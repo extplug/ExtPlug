@@ -208,7 +208,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
         'font-size': '70%',
         'border-radius': '10px',
         padding: '1px 4px',
-        'margin-top': '5px',
+        'margin': '-3px -7px 0 0',
         position: 'relative',
         float: 'right'
       }
