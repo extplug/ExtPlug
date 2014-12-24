@@ -15,6 +15,7 @@
         fnUtils.bound(this, 'colors');
         fnUtils.bound(this, 'css');
         fnUtils.bound(this, 'images');
+        fnUtils.bound(this, 'unload');
       },
 
       enable: function () {
@@ -24,6 +25,8 @@
           .on('change:colors', this.colors)
           .on('change:css', this.css)
           .on('change:images', this.images);
+
+        this.ext.on('room:left', this.unload);
       },
 
       disable: function () {
@@ -31,6 +34,8 @@
           .off('change:colors', this.colors)
           .off('change:css', this.css)
           .off('change:images', this.images);
+
+        this.ext.off('room:left', this.unload);
       },
 
       colors: function () {

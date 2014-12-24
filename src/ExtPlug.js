@@ -407,7 +407,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     mapEvent(API.USER_JOIN, 'userJoin');
     mapEvent(API.USER_LEAVE, 'userLeave');
 
-    currentRoom.on('change:joined', this.onRoomJoinedChange);
+    currentRoom.on('change:joined', this.onJoinedChange);
 
     currentUser.set('gRole', 5, { silent: true });
 

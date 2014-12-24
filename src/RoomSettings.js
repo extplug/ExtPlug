@@ -2,14 +2,19 @@ define('extplug/RoomSettings', function (require, exports, module) {
 
   var currentRoom = require('plug/models/currentRoom'),
     request = require('extplug/util/request'),
+    fnUtils = require('extplug/util/function'),
     Backbone = require('backbone');
 
   var RoomSettings = Backbone.Model.extend({
 
-    init: function (ext) {
-      this._super();
+    constructor: function (ext) {
+      Backbone.Model.call(this, {});
 
       this._loaded = {};
+
+      fnUtils.bound(this, 'load');
+      fnUtils.bound(this, 'unload');
+      fnUtils.bound(this, 'reload');
 
       currentRoom.on('change:description', this.reload);
       ext.on('room:joined', this.load);
@@ -44,6 +49,7 @@ define('extplug/RoomSettings', function (require, exports, module) {
     },
 
     unload: function () {
+      this.clear();
       this.trigger('unload');
     },
 
@@ -60,6 +66,6 @@ define('extplug/RoomSettings', function (require, exports, module) {
 
   });
 
-  return RoomSettings;
+  module.exports = RoomSettings;
 
 });
