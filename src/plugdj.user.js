@@ -14,9 +14,10 @@
 //= modules/ChatNotifications
 //= modules/RoomStyles
 //= modules/MehIcon
+//= modules/RolloverBlurbs
 //= modules/FullSizeVideo
 
-!(function _initExtPlug() {
+;(function _initExtPlug() {
 
   if (window.API) {
     //= ../node_modules/plug-modules/plug-modules
@@ -31,7 +32,7 @@
         cb(ext);
       });
 
-    })
+    });
   }
   else {
     setTimeout(_initExtPlug, 20);

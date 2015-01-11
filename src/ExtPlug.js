@@ -42,6 +42,8 @@ define('extplug/ExtPlug', function (require, exports, module) {
       i = 0,
       l = evts ? evts.length : 0;
     for (; i < l; i++) {
+      // Backbone event handlers have a .ctx property, containing what they will be bound to.
+      // And ApplicationView adds a handler that's bound to itself!
       if (evts[i].ctx instanceof ApplicationView) {
         return evts[i].ctx;
       }
@@ -89,8 +91,9 @@ define('extplug/ExtPlug', function (require, exports, module) {
     // bound methods
     this.onClick = this.onClick.bind(this);
     this.onVolume = this.onVolume.bind(this);
-    this.onSnooze = this.onSnooze.bind(this);
     this.onRefresh = this.onRefresh.bind(this);
+    this.onQuality = this.onQuality.bind(this);
+    this.onSnooze = this.onSnooze.bind(this);
     this.onJoinedChange = this.onJoinedChange.bind(this);
   }
 
@@ -193,7 +196,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
   ExtPlug.prototype.init = function () {
     var ext = this;
 
-    this.settings.set(settings.settings);
+    this.syncPlugSettings();
     this.appView = getApplicationView();
     this.applicationSettingsView = AppSettingsSectionView.prototype;
 
@@ -208,7 +211,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
         'font-size': '70%',
         'border-radius': '10px',
         padding: '1px 4px',
-        'margin': '-3px -7px 0 0',
+        'margin-top': '5px',
         position: 'relative',
         float: 'right'
       }
@@ -241,8 +244,9 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
     currentMedia.on('change:volume', this.onVolume);
 
-    this.snoozeButton.on('click.extplug', this.onSnooze);
     this.refreshButton.on('click.extplug', this.onRefresh);
+    this.hdButton.on('click.extplug', this.onQuality);
+    this.snoozeButton.on('click.extplug', this.onSnooze);
 
     // add an ExtPlug settings tab to User Settings
     var settingsTab = $('<button />').addClass('ext-plug').text('ExtPlug');
@@ -267,6 +271,18 @@ define('extplug/ExtPlug', function (require, exports, module) {
       }
     };
 
+    /**
+     * Wires a control to a setting model, updating the model when the control changes.
+     *
+     * @param {Backbone.View} el Control view.
+     * @param {Backbone.Model} settings Model to reflect the settings to.
+     * @param {string} target Relevant property on the model.
+     */
+    function wireSettingToModel(el, settings, target) {
+      el.on('change', function (value) {
+        settings.set(target, value);
+      });
+    }
     // add the ExtPlug settings pane
     function addExtPlugSettingsPane(old, itemName) {
       if (itemName === 'ext-plug') {
@@ -315,9 +331,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
         var extGroup = new SettingsGroup();
         var useCorsProxy = new SettingsCheckbox({ label: 'Use CORS proxy', enabled: true });
         extGroup.add(useCorsProxy);
-        useCorsProxy.on('change', function (enable) {
-          ext.settings.set('corsProxy', enable);
-        });
+        wireSettingToModel(useCorsProxy, ext.settings, 'corsProxy');
         view.addGroup('ExtPlug', extGroup, 10);
 
         return view;
@@ -357,9 +371,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
             control = new SettingsError({ label: 'Unknown type for "' + name + '"' });
             break;
         }
-        control.on('change', function (value) {
-          settings.set(name, value);
-        });
+        wireSettingToModel(control, settings, name);
         group.add(control);
       });
 
@@ -409,8 +421,6 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
     currentRoom.on('change:joined', this.onJoinedChange);
 
-    currentUser.set('gRole', 5, { silent: true });
-
     this._loadEnabledModules();
 
     this.notify('icon-plug-dj', 'ExtPlug loaded');
@@ -428,6 +438,20 @@ define('extplug/ExtPlug', function (require, exports, module) {
       this.disable(name);
     }, this);
     this.trigger('deinit');
+  };
+
+  /**
+   * Sets plug.dj settings on the ExtPlug settings model.
+   */
+  ExtPlug.prototype.syncPlugSettings = function () {
+    var newSettings = _.extend({}, settings.settings);
+    // when you mute a song using the volume button, plug.dj does not change the associated setting.
+    // here we fake a volume of 0% anyway if the volume is muted, so ExtPlug modules can just
+    // use volume throughout and have it work.
+    if (newSettings.volume !== 0 && $('#volume .icon').hasClass('icon-volume-off')) {
+      newSettings.volume = 0;
+    }
+    this.settings.set(newSettings);
   };
 
   /**
@@ -472,7 +496,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
   ExtPlug.prototype.onClick = function (e) {
     var target = $(e.target);
     if (target.parents('#user-settings').length === 1) {
-      this.settings.set(settings.settings);
+      this.syncPlugSettings();
     }
   };
 
@@ -495,6 +519,15 @@ define('extplug/ExtPlug', function (require, exports, module) {
    */
   ExtPlug.prototype.onSnooze = function () {
     this.trigger('snooze');
+  };
+
+  /**
+   * HD button click handler.
+   *
+   * @private
+   */
+  ExtPlug.prototype.onQuality = function () {
+    this.syncPlugSettings();
   };
 
   /**
