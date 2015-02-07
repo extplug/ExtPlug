@@ -8,21 +8,9 @@
     module.exports = Module({
       name: 'Full-Size Video',
 
-      settings: {
-        showDj: {
-          type: Boolean,
-          label: 'Show DJ Button',
-          default: true
-        },
-        showVote: {
-          type: Boolean,
-          label: 'Show Vote Panel',
-          default: true
-        }
-      },
-
       init: function () {
-        fnUtils.bound(this, 'update');
+        fnUtils.bound(this, 'enter');
+        fnUtils.bound(this, 'leave');
       },
 
       enable: function () {
@@ -48,36 +36,33 @@
             height: 'auto !important',
             background: '#000'
           },
-          '#avatars-container': { display: 'none !important' },
-          'body.extplug-fsv-nodj #dj-button, body.extplug-fsv-novote #vote': { display: 'none !important' }
+          '#avatars-container': { display: 'none !important' }
         });
-        this.settings.on('change:showDj change:showVote', this.update);
-        this.update();
         setTimeout(function () {
           win.onResize();
         }, 1);
+
+        this.$('#playback').on('mouseenter', this.enter).on('mouseleave', this.leave);
+        this.leave();
+      },
+
+      enter: function () {
+        this.$('#dj-button, #vote').show();
+      },
+      leave: function (e) {
+        // don't hide if the new target is one of the buttons
+        if (e && e.relatedTarget && $(e.relatedTarget).closest('#dj-button, #vote').length > 0) {
+          return;
+        }
+        this.$('#dj-button, #vote').hide();
       },
 
       disable: function () {
-        this.$('body').removeClass('extplug-fsv-nodj extplug-fsv-novote');
-        this.settings.off('change:showDj change:showVote', this.update);
+        this.enter();
+        this.$('#playback').off('mouseenter', this.enter).off('mouseleave', this.leave);
         setTimeout(function () {
           win.onResize();
         }, 1);
-      },
-
-      update: function () {
-        var body = this.$('body');
-        if (this.settings.get('showDj')) {
-          body.removeClass('extplug-fsv-nodj');
-        } else {
-          body.addClass('extplug-fsv-nodj');
-        }
-        if (this.settings.get('showVote')) {
-          body.removeClass('extplug-fsv-novote');
-        } else {
-          body.addClass('extplug-fsv-novote');
-        }
       }
 
     });

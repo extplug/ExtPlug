@@ -8,13 +8,12 @@
       UserFindAction = require('plug/actions/user/UserFindAction'),
       $ = require('jquery');
 
+    var emoji = $('<span />').addClass('emoji-glow')
+      .append($('<span />').addClass('emoji emoji-1f4dd'));
+
     module.exports = Module({
       name: 'Rollover Blurb (Experimental)',
       description: 'Show user "Blurb" / bio in rollover popups.',
-
-      init: function () {
-        fnUtils.bound(this, 'onRollover');
-      },
 
       enable: function () {
         this.Style({
@@ -32,48 +31,43 @@
           }
         });
 
-        var emoji = $('<span />').addClass('emoji-glow')
-          .append($('<span />').addClass('emoji emoji-1f4dd'));
-        fnUtils.replaceMethod(rolloverView, 'showModal', function (showModal, _arg) {
-          var self = this;
-          if (this._extPlugBlurbDiv) {
-            this._extPlugBlurbDiv.remove();
-          }
-          var span = $('<span />').addClass('extplug-blurb');
-          var div = this._extPlugBlurbDiv = $('<div />').addClass('info').append(span);
-          if (this.user.get('blurb')) {
-            show(this.user.get('blurb'));
-          }
-          else {
-            new UserFindAction(this.user.get('id')).on('success', function (user) {
-              self.user.set('blurb', user.blurb);
-              show(user.blurb);
-            });
-          }
-          showModal(_arg);
-
-          function show(blurb) {
-            if (blurb) {
-              self.$('.actions').before(div);
-              span.append(emoji, ' ' + blurb);
-              div.height(span[0].offsetHeight + 6);
-              self.$el.css('top', (parseInt(self.$el.css('top'), 10) - div.height()) + 'px');
-            }
-          }
-        });
-        fnUtils.replaceMethod(rolloverView, 'hide', function (hide, _arg) {
-          if (this._extPlugBlurbDiv) {
-            this._extPlugBlurbDiv.remove();
-            delete this._extPlugBlurbDiv;
-          }
-          hide(_arg);
-        });
+        fnUtils.replaceMethod(rolloverView, 'showModal', this.addBlurb);
+        fnUtils.replaceMethod(rolloverView, 'hide', this.removeBlurb);
       },
 
-      disable: function () {},
+      disable: function () {
+        fnUtils.unreplaceMethod(rolloverView, 'showModal', this.addBlurb);
+        fnUtils.unreplaceMethod(rolloverView, 'hide', this.removeBlurb);
+      },
 
-      onRollover: function () {
+      addBlurb: function (showModal, _arg) {
+        var self = this;
+        this.$('.extplug-blurb-wrap').remove();
+        var span = $('<span />').addClass('extplug-blurb');
+        var div = $('<div />').addClass('info extplug-blurb-wrap').append(span);
+        if (this.user.get('blurb')) {
+          show(this.user.get('blurb'));
+        }
+        else {
+          new UserFindAction(this.user.get('id')).on('success', function (user) {
+            self.user.set('blurb', user.blurb);
+            show(user.blurb);
+          });
+        }
+        showModal(_arg);
 
+        function show(blurb) {
+          if (blurb) {
+            self.$('.actions').before(div);
+            span.append(emoji, ' ' + blurb);
+            div.height(span[0].offsetHeight + 6);
+            self.$el.css('top', (parseInt(self.$el.css('top'), 10) - div.height()) + 'px');
+          }
+        }
+      },
+      removeBlurb: function (hide, _arg) {
+        this.$('.extplug-blurb-wrap').remove();
+        hide(_arg);
       }
 
     });

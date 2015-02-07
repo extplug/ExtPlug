@@ -8,6 +8,7 @@
 //= settings/SettingsView
 //= settings/Group
 //= settings/CheckboxView
+//= settings/DropdownView
 //= settings/ErrorCheckboxView
 
 //= modules/Autowoot

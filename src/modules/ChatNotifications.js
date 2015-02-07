@@ -9,11 +9,11 @@
       name: 'Chat Notifications',
 
       settings: {
-        userJoin: { type: Boolean, label: 'User Join', default: true },
-        userLeave: { type: Boolean, label: 'User Leave', default: true },
-        advance: { type: Boolean, label: 'DJ Advance', default: true },
-        grab: { type: Boolean, label: 'Media Grab', default: true },
-        meh: { type: Boolean, label: 'Meh Vote', default: true }
+        userJoin: { type: 'boolean', label: 'User Join', default: true },
+        userLeave: { type: 'boolean', label: 'User Leave', default: true },
+        advance: { type: 'boolean', label: 'DJ Advance', default: true },
+        grab: { type: 'boolean', label: 'Media Grab', default: true },
+        meh: { type: 'boolean', label: 'Meh Vote', default: true }
       },
 
       init: function () {
@@ -39,34 +39,36 @@
 
       onJoin: function (e) {
         if (this.settings.get('userJoin')) {
-          this.log(e.username + ' joined the room');
+          this.log('joined the room', e.id, e.username, '#2ECC40');
         }
       },
 
       onLeave: function (e) {
         if (this.settings.get('userLeave')) {
-          this.log(e.username + ' left the room');
+          this.log('left the room', e.id, e.username, '#FF4136');
         }
       },
 
       onAdvance: function (e) {
         if (this.settings.get('advance')) {
-          this.log('Now Playing: ' + e.media.author + ' – ' + e.media.title);
+          this.log('Now Playing: ' + e.media.author + ' – ' + e.media.title, e.dj.id, e.dj.username, '#7FDBFF');
         }
       },
 
       onGrab: function (e) {
         if (this.settings.get('grab')) {
           var media = API.getMedia();
-          this.log(e.user.username + ' grabbed ' + media.author + ' – ' + media.title);
+          this.log('grabbed ' + media.author + ' – ' + media.title, e.user.id, e.user.username, '#B10DC9');
         }
       },
 
-      log: function (msg) {
+      log: function (msg, uid, username, color, badge) {
         Events.trigger('chat:receive', {
           type: 'custom',
-          color: '#700',
-          message: msg
+          color: color,
+          message: msg,
+          uid: uid,
+          un: username
         });
       }
     });

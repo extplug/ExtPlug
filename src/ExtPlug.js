@@ -11,6 +11,8 @@ define('extplug/ExtPlug', function (require, exports, module) {
     UserSettingsView = require('plug/views/user/settings/SettingsView'),
     ShowDialogEvent = require('plug/events/ShowDialogEvent'),
     ChatView = require('plug/views/rooms/chat/ChatView'),
+    plugUtil = require('plug/util/util'),
+    emoji = require('plug/util/emoji'),
     lang = require('plug/lang/Lang'),
 
     Settings = require('extplug/settings/Settings'),
@@ -18,6 +20,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     SettingsGroup = require('extplug/settings/Group'),
     SettingsCheckbox = require('extplug/settings/CheckboxView'),
     SettingsError = require('extplug/settings/ErrorCheckboxView'),
+    SettingsDropdown = require('extplug/settings/DropdownView'),
     Style = require('extplug/Style'),
     RoomSettings = require('extplug/RoomSettings'),
     fnUtils = require('extplug/util/function'),
@@ -364,8 +367,18 @@ define('extplug/ExtPlug', function (require, exports, module) {
       _.each(meta, function (setting, name) {
         var control;
         switch (setting.type) {
-          case Boolean:
-            control = new SettingsCheckbox({ label: setting.label, enabled: settings.get(name) });
+          case 'boolean':
+            control = new SettingsCheckbox({
+              label: setting.label,
+              enabled: settings.get(name)
+            });
+            break;
+          case 'dropdown':
+            control = new SettingsDropdown({
+              label: setting.label,
+              options: setting.options,
+              selected: setting.default
+            });
             break;
           default:
             control = new SettingsError({ label: 'Unknown type for "' + name + '"' });
@@ -384,19 +397,45 @@ define('extplug/ExtPlug', function (require, exports, module) {
     function addCustomChatType(oldReceived, message) {
       if (message.type === 'custom') {
         message.type += ' update';
+        if (!message.timestamp) {
+          message.timestamp = plugUtil.getChatTimestamp();
+        }
         oldReceived(message);
+        if (message.badge) {
+          if (/^:(.*?):$/.test(message.badge)) {
+            var badgeBox = this.$chatMessages.children().last().find('.badge-box'),
+              emojiName = message.badge.slice(1, -1);
+            if (emoji.map[emojiName]) {
+              badgeBox.find('i').remove();
+              badgeBox.append(
+                $('<span />').addClass('emoji-glow extplug-badji').append(
+                  $('<span />').addClass('emoji emoji-' + emoji.map[emojiName])
+                )
+              );
+            }
+          }
+        }
         if (message.color) {
-          this.$chatMessages.children().last().css('color', message.color);
+          this.$chatMessages.children().last().find('.msg .text').css('color', message.color);
         }
       }
       else {
         oldReceived(message);
       }
     }
+
+    // Replace the event listener too
+    var chatView = this.appView.room && this.appView.room.chat;
+    if (chatView) {
+      Events.off('chat:receive', chatView.onReceived);
+    }
     fnUtils.replaceMethod(ChatView.prototype, 'onReceived', addCustomChatType);
     this.on('deinit', function () {
       fnUtils.unreplaceMethod(ChatView.prototype, 'onReceived', addCustomChatType);
     });
+    if (chatView) {
+      Events.on('chat:receive', chatView.onReceived, chatView);
+    }
 
     // room settings
     var roomSettings = new RoomSettings(this);
