@@ -15,7 +15,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     emoji = require('plug/util/emoji'),
     lang = require('plug/lang/Lang'),
 
-    Settings = require('extplug/settings/Settings'),
+    Settings = require('extplug/models/Settings'),
     ExtSettingsSectionView = require('extplug/settings/SettingsView'),
     SettingsGroup = require('extplug/settings/Group'),
     SettingsCheckbox = require('extplug/settings/CheckboxView'),
@@ -123,7 +123,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     var path = 'extplug/modules/' + name;
     define(path, deps, factory);
     require([ path ], function (Mod) {
-      ext.register(Mod);
+      ext.register(name, Mod);
     });
   };
 
@@ -176,10 +176,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
    *
    * @return {ExtPlug} `this`.
    */
-  ExtPlug.prototype.register = function (Mod) {
+  ExtPlug.prototype.register = function (id, Mod) {
     if (Mod._name) {
       try {
-        this._modules[Mod._name] = new Mod(this);
+        this._modules[Mod._name] = new Mod(id, this);
       }
       catch (e) {
         this._modules[Mod._name] = e;
@@ -513,8 +513,8 @@ define('extplug/ExtPlug', function (require, exports, module) {
    * @private
    */
   ExtPlug.prototype._loadEnabledModules = function () {
-    var enabled = localStorage.getItem('extPlugModulesEnabled');
-    if (enabled) {
+    var enabled = localStorage.getItem('extPlugModules');
+    if (enabled && false) {
       var modules = JSON.parse(enabled);
       _.each(modules, function (m, name) {
         if (m.enabled) {
@@ -733,17 +733,20 @@ define('extplug/ExtPlug', function (require, exports, module) {
     _ = require('underscore'),
     Backbone = require('backbone'),
     SettingsGroup = require('extplug/settings/Group'),
-    Settings = require('extplug/settings/Settings'),
-    Style = require('extplug/Style');
+    Settings = require('extplug/models/Settings'),
+    Style = require('extplug/Style'),
+    fnUtils = require('extplug/util/function');
 
   /**
    * @param {string}  name      Module name.
    * @param {Object=} prototype Module prototype.
    */
   function Module(prototype) {
-    function Constructor(ext) {
+    function Constructor(id, ext) {
       if (!(this instanceof Constructor)) return new Constructor(ext);
       _.extend(this, Backbone.Events);
+
+      this.id = id;
 
       /**
        * @type {Array.<Style>}
@@ -763,11 +766,15 @@ define('extplug/ExtPlug', function (require, exports, module) {
         this._settings = this.settings;
       }
       this.settings = settings;
+      this.loadSettings();
 
-      this.refresh = this.refresh.bind(this);
-      this.enable = this.enable.bind(this);
-      this.disable = this.disable.bind(this);
-      this.$ = this.$.bind(this);
+      fnUtils.bound(this, 'refresh');
+      fnUtils.bound(this, 'enable');
+      fnUtils.bound(this, 'disable');
+      fnUtils.bound(this, '$');
+      fnUtils.bound(this, 'saveSettings');
+
+      this.settings.on('change', this.saveSettings);
 
       this.init();
     }
@@ -792,6 +799,17 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
   Module.prototype.$ = function (sel) {
     return sel ? jQuery(sel, this.ext.document) : this.ext.document;
+  };
+
+  Module.prototype.loadSettings = function () {
+    var settings = localStorage.getItem('extPlugModule_' + this.id);
+    if (settings) {
+      this.settings.set(JSON.parse(settings));
+    }
+  };
+
+  Module.prototype.saveSettings = function () {
+    localStorage.setItem('extPlugModule_' + this.id, JSON.stringify(this.settings));
   };
 
   Module.prototype.disable = function () {
@@ -980,7 +998,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
   module.exports = RoomSettings;
 
 });
-;define('extplug/settings/Settings', function (require, exports, module) {
+;define('extplug/models/Settings', function (require, exports, module) {
 
   var Backbone = require('backbone');
 
@@ -1109,7 +1127,6 @@ define('extplug/ExtPlug', function (require, exports, module) {
   var CheckboxView = Backbone.View.extend({
     className: 'item',
     initialize: function (o) {
-      this.name = o.name;
       this.label = o.label;
       this.enabled = o.enabled || false;
       this.onChange = this.onChange.bind(this);
