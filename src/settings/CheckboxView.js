@@ -9,7 +9,6 @@ define('extplug/settings/CheckboxView', function (require, exports, module) {
   var CheckboxView = Backbone.View.extend({
     className: 'item',
     initialize: function (o) {
-      this.name = o.name;
       this.label = o.label;
       this.enabled = o.enabled || false;
       this.onChange = this.onChange.bind(this);

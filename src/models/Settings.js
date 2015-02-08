@@ -1,4 +1,4 @@
-define('extplug/settings/Settings', function (require, exports, module) {
+define('extplug/models/Settings', function (require, exports, module) {
 
   var Backbone = require('backbone');
 

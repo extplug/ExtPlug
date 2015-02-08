@@ -4,7 +4,7 @@ define('extplug/Module', function (require, exports, module) {
     _ = require('underscore'),
     Backbone = require('backbone'),
     SettingsGroup = require('extplug/settings/Group'),
-    Settings = require('extplug/settings/Settings'),
+    Settings = require('extplug/models/Settings'),
     Style = require('extplug/Style');
 
   /**

@@ -4,7 +4,7 @@
 //= util/function
 //= util/request
 //= RoomSettings
-//= settings/Settings
+//= models/Settings
 //= settings/SettingsView
 //= settings/Group
 //= settings/CheckboxView

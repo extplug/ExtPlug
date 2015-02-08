@@ -15,7 +15,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     emoji = require('plug/util/emoji'),
     lang = require('plug/lang/Lang'),
 
-    Settings = require('extplug/settings/Settings'),
+    Settings = require('extplug/models/Settings'),
     ExtSettingsSectionView = require('extplug/settings/SettingsView'),
     SettingsGroup = require('extplug/settings/Group'),
     SettingsCheckbox = require('extplug/settings/CheckboxView'),
