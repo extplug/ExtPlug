@@ -123,7 +123,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     var path = 'extplug/modules/' + name;
     define(path, deps, factory);
     require([ path ], function (Mod) {
-      ext.register(Mod);
+      ext.register(name, Mod);
     });
   };
 
@@ -176,10 +176,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
    *
    * @return {ExtPlug} `this`.
    */
-  ExtPlug.prototype.register = function (Mod) {
+  ExtPlug.prototype.register = function (id, Mod) {
     if (Mod._name) {
       try {
-        this._modules[Mod._name] = new Mod(this);
+        this._modules[Mod._name] = new Mod(id, this);
       }
       catch (e) {
         this._modules[Mod._name] = e;
@@ -513,8 +513,8 @@ define('extplug/ExtPlug', function (require, exports, module) {
    * @private
    */
   ExtPlug.prototype._loadEnabledModules = function () {
-    var enabled = localStorage.getItem('extPlugModulesEnabled');
-    if (enabled) {
+    var enabled = localStorage.getItem('extPlugModules');
+    if (enabled && false) {
       var modules = JSON.parse(enabled);
       _.each(modules, function (m, name) {
         if (m.enabled) {

@@ -5,16 +5,19 @@ define('extplug/Module', function (require, exports, module) {
     Backbone = require('backbone'),
     SettingsGroup = require('extplug/settings/Group'),
     Settings = require('extplug/models/Settings'),
-    Style = require('extplug/Style');
+    Style = require('extplug/Style'),
+    fnUtils = require('extplug/util/function');
 
   /**
    * @param {string}  name      Module name.
    * @param {Object=} prototype Module prototype.
    */
   function Module(prototype) {
-    function Constructor(ext) {
+    function Constructor(id, ext) {
       if (!(this instanceof Constructor)) return new Constructor(ext);
       _.extend(this, Backbone.Events);
+
+      this.id = id;
 
       /**
        * @type {Array.<Style>}
@@ -34,11 +37,15 @@ define('extplug/Module', function (require, exports, module) {
         this._settings = this.settings;
       }
       this.settings = settings;
+      this.loadSettings();
 
-      this.refresh = this.refresh.bind(this);
-      this.enable = this.enable.bind(this);
-      this.disable = this.disable.bind(this);
-      this.$ = this.$.bind(this);
+      fnUtils.bound(this, 'refresh');
+      fnUtils.bound(this, 'enable');
+      fnUtils.bound(this, 'disable');
+      fnUtils.bound(this, '$');
+      fnUtils.bound(this, 'saveSettings');
+
+      this.settings.on('change', this.saveSettings);
 
       this.init();
     }
@@ -63,6 +70,17 @@ define('extplug/Module', function (require, exports, module) {
 
   Module.prototype.$ = function (sel) {
     return sel ? jQuery(sel, this.ext.document) : this.ext.document;
+  };
+
+  Module.prototype.loadSettings = function () {
+    var settings = localStorage.getItem('extPlugModule_' + this.id);
+    if (settings) {
+      this.settings.set(JSON.parse(settings));
+    }
+  };
+
+  Module.prototype.saveSettings = function () {
+    localStorage.setItem('extPlugModule_' + this.id, JSON.stringify(this.settings));
   };
 
   Module.prototype.disable = function () {
