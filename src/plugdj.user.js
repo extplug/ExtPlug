@@ -22,6 +22,7 @@
 
   if (window.API) {
     //= ../node_modules/plug-modules/plug-modules
+    plugModules.register();
     require([ 'extplug/ExtPlug' ], function (ExtPlug) {
 
       var cbs = window.extp || [];

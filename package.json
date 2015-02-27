@@ -1,9 +1,9 @@
 {
   "name": "ExtPlug",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
-    "plug-modules": "*"
+    "plug-modules": "1.x"
   },
   "scripts": {
     "build": "node build.js",

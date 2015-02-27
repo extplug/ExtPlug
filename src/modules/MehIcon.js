@@ -3,7 +3,7 @@
   ext.define('MehIcon', function (require, exports, module) {
 
     var Module = require('extplug/Module'),
-      UserRowView = require('plug/views/room/users/RoomUserRowView'),
+      UserRowView = require('plug/views/rooms/users/RoomUserRowView'),
       $ = require('jquery');
 
     var MehIcon = Module({

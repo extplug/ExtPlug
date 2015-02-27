@@ -4,8 +4,8 @@
 
     var Module = require('extplug/Module'),
       fnUtils = require('extplug/util/function'),
-      rolloverView = require('plug/views/user/userRolloverView'),
-      UserFindAction = require('plug/actions/user/UserFindAction'),
+      rolloverView = require('plug/views/users/userRolloverView'),
+      UserFindAction = require('plug/actions/users/UserFindAction'),
       $ = require('jquery');
 
     var emoji = $('<span />').addClass('emoji-glow')

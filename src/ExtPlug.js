@@ -3,12 +3,12 @@ define('extplug/ExtPlug', function (require, exports, module) {
   var currentMedia = require('plug/models/currentMedia'),
     currentUser = require('plug/models/currentUser'),
     currentRoom = require('plug/models/currentRoom'),
-    settings = require('plug/settings/settings'),
+    settings = require('plug/store/settings'),
     Events = require('plug/core/Events'),
     ApplicationView = require('plug/views/app/ApplicationView'),
-    SettingsTabMenuView = require('plug/views/user/settings/TabMenuView'),
-    AppSettingsSectionView = require('plug/views/user/settings/SettingsApplicationView'),
-    UserSettingsView = require('plug/views/user/settings/SettingsView'),
+    SettingsTabMenuView = require('plug/views/users/settings/TabMenuView'),
+    AppSettingsSectionView = require('plug/views/users/settings/SettingsApplicationView'),
+    UserSettingsView = require('plug/views/users/settings/SettingsView'),
     ShowDialogEvent = require('plug/events/ShowDialogEvent'),
     ChatView = require('plug/views/rooms/chat/ChatView'),
     plugUtil = require('plug/util/util'),
@@ -300,7 +300,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
             modulesGroup.add(new SettingsError({ label: name }));
           }
           else {
-            var box = new SettingsCheckbox({ label: name, enabled: ext.enabled(name) });
+            var box = new SettingsCheckbox({
+              label: name,
+              enabled: ext.enabled(name)
+            });
             modulesGroup.add(box);
             box.on('change', function (value) {
               // add / remove module settings group
