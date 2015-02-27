@@ -302,6 +302,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
           else {
             var box = new SettingsCheckbox({
               label: name,
+              description: module.description || false,
               enabled: ext.enabled(name)
             });
             modulesGroup.add(box);
