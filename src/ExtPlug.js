@@ -1,7 +1,6 @@
 define('extplug/ExtPlug', function (require, exports, module) {
 
   var currentMedia = require('plug/models/currentMedia'),
-    currentUser = require('plug/models/currentUser'),
     currentRoom = require('plug/models/currentRoom'),
     settings = require('plug/store/settings'),
     Events = require('plug/core/Events'),
@@ -16,11 +15,9 @@ define('extplug/ExtPlug', function (require, exports, module) {
     lang = require('plug/lang/Lang'),
 
     Settings = require('extplug/models/Settings'),
-    ExtSettingsSectionView = require('extplug/settings/SettingsView'),
-    SettingsGroup = require('extplug/settings/Group'),
-    SettingsCheckbox = require('extplug/settings/CheckboxView'),
-    SettingsError = require('extplug/settings/ErrorCheckboxView'),
-    SettingsDropdown = require('extplug/settings/DropdownView'),
+    Module = require('extplug/models/Module'),
+    ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView'),
+    ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
     Style = require('extplug/Style'),
     RoomSettings = require('extplug/RoomSettings'),
     fnUtils = require('extplug/util/function'),
@@ -64,16 +61,13 @@ define('extplug/ExtPlug', function (require, exports, module) {
   function ExtPlug() {
     _.extend(this, Backbone.Events);
 
+    var ModulesCollection = Backbone.Collection.extend({ model: Module });
     /**
      * Internal map of registered modules.
      * @type {Object.<string, Module>}
      */
-    this._modules = {};
-    /**
-     * Internal map of module names → whether they are enabled.
-     * @type {Object.<string, boolean>}
-     */
-    this._enabled = {};
+    this._modules = new ModulesCollection();
+
     /**
      * ExtPlug global settings. Includes global plug.dj settings.
      *
@@ -133,13 +127,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
    * @param {string} name Module name.
    */
   ExtPlug.prototype.enable = function (name) {
-    var mod = this._modules[name];
-    if (mod) {
-      if (!this._enabled[name]) {
-        mod.enable();
-      }
-      // TODO set enabled as a property on the module?
-      this._enabled[name] = true;
+    var mod = this._modules.findWhere({ name: name });
+    if (mod && !mod.get('enabled')) {
+      mod.get('module').enable();
+      mod.set('enabled', true);
       this._updateEnabledModules();
     }
   };
@@ -150,10 +141,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
    * @param {string} name Module name.
    */
   ExtPlug.prototype.disable = function (name) {
-    if (this._enabled[name]) {
-      var mod = this._modules[name];
-      mod.disable();
-      this._enabled[name] = false;
+    var mod = this._modules.findWhere({ name: name });
+    if (mod && mod.get('enabled')) {
+      mod.get('module').disable();
+      mod.set('enabled', false);
       this._updateEnabledModules();
     }
   };
@@ -166,7 +157,8 @@ define('extplug/ExtPlug', function (require, exports, module) {
    * @return {boolean} True if the Module is enabled, false otherwise.
    */
   ExtPlug.prototype.enabled = function (name) {
-    return this._enabled[name] || false;
+    var mod = this._modules.findWhere({ name: name });
+    return mod ? mod.get('enabled') : false;
   };
 
   /**
@@ -179,10 +171,11 @@ define('extplug/ExtPlug', function (require, exports, module) {
   ExtPlug.prototype.register = function (id, Mod) {
     if (Mod._name) {
       try {
-        this._modules[Mod._name] = new Mod(id, this);
+        var mod = new Mod(id, this);
+        this._modules.push(new Module({ module: mod, name: Mod._name }));
       }
       catch (e) {
-        this._modules[Mod._name] = e;
+        this._modules.push(new Module({ module: e, name: Mod._name }));
       }
     }
     return this;
@@ -252,148 +245,20 @@ define('extplug/ExtPlug', function (require, exports, module) {
     this.snoozeButton.on('click.extplug', this.onSnooze);
 
     // add an ExtPlug settings tab to User Settings
-    var settingsTab = $('<button />').addClass('ext-plug').text('ExtPlug');
-    function addExtPlugSettingsTab(oldRender) {
-      var ret = oldRender();
-      var butt = settingsTab.clone();
-      this.$el.append(butt);
-      butt.on('click', this.onClickExt.bind(this));
+    fnUtils.replaceClass(SettingsTabMenuView, ExtSettingsTabMenuView);
 
-      var buttons = this.$('button');
-      buttons.css('width', 100 / buttons.length + '%');
-      return ret;
-    }
-    fnUtils.replaceMethod(SettingsTabMenuView.prototype, 'render', addExtPlugSettingsTab);
-
-    // Using a separate method, because the other tab buttons don't need to check for ext-plug anyway.
-    // TODO this can probably just not call onClick() entirely
-    SettingsTabMenuView.prototype.onClickExt = function (e) {
-      this.onClick(e);
-      if ($(e.target).hasClass('ext-plug')) {
-        this.trigger('select', 'ext-plug');
-      }
-    };
-
-    /**
-     * Wires a control to a setting model, updating the model when the control changes.
-     *
-     * @param {Backbone.View} el Control view.
-     * @param {Backbone.Model} settings Model to reflect the settings to.
-     * @param {string} target Relevant property on the model.
-     */
-    function wireSettingToModel(el, settings, target) {
-      el.on('change', function (value) {
-        settings.set(target, value);
-      });
-    }
     // add the ExtPlug settings pane
     function addExtPlugSettingsPane(old, itemName) {
       if (itemName === 'ext-plug') {
-        var view = new ExtSettingsSectionView();
-
-        var modulesGroup = new SettingsGroup();
-        // generate module list
-        view.addGroup('Modules', modulesGroup, 1000);
-        _.each(ext._modules, function (module, name) {
-          if (module instanceof Error) {
-            // this module errored out during its initialization
-            modulesGroup.add(new SettingsError({ label: name }));
-          }
-          else {
-            var box = new SettingsCheckbox({
-              label: name,
-              description: module.description || false,
-              enabled: ext.enabled(name)
-            });
-            modulesGroup.add(box);
-            box.on('change', function (value) {
-              // add / remove module settings group
-              if (value) {
-                ext.enable(name);
-                var moduleSettings = getSettingsGroup(module);
-                if (moduleSettings) {
-                  view.addGroup(name, moduleSettings);
-                  view.render();
-                }
-              }
-              else {
-                ext.disable(name);
-                if (view.hasGroup(name)) {
-                  view.removeGroup(name);
-                  view.render();
-                }
-              }
-            });
-            // add module settings group for stuff that was already enabled
-            if (ext.enabled(name)) {
-              var moduleSettings = getSettingsGroup(module);
-              if (moduleSettings) {
-                view.addGroup(name, moduleSettings);
-              }
-            }
-          }
-        });
-
-        // global ExtPlug settings
-        var extGroup = new SettingsGroup();
-        var useCorsProxy = new SettingsCheckbox({ label: 'Use CORS proxy', enabled: true });
-        extGroup.add(useCorsProxy);
-        wireSettingToModel(useCorsProxy, ext.settings, 'corsProxy');
-        view.addGroup('ExtPlug', extGroup, 10);
-
-        return view;
+        return new ExtSettingsSectionView({ modules: ext._modules, ext: ext });
       }
       return old(itemName);
     }
     fnUtils.replaceMethod(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
 
     this.on('deinit', function () {
-      delete SettingsTabMenuView.prototype.onClickExt;
       fnUtils.unreplaceMethod(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
-      fnUtils.unreplaceMethod(SettingsTabMenuView.prototype, 'render', addExtPlugSettingsTab);
     });
-
-    /**
-     * Returns a SettingsGroup "view" for a given module's settings.
-     * Events all wired up, ready to go!
-     *
-     * @param {Module} module The module to base this view on.
-     * @return {SettingsGroup} Group of proper setting view instances.
-     */
-    function getSettingsGroup(module) {
-      if (!module._settings) {
-        return;
-      }
-      var group = new SettingsGroup();
-      var meta = module._settings;
-      var settings = module.settings;
-
-      _.each(meta, function (setting, name) {
-        var control;
-        switch (setting.type) {
-          case 'boolean':
-            control = new SettingsCheckbox({
-              label: setting.label,
-              enabled: settings.get(name)
-            });
-            break;
-          case 'dropdown':
-            control = new SettingsDropdown({
-              label: setting.label,
-              options: setting.options,
-              selected: setting.default
-            });
-            break;
-          default:
-            control = new SettingsError({ label: 'Unknown type for "' + name + '"' });
-            break;
-        }
-        wireSettingToModel(control, settings, name);
-        group.add(control);
-      });
-
-      return group;
-    }
 
     // add custom chat message type
     // still a bit broked since the new chat system
@@ -429,7 +294,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     }
 
     // Replace the event listener too
-    var chatView = this.appView.room && this.appView.room.chat;
+    var chatView = this.appView && this.appView.room && this.appView.room.chat;
     if (chatView) {
       Events.off('chat:receive', chatView.onReceived);
     }
@@ -503,10 +368,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
    */
   ExtPlug.prototype._updateEnabledModules = function () {
     var modules = {};
-    _.each(this._modules, function (m, name) {
-      modules[name] = {
-        enabled: this._enabled[name] || false,
-        settings: m.settings
+    this._modules.forEach(function (m) {
+      modules[m.get('name')] = {
+        enabled: m.get('enabled'),
+        settings: m.get('module').settings
       };
     }, this);
     localStorage.setItem('extPlugModules', JSON.stringify(modules));
@@ -518,13 +383,16 @@ define('extplug/ExtPlug', function (require, exports, module) {
    */
   ExtPlug.prototype._loadEnabledModules = function () {
     var enabled = localStorage.getItem('extPlugModules');
-    if (enabled && false) {
+    if (enabled) {
       var modules = JSON.parse(enabled);
       _.each(modules, function (m, name) {
         if (m.enabled) {
           this.enable(name);
         }
-        this._modules[name].settings.set(m.settings);
+        var mod = this._modules.findWhere({ name: name });
+        if (mod) {
+          mod.get('module').settings.set(m.settings);
+        }
       }, this);
     }
   };

@@ -35,6 +35,48 @@ define('extplug/util/function', function (require, exports, module) {
     }
   };
 
+  /**
+   * Replaces a Backbone class implementation by a different class implementation.
+   * This is particularly useful for overriding plug.dj internal class behaviour. Extend
+   * the class, and then replace the original implementation by your new implementation.
+   *
+   * This should not be used by modules for now, as it only supports one override at a time!
+   *
+   * @param {function()} oldClass The class to replace.
+   * @param {function()} newClass Replacement.
+   *
+   * @return {function()} The patched class.
+   */
+  exports.replaceClass = function (oldClass, newClass) {
+    Object.defineProperty(oldClass, '$replaced', {
+      writable: true,
+      enumerable: false,
+      configurable: false,
+      value: { extend: oldClass.extend, proto: oldClass.prototype }
+    });
+    oldClass.extend = newClass.extend;
+    oldClass.prototype = newClass.prototype;
+    return oldClass;
+  };
+
+  /**
+   * Restore a class to its original implementation.
+   */
+  exports.restoreClass = function (oldClass) {
+    if (oldClass.$replaced) {
+      oldClass.extend = oldClass.$replaced.extend;
+      oldClass.prototype = oldClass.$replaced.prototype;
+      delete oldClass.$replaced;
+    }
+    return oldClass;
+  };
+
+  /**
+   * Concisely binds a method to an object.
+   *
+   * @param {Object} obj Base object.
+   * @param {string} key Method name.
+   */
   exports.bound = function (obj, key) {
     obj[key] = obj[key].bind(obj);
   };
