@@ -7,6 +7,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     ApplicationView = require('plug/views/app/ApplicationView'),
     SettingsTabMenuView = require('plug/views/users/settings/TabMenuView'),
     AppSettingsSectionView = require('plug/views/users/settings/SettingsApplicationView'),
+    UserView = require('plug/views/users/UserView'),
     UserSettingsView = require('plug/views/users/settings/SettingsView'),
     ShowDialogEvent = require('plug/events/ShowDialogEvent'),
     ChatView = require('plug/views/rooms/chat/ChatView'),
@@ -15,11 +16,12 @@ define('extplug/ExtPlug', function (require, exports, module) {
     lang = require('plug/lang/Lang'),
 
     Settings = require('extplug/models/Settings'),
+    RoomSettings = require('extplug/models/RoomSettings'),
     Module = require('extplug/models/Module'),
+    ExtUserView = require('extplug/views/users/ExtUserView'),
     ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView'),
     ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
     Style = require('extplug/Style'),
-    RoomSettings = require('extplug/RoomSettings'),
     fnUtils = require('extplug/util/function'),
 
     $ = require('jquery'),
@@ -246,6 +248,12 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
     // add an ExtPlug settings tab to User Settings
     fnUtils.replaceClass(SettingsTabMenuView, ExtSettingsTabMenuView);
+    fnUtils.replaceClass(UserView, ExtUserView);
+    // replace rendered UserView
+    var userView = new UserView();
+    userView.render();
+    this.appView.user.$el.replaceWith(userView.$el);
+    this.appView.user = userView;
 
     // add the ExtPlug settings pane
     function addExtPlugSettingsPane(old, itemName) {
@@ -294,7 +302,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     }
 
     // Replace the event listener too
-    var chatView = this.appView && this.appView.room && this.appView.room.chat;
+    var chatView = this.appView.room.chat;
     if (chatView) {
       Events.off('chat:receive', chatView.onReceived);
     }
@@ -395,6 +403,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
         }
       }, this);
     }
+  };
+
+  ExtPlug.prototype.showSettings = function () {
+    Events.trigger('show:user', 'settings', 'ext-plug');
   };
 
   /**
@@ -840,7 +852,16 @@ define('extplug/ExtPlug', function (require, exports, module) {
   }
 
 });
-;define('extplug/RoomSettings', function (require, exports, module) {
+;define('extplug/models/Settings', function (require, exports, module) {
+
+  var Backbone = require('backbone');
+
+  var Settings = Backbone.Model.extend({});
+
+  module.exports = Settings;
+
+});
+;define('extplug/models/RoomSettings', function (require, exports, module) {
 
   var currentRoom = require('plug/models/currentRoom'),
     request = require('extplug/util/request'),
@@ -911,15 +932,6 @@ define('extplug/ExtPlug', function (require, exports, module) {
   module.exports = RoomSettings;
 
 });
-;define('extplug/models/Settings', function (require, exports, module) {
-
-  var Backbone = require('backbone');
-
-  var Settings = Backbone.Model.extend({});
-
-  module.exports = Settings;
-
-});
 ;define('extplug/models/Module', function (require, exports, module) {
 
   var Backbone = require('backbone');
@@ -953,6 +965,21 @@ define('extplug/ExtPlug', function (require, exports, module) {
   var Backbone = require('backbone');
 
   return Backbone.View.extend({
+  });
+
+});;define('extplug/views/users/ExtUserView', function (require, exports, module) {
+
+  var UserView = require('plug/views/users/UserView');
+
+  return UserView.extend({
+    className: 'extplug app-left',
+    show: function (category, sub, _arg2) {
+      this._super(category, sub, _arg2);
+
+      if (category === 'settings' && sub === 'ext-plug') {
+        this.view.menu.selectExtPlug();
+      }
+    }
   });
 
 });;define('extplug/views/users/settings/SettingsView', function (require, exports, module) {
@@ -1168,9 +1195,16 @@ define('extplug/ExtPlug', function (require, exports, module) {
     },
 
     onClickExt: function (e) {
-      if ($(e.target).hasClass('ext-plug')) {
-        this.trigger('select', 'ext-plug');
+      var button = $(e.target);
+      if (button.hasClass('ext-plug') && !button.hasClass('selected')) {
+        this.selectExtPlug();
       }
+    },
+
+    selectExtPlug: function () {
+      this.$('button').removeClass('selected');
+      this.$('button.ext-plug').addClass('selected');
+      this.trigger('select', 'ext-plug');
     }
 
   });
@@ -1515,6 +1549,81 @@ define('extplug/ExtPlug', function (require, exports, module) {
 });
 ;(extp = window.extp || []).push(function (ext) {
 
+  ext.define('CompactHistory', function (require, exports, module) {
+
+    var Module = require('extplug/Module'),
+      fnUtils = require('extplug/util/function'),
+      _ = require('underscore'),
+      $ = require('jquery');
+
+    module.exports = Module({
+      name: 'Compact History',
+      description: 'Lays out the room history in a much more compact view.',
+
+      init: function () {
+      },
+
+      /**
+       * We'll just use CSS!
+       */
+      enable: function () {
+        var ITEM_HEIGHT = 20
+        var heightPx = ITEM_HEIGHT + 'px'
+        this.Style({
+          '#history-panel .media-list.history .playlist-media-item:not(.selected)': {
+            'height': heightPx
+          },
+          '#history-panel .media-list.history .playlist-media-item:not(.selected) img': {
+            'height': heightPx,
+            'width': (ITEM_HEIGHT * 1.5) + 'px',
+            'margin-top': '0px'
+          },
+          '#history-panel .media-list.history .playlist-media-item:not(.selected) .score': {
+            'height': 'auto',
+            'width': 'auto',
+            'top': '0px',
+            'left': '65px'
+          },
+          '#history-panel .media-list.history .playlist-media-item:not(.selected) .score .item': {
+            'margin-right': '10px'
+          },
+          '#history-panel .media-list.history .playlist-media-item:not(.selected) .meta': {
+            'height': 'auto'
+          },
+          '#history-panel .media-list.history .playlist-media-item:not(.selected) .meta span': {
+            'height': heightPx,
+            'top': '0px'
+          },
+          '#history-panel .media-list.history .playlist-media-item:not(.selected) .actions': {
+            'height': heightPx,
+            'top': '0px'
+          },
+          '#history-panel .media-list.history .playlist-media-item:not(.selected) .author': {
+            'left': '120px',
+            'right': '300px',
+            'width': 'auto'
+          },
+          '#history-panel .media-list.history .playlist-media-item:not(.selected) .name': {
+            'right': '125px'
+          },
+          '#history-panel .media-list.history .playlist-media-item:not(.selected) .actions div': {
+            'height': heightPx
+          },
+          '#history-panel .media-list.history .playlist-media-item:not(.selected) .actions div i': {
+            'top': '-4px'
+          }
+        });
+      },
+
+      disable: function () {}
+
+    });
+
+  });
+
+});
+;(extp = window.extp || []).push(function (ext) {
+
   ext.define('RoomStyles', function (require, exports, module) {
 
     var Module = require('extplug/Module'),
@@ -1612,7 +1721,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
               'position': 'absolute',
               'width': '300px',
               'height': '100px',
-              'left': '-64px',
+              'left': '15px',
               'top': '70px',
               'z-index': -1
             }).appendTo(this.$('#dj-booth'));
@@ -3254,7 +3363,12 @@ for (var i = 0; i < detectives.length && i < 5000; i++) {
 return context;
 
 }());    plugModules.register();
-    require([ 'extplug/ExtPlug' ], function (ExtPlug) {
+    require([ 'extplug/ExtPlug' ], function _loaded(ExtPlug) {
+      if (!appViewExists()) {
+        return setTimeout(function () {
+          _loaded(ExtPlug)
+        }, 20);
+      }
 
       var cbs = window.extp || [];
       var ext = new ExtPlug();
@@ -3269,6 +3383,18 @@ return context;
   }
   else {
     setTimeout(_initExtPlug, 20);
+  }
+
+  function appViewExists() {
+    try {
+      // the ApplicationView attaches an event handler on instantiation.
+      var AppView = plugModules.require('plug/views/app/ApplicationView'),
+        evts = plugModules.require('plug/core/Events')._events['show:room'];
+      return evts.some(function (event) { return event.ctx instanceof AppView; });
+    }
+    catch (e) {
+      return false;
+    }
   }
 
 }());
