@@ -17,6 +17,7 @@
 
 //= modules/Autowoot
 //= modules/ChatNotifications
+//= modules/CompactHistory
 //= modules/RoomStyles
 //= modules/MehIcon
 //= modules/RolloverBlurbs
