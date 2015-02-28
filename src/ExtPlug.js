@@ -16,12 +16,12 @@ define('extplug/ExtPlug', function (require, exports, module) {
     lang = require('plug/lang/Lang'),
 
     Settings = require('extplug/models/Settings'),
+    RoomSettings = require('extplug/models/RoomSettings'),
     Module = require('extplug/models/Module'),
     ExtUserView = require('extplug/views/users/ExtUserView'),
     ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView'),
     ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
     Style = require('extplug/Style'),
-    RoomSettings = require('extplug/RoomSettings'),
     fnUtils = require('extplug/util/function'),
 
     $ = require('jquery'),

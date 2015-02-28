@@ -3,8 +3,8 @@
 //= Module
 //= util/function
 //= util/request
-//= RoomSettings
 //= models/Settings
+//= models/RoomSettings
 //= models/Module
 //= views/BaseView
 //= views/users/ExtUserView
@@ -35,7 +35,7 @@
         }, 20);
       }
 
-      var cbs =window.extp || [];
+      var cbs = window.extp || [];
       var ext = new ExtPlug();
       window.extp = ext;
 

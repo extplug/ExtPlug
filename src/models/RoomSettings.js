@@ -1,4 +1,4 @@
-define('extplug/RoomSettings', function (require, exports, module) {
+define('extplug/models/RoomSettings', function (require, exports, module) {
 
   var currentRoom = require('plug/models/currentRoom'),
     request = require('extplug/util/request'),
