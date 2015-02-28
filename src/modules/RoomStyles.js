@@ -97,7 +97,7 @@
               'position': 'absolute',
               'width': '300px',
               'height': '100px',
-              'left': '-64px',
+              'left': '15px',
               'top': '70px',
               'z-index': -1
             }).appendTo(this.$('#dj-booth'));
