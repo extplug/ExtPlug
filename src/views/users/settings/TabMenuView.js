@@ -17,7 +17,10 @@ define('extplug/views/users/settings/TabMenuView', function (require, exports, m
     },
 
     onClickExt: function (e) {
-      if ($(e.target).hasClass('ext-plug')) {
+      var button = $(e.target);
+      if (button.hasClass('ext-plug') && !button.hasClass('selected')) {
+        this.$('button').removeClass('selected');
+        button.addClass('selected');
         this.trigger('select', 'ext-plug');
       }
     }
