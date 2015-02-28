@@ -1,4 +1,4 @@
-define('extplug/settings/DropdownView', function (require, exports, module) {
+define('extplug/views/users/settings/DropdownView', function (require, exports, module) {
 
   var Backbone = require('backbone'),
     $ = require('jquery'),

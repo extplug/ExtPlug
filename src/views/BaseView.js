@@ -1,0 +1,8 @@
+define('extplug/views/BaseView', function (require, exports, module) {
+
+  var Backbone = require('backbone');
+
+  return Backbone.View.extend({
+  });
+
+});

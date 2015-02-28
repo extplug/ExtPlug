@@ -3,7 +3,6 @@ define('extplug/Module', function (require, exports, module) {
   var jQuery = require('jquery'),
     _ = require('underscore'),
     Backbone = require('backbone'),
-    SettingsGroup = require('extplug/settings/Group'),
     Settings = require('extplug/models/Settings'),
     Style = require('extplug/Style'),
     fnUtils = require('extplug/util/function');

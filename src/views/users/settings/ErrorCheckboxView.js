@@ -1,4 +1,4 @@
-define('extplug/settings/ErrorCheckboxView', function (require, exports, module) {
+define('extplug/views/users/settings/ErrorCheckboxView', function (require, exports, module) {
 
   var Backbone = require('backbone'),
     $ = require('jquery');

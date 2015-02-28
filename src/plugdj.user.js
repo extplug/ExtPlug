@@ -5,11 +5,14 @@
 //= util/request
 //= RoomSettings
 //= models/Settings
-//= settings/SettingsView
-//= settings/Group
-//= settings/CheckboxView
-//= settings/DropdownView
-//= settings/ErrorCheckboxView
+//= models/Module
+//= views/BaseView
+//= views/users/settings/SettingsView
+//= views/users/settings/TabMenuView
+//= views/users/settings/ControlGroupView
+//= views/users/settings/CheckboxView
+//= views/users/settings/DropdownView
+//= views/users/settings/ErrorCheckboxView
 
 //= modules/Autowoot
 //= modules/ChatNotifications
