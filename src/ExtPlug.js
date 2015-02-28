@@ -7,6 +7,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     ApplicationView = require('plug/views/app/ApplicationView'),
     SettingsTabMenuView = require('plug/views/users/settings/TabMenuView'),
     AppSettingsSectionView = require('plug/views/users/settings/SettingsApplicationView'),
+    UserView = require('plug/views/users/UserView'),
     UserSettingsView = require('plug/views/users/settings/SettingsView'),
     ShowDialogEvent = require('plug/events/ShowDialogEvent'),
     ChatView = require('plug/views/rooms/chat/ChatView'),
@@ -16,6 +17,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
     Settings = require('extplug/models/Settings'),
     Module = require('extplug/models/Module'),
+    ExtUserView = require('extplug/views/users/ExtUserView'),
     ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView'),
     ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
     Style = require('extplug/Style'),
@@ -246,6 +248,12 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
     // add an ExtPlug settings tab to User Settings
     fnUtils.replaceClass(SettingsTabMenuView, ExtSettingsTabMenuView);
+    fnUtils.replaceClass(UserView, ExtUserView);
+    // replace rendered UserView
+    var userView = new UserView();
+    userView.render();
+    this.appView.user.$el.replaceWith(userView.$el);
+    this.appView.user = userView;
 
     // add the ExtPlug settings pane
     function addExtPlugSettingsPane(old, itemName) {
@@ -294,7 +302,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     }
 
     // Replace the event listener too
-    var chatView = this.appView && this.appView.room && this.appView.room.chat;
+    var chatView = this.appView.room.chat;
     if (chatView) {
       Events.off('chat:receive', chatView.onReceived);
     }
@@ -395,6 +403,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
         }
       }, this);
     }
+  };
+
+  ExtPlug.prototype.showSettings = function () {
+    Events.trigger('show:user', 'settings', 'ext-plug');
   };
 
   /**

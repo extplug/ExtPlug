@@ -7,6 +7,7 @@
 //= models/Settings
 //= models/Module
 //= views/BaseView
+//= views/users/ExtUserView
 //= views/users/settings/SettingsView
 //= views/users/settings/TabMenuView
 //= views/users/settings/ControlGroupView
@@ -26,9 +27,14 @@
   if (window.API) {
     //= ../node_modules/plug-modules/plug-modules
     plugModules.register();
-    require([ 'extplug/ExtPlug' ], function (ExtPlug) {
+    require([ 'extplug/ExtPlug' ], function _loaded(ExtPlug) {
+      if (!appViewExists()) {
+        return setTimeout(function () {
+          _loaded(ExtPlug)
+        }, 20);
+      }
 
-      var cbs = window.extp || [];
+      var cbs =window.extp || [];
       var ext = new ExtPlug();
       window.extp = ext;
 
@@ -41,6 +47,18 @@
   }
   else {
     setTimeout(_initExtPlug, 20);
+  }
+
+  function appViewExists() {
+    try {
+      // the ApplicationView attaches an event handler on instantiation.
+      var AppView = plugModules.require('plug/views/app/ApplicationView'),
+        evts = plugModules.require('plug/core/Events')._events['show:room'];
+      return evts.some(function (event) { return event.ctx instanceof AppView; });
+    }
+    catch (e) {
+      return false;
+    }
   }
 
 }());
