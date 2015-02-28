@@ -1,14 +1,13 @@
 define('extplug/ExtPlug', function (require, exports, module) {
 
   var currentMedia = require('plug/models/currentMedia'),
-    currentUser = require('plug/models/currentUser'),
     currentRoom = require('plug/models/currentRoom'),
-    settings = require('plug/settings/settings'),
+    settings = require('plug/store/settings'),
     Events = require('plug/core/Events'),
     ApplicationView = require('plug/views/app/ApplicationView'),
-    SettingsTabMenuView = require('plug/views/user/settings/TabMenuView'),
-    AppSettingsSectionView = require('plug/views/user/settings/SettingsApplicationView'),
-    UserSettingsView = require('plug/views/user/settings/SettingsView'),
+    SettingsTabMenuView = require('plug/views/users/settings/TabMenuView'),
+    AppSettingsSectionView = require('plug/views/users/settings/SettingsApplicationView'),
+    UserSettingsView = require('plug/views/users/settings/SettingsView'),
     ShowDialogEvent = require('plug/events/ShowDialogEvent'),
     ChatView = require('plug/views/rooms/chat/ChatView'),
     plugUtil = require('plug/util/util'),
@@ -16,11 +15,9 @@ define('extplug/ExtPlug', function (require, exports, module) {
     lang = require('plug/lang/Lang'),
 
     Settings = require('extplug/models/Settings'),
-    ExtSettingsSectionView = require('extplug/settings/SettingsView'),
-    SettingsGroup = require('extplug/settings/Group'),
-    SettingsCheckbox = require('extplug/settings/CheckboxView'),
-    SettingsError = require('extplug/settings/ErrorCheckboxView'),
-    SettingsDropdown = require('extplug/settings/DropdownView'),
+    Module = require('extplug/models/Module'),
+    ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView'),
+    ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
     Style = require('extplug/Style'),
     RoomSettings = require('extplug/RoomSettings'),
     fnUtils = require('extplug/util/function'),
@@ -64,16 +61,13 @@ define('extplug/ExtPlug', function (require, exports, module) {
   function ExtPlug() {
     _.extend(this, Backbone.Events);
 
+    var ModulesCollection = Backbone.Collection.extend({ model: Module });
     /**
      * Internal map of registered modules.
      * @type {Object.<string, Module>}
      */
-    this._modules = {};
-    /**
-     * Internal map of module names → whether they are enabled.
-     * @type {Object.<string, boolean>}
-     */
-    this._enabled = {};
+    this._modules = new ModulesCollection();
+
     /**
      * ExtPlug global settings. Includes global plug.dj settings.
      *
@@ -133,13 +127,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
    * @param {string} name Module name.
    */
   ExtPlug.prototype.enable = function (name) {
-    var mod = this._modules[name];
-    if (mod) {
-      if (!this._enabled[name]) {
-        mod.enable();
-      }
-      // TODO set enabled as a property on the module?
-      this._enabled[name] = true;
+    var mod = this._modules.findWhere({ name: name });
+    if (mod && !mod.get('enabled')) {
+      mod.get('module').enable();
+      mod.set('enabled', true);
       this._updateEnabledModules();
     }
   };
@@ -150,10 +141,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
    * @param {string} name Module name.
    */
   ExtPlug.prototype.disable = function (name) {
-    if (this._enabled[name]) {
-      var mod = this._modules[name];
-      mod.disable();
-      this._enabled[name] = false;
+    var mod = this._modules.findWhere({ name: name });
+    if (mod && mod.get('enabled')) {
+      mod.get('module').disable();
+      mod.set('enabled', false);
       this._updateEnabledModules();
     }
   };
@@ -166,7 +157,8 @@ define('extplug/ExtPlug', function (require, exports, module) {
    * @return {boolean} True if the Module is enabled, false otherwise.
    */
   ExtPlug.prototype.enabled = function (name) {
-    return this._enabled[name] || false;
+    var mod = this._modules.findWhere({ name: name });
+    return mod ? mod.get('enabled') : false;
   };
 
   /**
@@ -179,10 +171,11 @@ define('extplug/ExtPlug', function (require, exports, module) {
   ExtPlug.prototype.register = function (id, Mod) {
     if (Mod._name) {
       try {
-        this._modules[Mod._name] = new Mod(id, this);
+        var mod = new Mod(id, this);
+        this._modules.push(new Module({ module: mod, name: Mod._name }));
       }
       catch (e) {
-        this._modules[Mod._name] = e;
+        this._modules.push(new Module({ module: e, name: Mod._name }));
       }
     }
     return this;
@@ -252,144 +245,20 @@ define('extplug/ExtPlug', function (require, exports, module) {
     this.snoozeButton.on('click.extplug', this.onSnooze);
 
     // add an ExtPlug settings tab to User Settings
-    var settingsTab = $('<button />').addClass('ext-plug').text('ExtPlug');
-    function addExtPlugSettingsTab(oldRender) {
-      var ret = oldRender();
-      var butt = settingsTab.clone();
-      this.$el.append(butt);
-      butt.on('click', this.onClickExt.bind(this));
+    fnUtils.replaceClass(SettingsTabMenuView, ExtSettingsTabMenuView);
 
-      var buttons = this.$('button');
-      buttons.css('width', 100 / buttons.length + '%');
-      return ret;
-    }
-    fnUtils.replaceMethod(SettingsTabMenuView.prototype, 'render', addExtPlugSettingsTab);
-
-    // Using a separate method, because the other tab buttons don't need to check for ext-plug anyway.
-    // TODO this can probably just not call onClick() entirely
-    SettingsTabMenuView.prototype.onClickExt = function (e) {
-      this.onClick(e);
-      if ($(e.target).hasClass('ext-plug')) {
-        this.trigger('select', 'ext-plug');
-      }
-    };
-
-    /**
-     * Wires a control to a setting model, updating the model when the control changes.
-     *
-     * @param {Backbone.View} el Control view.
-     * @param {Backbone.Model} settings Model to reflect the settings to.
-     * @param {string} target Relevant property on the model.
-     */
-    function wireSettingToModel(el, settings, target) {
-      el.on('change', function (value) {
-        settings.set(target, value);
-      });
-    }
     // add the ExtPlug settings pane
     function addExtPlugSettingsPane(old, itemName) {
       if (itemName === 'ext-plug') {
-        var view = new ExtSettingsSectionView();
-
-        var modulesGroup = new SettingsGroup();
-        // generate module list
-        view.addGroup('Modules', modulesGroup, 1000);
-        _.each(ext._modules, function (module, name) {
-          if (module instanceof Error) {
-            // this module errored out during its initialization
-            modulesGroup.add(new SettingsError({ label: name }));
-          }
-          else {
-            var box = new SettingsCheckbox({ label: name, enabled: ext.enabled(name) });
-            modulesGroup.add(box);
-            box.on('change', function (value) {
-              // add / remove module settings group
-              if (value) {
-                ext.enable(name);
-                var moduleSettings = getSettingsGroup(module);
-                if (moduleSettings) {
-                  view.addGroup(name, moduleSettings);
-                  view.render();
-                }
-              }
-              else {
-                ext.disable(name);
-                if (view.hasGroup(name)) {
-                  view.removeGroup(name);
-                  view.render();
-                }
-              }
-            });
-            // add module settings group for stuff that was already enabled
-            if (ext.enabled(name)) {
-              var moduleSettings = getSettingsGroup(module);
-              if (moduleSettings) {
-                view.addGroup(name, moduleSettings);
-              }
-            }
-          }
-        });
-
-        // global ExtPlug settings
-        var extGroup = new SettingsGroup();
-        var useCorsProxy = new SettingsCheckbox({ label: 'Use CORS proxy', enabled: true });
-        extGroup.add(useCorsProxy);
-        wireSettingToModel(useCorsProxy, ext.settings, 'corsProxy');
-        view.addGroup('ExtPlug', extGroup, 10);
-
-        return view;
+        return new ExtSettingsSectionView({ modules: ext._modules, ext: ext });
       }
       return old(itemName);
     }
     fnUtils.replaceMethod(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
 
     this.on('deinit', function () {
-      delete SettingsTabMenuView.prototype.onClickExt;
       fnUtils.unreplaceMethod(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
-      fnUtils.unreplaceMethod(SettingsTabMenuView.prototype, 'render', addExtPlugSettingsTab);
     });
-
-    /**
-     * Returns a SettingsGroup "view" for a given module's settings.
-     * Events all wired up, ready to go!
-     *
-     * @param {Module} module The module to base this view on.
-     * @return {SettingsGroup} Group of proper setting view instances.
-     */
-    function getSettingsGroup(module) {
-      if (!module._settings) {
-        return;
-      }
-      var group = new SettingsGroup();
-      var meta = module._settings;
-      var settings = module.settings;
-
-      _.each(meta, function (setting, name) {
-        var control;
-        switch (setting.type) {
-          case 'boolean':
-            control = new SettingsCheckbox({
-              label: setting.label,
-              enabled: settings.get(name)
-            });
-            break;
-          case 'dropdown':
-            control = new SettingsDropdown({
-              label: setting.label,
-              options: setting.options,
-              selected: setting.default
-            });
-            break;
-          default:
-            control = new SettingsError({ label: 'Unknown type for "' + name + '"' });
-            break;
-        }
-        wireSettingToModel(control, settings, name);
-        group.add(control);
-      });
-
-      return group;
-    }
 
     // add custom chat message type
     // still a bit broked since the new chat system
@@ -425,7 +294,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     }
 
     // Replace the event listener too
-    var chatView = this.appView.room && this.appView.room.chat;
+    var chatView = this.appView && this.appView.room && this.appView.room.chat;
     if (chatView) {
       Events.off('chat:receive', chatView.onReceived);
     }
@@ -499,10 +368,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
    */
   ExtPlug.prototype._updateEnabledModules = function () {
     var modules = {};
-    _.each(this._modules, function (m, name) {
-      modules[name] = {
-        enabled: this._enabled[name] || false,
-        settings: m.settings
+    this._modules.forEach(function (m) {
+      modules[m.get('name')] = {
+        enabled: m.get('enabled'),
+        settings: m.get('module').settings
       };
     }, this);
     localStorage.setItem('extPlugModules', JSON.stringify(modules));
@@ -514,13 +383,16 @@ define('extplug/ExtPlug', function (require, exports, module) {
    */
   ExtPlug.prototype._loadEnabledModules = function () {
     var enabled = localStorage.getItem('extPlugModules');
-    if (enabled && false) {
+    if (enabled) {
       var modules = JSON.parse(enabled);
       _.each(modules, function (m, name) {
         if (m.enabled) {
           this.enable(name);
         }
-        this._modules[name].settings.set(m.settings);
+        var mod = this._modules.findWhere({ name: name });
+        if (mod) {
+          mod.get('module').settings.set(m.settings);
+        }
       }, this);
     }
   };
@@ -732,7 +604,6 @@ define('extplug/ExtPlug', function (require, exports, module) {
   var jQuery = require('jquery'),
     _ = require('underscore'),
     Backbone = require('backbone'),
-    SettingsGroup = require('extplug/settings/Group'),
     Settings = require('extplug/models/Settings'),
     Style = require('extplug/Style'),
     fnUtils = require('extplug/util/function');
@@ -876,6 +747,48 @@ define('extplug/ExtPlug', function (require, exports, module) {
     }
   };
 
+  /**
+   * Replaces a Backbone class implementation by a different class implementation.
+   * This is particularly useful for overriding plug.dj internal class behaviour. Extend
+   * the class, and then replace the original implementation by your new implementation.
+   *
+   * This should not be used by modules for now, as it only supports one override at a time!
+   *
+   * @param {function()} oldClass The class to replace.
+   * @param {function()} newClass Replacement.
+   *
+   * @return {function()} The patched class.
+   */
+  exports.replaceClass = function (oldClass, newClass) {
+    Object.defineProperty(oldClass, '$replaced', {
+      writable: true,
+      enumerable: false,
+      configurable: false,
+      value: { extend: oldClass.extend, proto: oldClass.prototype }
+    });
+    oldClass.extend = newClass.extend;
+    oldClass.prototype = newClass.prototype;
+    return oldClass;
+  };
+
+  /**
+   * Restore a class to its original implementation.
+   */
+  exports.restoreClass = function (oldClass) {
+    if (oldClass.$replaced) {
+      oldClass.extend = oldClass.$replaced.extend;
+      oldClass.prototype = oldClass.$replaced.prototype;
+      delete oldClass.$replaced;
+    }
+    return oldClass;
+  };
+
+  /**
+   * Concisely binds a method to an object.
+   *
+   * @param {Object} obj Base object.
+   * @param {string} key Method name.
+   */
   exports.bound = function (obj, key) {
     obj[key] = obj[key].bind(obj);
   };
@@ -1007,28 +920,186 @@ define('extplug/ExtPlug', function (require, exports, module) {
   module.exports = Settings;
 
 });
-;define('extplug/settings/SettingsView', function (require, exports, module) {
-  var Backbone = require('backbone'),
+;define('extplug/models/Module', function (require, exports, module) {
+
+  var Backbone = require('backbone');
+
+  return Backbone.Model.extend({
+
+    defaults: {
+      enabled: false,
+      name: '',
+      module: null
+    },
+
+    enable: function () {
+      if (!this.get('enabled')) {
+        this.set('enabled', true);
+        this.get('module').enable();
+      }
+    },
+
+    disable: function () {
+      if (this.get('enabled')) {
+        this.set('enabled', false);
+        this.get('module').disable();
+      }
+    }
+
+  });
+
+});;define('extplug/views/BaseView', function (require, exports, module) {
+
+  var Backbone = require('backbone');
+
+  return Backbone.View.extend({
+  });
+
+});;define('extplug/views/users/settings/SettingsView', function (require, exports, module) {
+  var BaseView = require('extplug/views/BaseView'),
+    ControlGroupView = require('extplug/views/users/settings/ControlGroupView'),
+    ErrorCheckboxView = require('extplug/views/users/settings/ErrorCheckboxView'),
+    CheckboxView = require('extplug/views/users/settings/CheckboxView'),
+    DropdownView = require('extplug/views/users/settings/DropdownView'),
+    _ = require('underscore'),
     $ = require('jquery');
 
-  var SettingsView = Backbone.View.extend({
+  /**
+   * Wires a control to a setting model, updating the model when the control changes.
+   *
+   * @param {Backbone.View} el Control view.
+   * @param {Backbone.Model} settings Model to reflect the settings to.
+   * @param {string} target Relevant property on the model.
+   */
+  function wireSettingToModel(el, settings, target) {
+    el.on('change', function (value) {
+      settings.set(target, value);
+    });
+  }
+
+  var SettingsView = BaseView.extend({
     className: 'ext-plug section',
 
-    initialize: function () {
+    initialize: function (o) {
+      this.modules = o.modules;
+      this.modules.on('reset add remove', this.refresh.bind(this));
+      this.ext = o.ext;
+
+      this.refresh();
+    },
+
+    refresh: function () {
       this.groups = [];
+      this.addGroup(this.createModulesGroup(), 1000);
+      this.addGroup(this.createExtPlugGroup(), 999);
+      this.modules.forEach(function (mod) {
+        // add module settings group for stuff that was already enabled
+        if (mod.get('enabled')) {
+          var moduleSettings = this.createSettingsGroup(mod);
+          if (moduleSettings) {
+            this.addGroup(moduleSettings);
+          }
+        }
+      }, this)
     },
 
     render: function () {
-      var container = $('<div>').addClass('container');
-      this.$el.empty().append(container);
+      this.$container = $('<div>').addClass('container');
+      this.$el.empty().append(this.$container);
 
       this.sort();
       this.groups.forEach(function (group) {
-        container.append($('<div>').addClass('header').append($('<span>').text(group.name)));
-        container.append(group.items.render());
+        this.$container.append(group.items.render().$el);
       }, this);
 
       return this;
+    },
+
+    createModulesGroup: function () {
+      var view = this;
+      var modulesGroup = new ControlGroupView({ name: 'Modules' });
+      // generate module list
+      this.modules.forEach(function (mod) {
+        var module = mod.get('module'),
+          name = mod.get('name');
+        if (module instanceof Error) {
+          // this module errored out during its initialization
+          modulesGroup.add(new ErrorCheckboxView({ label: name }));
+        }
+        else {
+          var box = new CheckboxView({
+            label: name,
+            description: module.description || false,
+            enabled: mod.get('enabled')
+          });
+          modulesGroup.add(box);
+          box.on('change', function (value) {
+            // add / remove module settings group
+            if (value) {
+              mod.enable();
+              var moduleSettings = view.createSettingsGroup(mod);
+              if (moduleSettings) {
+                view.addGroup(moduleSettings);
+                view.$container.append(moduleSettings.render().$el);
+              }
+            }
+            else {
+              mod.disable();
+              var moduleSettings = view.getGroup(name);
+              if (moduleSettings) {
+                view.removeGroup(name);
+                moduleSettings.remove();
+              }
+            }
+          });
+        }
+      });
+
+      return modulesGroup;
+    },
+    createExtPlugGroup: function () {
+      // global ExtPlug settings
+      var extGroup = new ControlGroupView({ name: 'ExtPlug' });
+      var useCorsProxy = new CheckboxView({ label: 'Use CORS proxy', enabled: true });
+      extGroup.add(useCorsProxy);
+      wireSettingToModel(useCorsProxy, this.ext.settings, 'corsProxy');
+      return extGroup;
+    },
+
+    createSettingsGroup: function (mod) {
+      var module = mod.get('module');
+      if (!module._settings) {
+        return;
+      }
+      var group = new ControlGroupView({ name: mod.get('name') });
+      var meta = module._settings;
+      var settings = module.settings;
+
+      _.each(meta, function (setting, name) {
+        var control;
+        switch (setting.type) {
+          case 'boolean':
+            control = new CheckboxView({
+              label: setting.label,
+              enabled: settings.get(name)
+            });
+            break;
+          case 'dropdown':
+            control = new DropdownView({
+              label: setting.label,
+              options: setting.options,
+              selected: setting.default
+            });
+            break;
+          default:
+            control = new ErrorCheckboxView({ label: 'Unknown type for "' + name + '"' });
+            break;
+        }
+        wireSettingToModel(control, settings, name);
+        group.add(control);
+      });
+
+      return group;
     },
 
     sort: function () {
@@ -1044,9 +1115,8 @@ define('extplug/ExtPlug', function (require, exports, module) {
     onResize: function () {
     },
 
-    addGroup: function (name, items, priority) {
+    addGroup: function (items, priority) {
       this.groups.push({
-        name: name,
         items: items,
         priority: typeof priority === 'number' ? priority : 0
       });
@@ -1054,7 +1124,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
     getGroup: function (name) {
       for (var i = 0, l = this.groups.length; i < l; i++) {
-        if (this.groups[i].name === name) {
+        if (this.groups[i].items.name === name) {
           return this.groups[i].items;
         }
       }
@@ -1062,13 +1132,13 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
     hasGroup: function (name) {
       return this.groups.some(function (group) {
-        return group.name === name;
+        return group.items.name === name;
       });
     },
 
     removeGroup: function (name) {
       for (var i = 0, l = this.groups.length; i < l; i++) {
-        if (this.groups[i].name === name) {
+        if (this.groups[i].items.name === name) {
           return this.groups.splice(i, 1);
         }
       }
@@ -1079,47 +1149,75 @@ define('extplug/ExtPlug', function (require, exports, module) {
   module.exports = SettingsView;
 
 });
-;define('extplug/settings/Group', function (require, exports, module) {
+;define('extplug/views/users/settings/TabMenuView', function (require, exports, module) {
+
+  var SettingsTabMenuView = require('plug/views/users/settings/TabMenuView'),
+    $ = require('jquery');
+
+  return SettingsTabMenuView.extend({
+
+    render: function () {
+      this._super();
+      var extPlugTab = $('<button />').addClass('ext-plug').text('ExtPlug');
+      this.$el.append(extPlugTab);
+      extPlugTab.on('click', this.onClickExt.bind(this));
+
+      var buttons = this.$('button');
+      buttons.css('width', 100 / buttons.length + '%');
+      return this;
+    },
+
+    onClickExt: function (e) {
+      if ($(e.target).hasClass('ext-plug')) {
+        this.trigger('select', 'ext-plug');
+      }
+    }
+
+  });
+
+});define('extplug/views/users/settings/ControlGroupView', function (require, exports, module) {
 
   var $ = require('jquery'),
-    _ = require('underscore');
+    BaseView = require('extplug/views/BaseView');
 
-  /**
-   * Creates an array with some setting group methods.
-   * @param {?Array} group An array of setting items.
-   */
-  var Group = function (group) {
-    if (!_.isArray(group)) {
-      group = [];
-    }
-    /**
-     * Renders the setting group.
-     * @return {DocumentFragment} A DocumentFragment containing the setting group DOM.
-     */
-    group.render = function () {
-      var el = document.createDocumentFragment();
-      var switchAt = Math.ceil(this.length / 2 - 1),
-        current = $('<div />').addClass('left').appendTo(el);
-      this.forEach(function (item, i) {
+  var ControlGroupView = BaseView.extend({
+    className: 'extplug group',
+
+    initialize: function (o) {
+      this.name = o.name;
+      this.controls = [];
+    },
+
+    render: function () {
+      this.$el.append($('<div>').addClass('header').append($('<span>').text(this.name)));
+
+      var $el = this.$el,
+        switchAt = Math.ceil(this.controls.length / 2 - 1),
+        current = $('<div />').addClass('left').appendTo($el);
+      this.controls.forEach(function (item, i) {
         current.append(item.$el);
         item.render();
         if (i === switchAt) {
-          current = $('<div />').addClass('right').appendTo(el);
+          current = $('<div />').addClass('right').appendTo($el);
         }
       });
-      return el;
-    };
-    group.add = group.push;
-    return group;
-  };
+      return this;
+    },
 
-  module.exports = Group;
+    add: function (control) {
+      this.controls.push(control);
+      return this;
+    }
+  });
+
+  module.exports = ControlGroupView;
 
 });
-;define('extplug/settings/CheckboxView', function (require, exports, module) {
+;define('extplug/views/users/settings/CheckboxView', function (require, exports, module) {
 
   var Backbone = require('backbone'),
-    $ = require('jquery');
+    $ = require('jquery'),
+    Events = require('plug/core/Events');
 
   /**
    * A checkbox setting item.
@@ -1128,6 +1226,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     className: 'item',
     initialize: function (o) {
       this.label = o.label;
+      this.description = o.description;
       this.enabled = o.enabled || false;
       this.onChange = this.onChange.bind(this);
     },
@@ -1135,6 +1234,14 @@ define('extplug/ExtPlug', function (require, exports, module) {
       this.$el
         .append('<i class="icon icon-check-blue" />')
         .append($('<span />').text(this.label));
+
+      if (this.description) {
+        this.$el
+          .on('mouseenter', function () {
+            Events.trigger('tooltip:show', this.description, this.$el);
+          }.bind(this))
+          .on('mouseleave', function () { Events.trigger('tooltip:hide'); });
+      }
 
       if (this.enabled) {
         this.$el.addClass('selected');
@@ -1168,7 +1275,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
   module.exports = CheckboxView;
 
 });
-;define('extplug/settings/DropdownView', function (require, exports, module) {
+;define('extplug/views/users/settings/DropdownView', function (require, exports, module) {
 
   var Backbone = require('backbone'),
     $ = require('jquery'),
@@ -1258,7 +1365,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
   module.exports = DropdownView;
 
 });
-;define('extplug/settings/ErrorCheckboxView', function (require, exports, module) {
+;define('extplug/views/users/settings/ErrorCheckboxView', function (require, exports, module) {
 
   var Backbone = require('backbone'),
     $ = require('jquery');
@@ -1544,7 +1651,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
   ext.define('MehIcon', function (require, exports, module) {
 
     var Module = require('extplug/Module'),
-      UserRowView = require('plug/views/room/users/RoomUserRowView'),
+      UserRowView = require('plug/views/rooms/users/RoomUserRowView'),
       $ = require('jquery');
 
     var MehIcon = Module({
@@ -1591,8 +1698,8 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
     var Module = require('extplug/Module'),
       fnUtils = require('extplug/util/function'),
-      rolloverView = require('plug/views/user/userRolloverView'),
-      UserFindAction = require('plug/actions/user/UserFindAction'),
+      rolloverView = require('plug/views/users/userRolloverView'),
+      UserFindAction = require('plug/actions/users/UserFindAction'),
       $ = require('jquery');
 
     var emoji = $('<span />').addClass('emoji-glow')
@@ -1736,57 +1843,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
 ;(function _initExtPlug() {
 
   if (window.API) {
-    /**
- * Adds a module definition.
- *
- * @param {string} name Module name.
- * @param {*} module Module definition. (Not its factory!)
- */
-var setDefine = function (name, module) {
-  require.s.contexts._.defined[name] = module;
-};
-
-/**
- * Find a plug.dj module that matches a filter function.
- *
- * @param {function()} fn Filter function `fn(module)`.
- * @return {?Object} Module, or undefined if no matching module was found.
- */
-var plugRequire = function (fn) {
-  var defines = require.s.contexts._.defined,
-    i, module;
-  for (i in defines) if (defines.hasOwnProperty(i)) {
-    module = defines[i];
-    if (module && fn(module)) {
-      module.originalModuleName = i;
-      return module;
-    }
-  }
-};
-
-/**
- * Creates a function that matches an Event module.
- *
- * @param {string} name Event name.
- * @return {function()} Matcher function.
- */
-var eventModule = function (name) {
-  return function (module) { return module._name === name; };
-};
-
-/**
- * Creates a function that matches a REST Command module.
- *
- * @param {string} method REST method to match.
- * @param {string} url REST URL to match.
- * @return {function()} Matcher function.
- */
-var commandModule = function (method, url) {
-  return function (m) {
-    return m.prototype && functionContains(m.prototype.execute, '.execute("' + method.toUpperCase()) &&
-      functionContains(m.prototype.execute, url);
-  };
-};
+    window.plugModules = (function () {
 
 /**
  * Tests if a module is a collection of a certain type of Model.
@@ -1796,7 +1853,7 @@ var commandModule = function (method, url) {
  * @return {boolean} True if the module is a collection of the given models, false otherwise.
  */
 var isCollectionOf = function (m, Model) {
-  return m instanceof Backbone.Collection && m.model === Model;
+  return Model && m instanceof Backbone.Collection && m.model === Model;
 };
 
 /**
@@ -1832,18 +1889,6 @@ var functionContains = function (fn, match) {
 };
 
 /**
- * Creates a function that matches a View class with the given element ID.
- *
- * @param {string} id ID.
- * @return {function()} Matcher function.
- */
-var viewModuleById = function (id) {
-  return function (m) {
-    return isView(m) && m.prototype.id === id;
-  };
-};
-
-/**
  * Checks if a given module is a View class.
  *
  * @param {Object} m Module.
@@ -1864,6 +1909,18 @@ var hasDefaults = function (m) {
 };
 
 /**
+ * Checks if a given module has the given attributes (Backbone models).
+ *
+ * @param {Object} m Module.
+ * @return True if the module has the given attributes, false otherwise.
+ */
+var hasAttributes = function (m, attributes) {
+  return m instanceof Backbone.Model && attributes.every(function (attr) {
+    return attr in m.attributes;
+  })
+};
+
+/**
  * Checks if a View template contains an element matching a given CSS selector.
  *
  * @param {function()} View View class.
@@ -1872,11 +1929,16 @@ var hasDefaults = function (m) {
  */
 var viewHasElement = function (View, sel) {
   var stubEl = $('<div>');
-  var x = new View({ el: stubEl });
-  x.render();
-  var has = x.$(sel).length > 0;
-  x.remove();
-  return has;
+  try {
+    var x = new View({ el: stubEl });
+    x.render();
+    var has = x.$(sel).length > 0;
+    x.remove();
+    return has;
+  }
+  catch (e) {
+    return false;
+  }
 };
 
 /**
@@ -1889,8 +1951,249 @@ var todo = function () {
 };
 
 /**
- * Map improvised module name → module filter function. (that hopefully matches only the right module!)
- * This is quite brittle because Plug.DJ can change their internals at any given moment :'
+ * The Context keeps track of the long names, and provides some convenience methods
+ * for working with renamed modules.
+ */
+function Context() {
+  this._nameMapping = {};
+  this._notFound = [];
+}
+Context.prototype.resolveName = function (path) {
+  return this._nameMapping[path] ? this.resolveName(this._nameMapping[path]) : path;
+};
+Context.prototype.require = function (path) {
+  var defined = require.s.contexts._.defined;
+  return defined[path] || (this._nameMapping[path] && this.require(this._nameMapping[path])) || undefined;
+};
+Context.prototype.isDefined = function (path) {
+  return typeof this.require(path) !== 'undefined';
+};
+Context.prototype.define = function (newPath, oldPath) {
+  this._nameMapping[newPath] = oldPath;
+  return this;
+};
+Context.prototype.setNotFound = function (path) {
+  this._notFound.push(path);
+};
+Context.prototype.getUnknownModules = function () {
+  var knownModules = _.values(this._nameMapping);
+  var allModules = _.keys(require.s.contexts._.defined).filter(function (moduleName) {
+    return moduleName.substr(0, 5) !== 'plug/' &&
+      moduleName.substr(0, 4) !== 'hbs!' &&
+      this.require(moduleName) !== undefined;
+  }, this);
+
+  return _.difference(allModules, knownModules);
+};
+Context.prototype.isInSameNamespace = function (name, otherModuleName) {
+  var otherName = this.resolveName(otherModuleName);
+  return otherName && otherName.substr(0, otherName.lastIndexOf('/')) === name.substr(0, name.lastIndexOf('/'));
+}
+// Add the new names to the global module registry
+Context.prototype.register = function () {
+  for (var newName in this._nameMapping) if (this._nameMapping.hasOwnProperty(newName)) {
+    require.s.contexts._.defined[newName] = this.require(newName);
+  }
+};
+
+/**
+ * A Detective finds a specific module definition.
+ */
+function Detective() {
+  this._needs = [];
+}
+// Define dependencies. This ensures that this Detective will only run
+// once the given modules have been found.
+Detective.prototype.needs = function () {
+  this._needs = this._needs.concat(Array.prototype.slice.call(arguments));
+  return this;
+};
+Detective.prototype.isReady = function (context) {
+  return this._needs.every(function (name) {
+    return context.isDefined(name);
+  });
+};
+Detective.prototype.resolve = function () {
+  throw new Error('Engineer "resolve" method not implemented');
+};
+Detective.prototype.run = function (context, newName) {
+  var oldName = this.resolve(context);
+  if (oldName) {
+    context.define(newName, oldName);
+    return true;
+  }
+  context.setNotFound(newName);
+  return false;
+};
+
+/**
+ * A Matcher finds a module definition by checking every available
+ * module definition until it matches.
+ */
+function Matcher() {
+  Detective.call(this);
+}
+Matcher.prototype = Object.create(Detective.prototype);
+Matcher.prototype.match = function (context, module, name) {
+  throw new Error('Matcher "match" method not implemented');
+};
+Matcher.prototype.resolve = function (context) {
+  var defines = require.s.contexts._.defined;
+  var fn = this.fn;
+  for (var name in defines) if (defines.hasOwnProperty(name)) {
+    if (defines[name] && this.match(context, defines[name], name)) {
+      return name;
+    }
+  }
+};
+Matcher.prototype.and = function (matcher) {
+  if (!(matcher instanceof Matcher)) {
+    matcher = new SimpleMatcher(matcher);
+  }
+  return new AndMatcher(this, matcher);
+};
+
+/**
+ * A Fetcher finds a module definition by itself. Usually it will use other, known, modules
+ * and "navigate" to a place that references target module.
+ */
+function Fetcher() {
+  Detective.call(this);
+}
+Fetcher.prototype = Object.create(Detective.prototype);
+Fetcher.prototype.resolve = function (context) {
+  var module = this.fetch(context);
+  if (module) {
+    // find module name
+    var defines = require.s.contexts._.defined,
+      name;
+    for (name in defines) if (defines.hasOwnProperty(name)) {
+      if (defines[name] && defines[name] === module) {
+        return name;
+      }
+    }
+  }
+}
+
+/**
+ * A SimpleMatcher finds a module definition that matches a function.
+ */
+function SimpleMatcher(fn) {
+  Matcher.call(this);
+
+  this._fn = fn;
+}
+SimpleMatcher.prototype = Object.create(Matcher.prototype);
+SimpleMatcher.prototype.match = function (context, module, name) {
+  if (!this._fn) {
+    throw new Error('No function passed to SimpleMatcher.');
+  }
+  return this._fn.call(context, module, name);
+};
+
+/**
+ * A StepwiseMatcher finds a module definition that matches a function.
+ * Some setup and cleanup can be done around the matcher, for example
+ * to set up some mutations that you can use to detect the right definition.
+ */
+function StepwiseMatcher(steps) {
+  SimpleMatcher.call(this, steps.check);
+
+  this._setup = steps.setup;
+  this._cleanup = steps.cleanup;
+}
+StepwiseMatcher.prototype = Object.create(SimpleMatcher.prototype);
+StepwiseMatcher.prototype.resolve = function (context) {
+  // step 1: setup
+  this._setup.call(context);
+  // step 2: run checks
+  var name = SimpleMatcher.prototype.resolve.call(this, context);
+  // step 3: cleanup
+  this._cleanup.call(context, context.require(name), name);
+  return name;
+};
+
+/**
+ * An AndMatcher finds a module definition that matches two other Matchers.
+ */
+function AndMatcher(a, b) {
+  Matcher.call(this);
+
+  if (a._needs) this.needs.apply(this, a._needs);
+  if (b._needs) this.needs.apply(this, b._needs);
+
+  this.a = a;
+  this.b = b;
+}
+AndMatcher.prototype = Object.create(Matcher.prototype);
+AndMatcher.prototype.match = function (context, module, name) {
+  return this.a.match(context, module, name) && this.b.match(context, module, name);
+};
+
+/**
+ * An EventMatcher finds a module definition for a specific kind of Event.
+ */
+function EventMatcher(name) {
+  Matcher.call(this);
+
+  this._name = name;
+}
+EventMatcher.prototype = Object.create(Matcher.prototype);
+EventMatcher.prototype.match = function (context, module, name) {
+  return module._name === this._name;
+};
+
+/**
+ * An ActionMatcher finds a module definition that defines a certain plug.dj Action.
+ */
+function ActionMatcher(method, url) {
+  Matcher.call(this);
+
+  this._method = method.toUpperCase();
+  this._url = url;
+}
+ActionMatcher.prototype = Object.create(Matcher.prototype);
+ActionMatcher.prototype.match = function (context, module, name) {
+  return module.prototype &&
+    functionContains(module.prototype.execute, '.execute("' + this._method) &&
+    functionContains(module.prototype.execute, this._url);
+};
+
+/**
+ * A SimpleFetcher allows a given function to find a module definition.
+ */
+function SimpleFetcher(fn) {
+  Detective.call(this);
+
+  this._fetch = fn;
+}
+SimpleFetcher.prototype = Object.create(Fetcher.prototype);
+SimpleFetcher.prototype.fetch = function (context) {
+  return this._fetch.call(context);
+};
+
+/**
+ * A HandlerFetcher finds a module definition of a plug.dj Event Handler that handles a specific event.
+ */
+function HandlerFetcher(eventName) {
+  Detective.call(this);
+
+  this._eventName = eventName;
+  this.needs('plug/core/EventManager');
+}
+HandlerFetcher.prototype = Object.create(Fetcher.prototype);
+HandlerFetcher.prototype.fetch = function (context) {
+  var events = context.require('plug/core/EventManager').eventTypeMap;
+  if (!events) return false;
+  var eventTypes = events[this._eventName];
+  // Luckily for us, none of the events have multiple handlers at the moment!
+  return eventTypes && eventTypes[0];
+};
+
+/**
+ * Map improvised module name → module matcher. (that hopefully matches only the right module!)
+ * This is quite brittle because Plug.DJ can change their internals at any given moment, but
+ * it sort of works!
  */
 var plugModules = {
 
@@ -1902,72 +2205,113 @@ var plugModules = {
       _.isFunction(m.next) && _.isFunction(m.complete);
   },
 
-  'plug/actions/auth/AuthResetAction': commandModule('POST', 'auth/reset/me'),
-  'plug/actions/auth/AuthTokenAction': commandModule('GET', 'auth/token'),
-  'plug/actions/auth/FacebookAuthAction': commandModule('POST', 'auth/facebook'),
-  'plug/actions/auth/KillSessionAction': commandModule('DELETE', 'auth/session'),
-  'plug/actions/bans/BanAction': commandModule('POST', 'bans/add'),
-  'plug/actions/bans/ListBansAction': commandModule('GET', 'bans'),
-  'plug/actions/bans/UnbanAction': commandModule('DELETE', 'bans/'),
-  'plug/actions/booth/JoinWaitlistAction': commandModule('POST', 'booth'),
-  'plug/actions/booth/LeaveWaitlistAction': commandModule('DELETE', 'booth'),
-  'plug/actions/booth/ModerateAddDJAction': commandModule('POST', 'booth/add'),
-  'plug/actions/booth/ModerateForceSkipAction': commandModule('POST', 'booth/skip'),
-  'plug/actions/booth/ModerateRemoveDJAction': commandModule('DELETE', 'booth/remove/'),
-  'plug/actions/booth/SkipTurnAction': commandModule('POST', 'booth/skip/me'),
-  'plug/actions/booth/BoothLockAction': commandModule('PUT', 'booth/lock'),
-  'plug/actions/booth/BoothMoveAction': commandModule('POST', 'booth/move'),
-  'plug/actions/booth/BoothSetCycleAction': commandModule('PUT', 'booth/cycle'),
-  'plug/actions/friends/BefriendAction': commandModule('POST', 'friends'),
-  'plug/actions/friends/UnfriendAction': commandModule('DELETE', 'friends/'),
-  'plug/actions/ignores/IgnoreAction': commandModule('POST', 'ignores'),
-  'plug/actions/ignores/UnignoreAction': commandModule('DELETE', 'ignores/'),
-  'plug/actions/ignores/IgnoresListAction': commandModule('GET', 'ignores'),
-  'plug/actions/media/ListMediaAction': commandModule('GET', 'playlists/'),
-  'plug/actions/media/MediaDeleteAction': commandModule('POST', 'playlists/"+this.id+"/media/delete'),
-  'plug/actions/media/MediaGrabAction': commandModule('POST', 'grabs'),
-  'plug/actions/media/MediaInsertAction': commandModule('POST', 'playlists/"+this.id+"/media/insert'),
-  'plug/actions/media/MediaMoveAction': commandModule('PUT', 'playlists/"+this.id+"/media/move'),
-  'plug/actions/media/MediaUpdateAction': commandModule('PUT', 'playlists/"+this.id+"/media/update'),
-  'plug/actions/media/SearchPlaylistsAction': commandModule('GET', 'playlists/media?q='),
-  'plug/actions/mutes/MuteAction': commandModule('POST', 'mutes'),
-  'plug/actions/mutes/UnmuteAction': commandModule('DELETE', 'mutes/'),
-  'plug/actions/mutes/MutesListAction': commandModule('GET', 'mutes'),
-  'plug/actions/news/NewsListAction': commandModule('GET', 'news'),
-  'plug/actions/notifications/NotificationReadAction': commandModule('DELETE', 'notifications/'),
-  'plug/actions/playlists/ListPlaylistsAction': commandModule('GET', 'playlists'),
-  'plug/actions/playlists/PlaylistActivateAction': commandModule('PUT', 'playlists/"+this.data+"/activate'),
-  'plug/actions/playlists/PlaylistCreateAction': commandModule('POST', 'playlists'),
-  'plug/actions/playlists/PlaylistDeleteAction': commandModule('DELETE', 'playlists/'),
-  'plug/actions/playlists/PlaylistRenameAction': commandModule('PUT', 'playlists/"+this.id+"/rename'),
-  'plug/actions/playlists/PlaylistShuffleAction': commandModule('PUT', 'playlists/"+this.data+"/shuffle'),
-  'plug/actions/profile/SetBlurbAction': commandModule('PUT', 'profile/blurb'),
-  'plug/actions/rooms/ListFavoritesAction': commandModule('GET', 'rooms/favorites'),
-  'plug/actions/rooms/ListMyRoomsAction': commandModule('GET', 'rooms/me'),
-  'plug/actions/rooms/ListRoomsAction': commandModule('GET', 'rooms'),
-  'plug/actions/rooms/ModerateDeleteChatAction': commandModule('DELETE', 'chat/"+this.data'),
-  'plug/actions/rooms/RoomCreateAction': commandModule('POST', 'rooms'),
-  'plug/actions/rooms/RoomFavoriteAction': commandModule('POST', 'rooms/favorites'),
-  'plug/actions/rooms/RoomHistoryAction': commandModule('GET', 'rooms/history'),
-  'plug/actions/rooms/RoomJoinAction': commandModule('POST', 'rooms/join'),
-  'plug/actions/rooms/RoomStateAction': commandModule('GET', 'rooms/state'),
-  'plug/actions/rooms/RoomUnfavoriteAction': commandModule('DELETE', 'rooms/favorites'),
-  'plug/actions/rooms/RoomUpdateAction': commandModule('POST', 'rooms/update'),
-  'plug/actions/rooms/RoomValidateAction': commandModule('GET', 'rooms/validate'),
-  'plug/actions/rooms/VoteAction': commandModule('POST', 'votes'),
-  'plug/actions/staff/StaffListAction': commandModule('GET', 'staff'),
-  'plug/actions/staff/StaffRemoveAction': commandModule('DELETE', 'staff/'),
-  'plug/actions/staff/StaffUpdateAction': commandModule('POST', 'staff/update'),
-  'plug/actions/store/AvatarPurchaseAction': commandModule('POST', 'store/purchase'),
-  'plug/actions/store/ProductsAction': commandModule('GET', 'store/products'),
-  'plug/actions/store/InventoryAction': commandModule('GET', 'store/inventory'),
-  'plug/actions/user/SetStatusAction': commandModule('PUT', 'users/status'),
-  'plug/actions/user/SetLanguageAction': commandModule('PUT', 'users/language'),
-  'plug/actions/user/SetAvatarAction': commandModule('PUT', 'users/avatar'),
-  'plug/actions/user/MeAction': commandModule('GET', '"users/me"'),
-  'plug/actions/user/UserHistoryAction': commandModule('GET', 'users/me/history'),
-  'plug/actions/user/UserFindAction': commandModule('GET', 'users/"+this.data'),
-  'plug/actions/user/BulkFindAction': commandModule('GET', 'users/bulk'),
+  'plug/actions/auth/AuthResetAction': new ActionMatcher('POST', 'auth/reset/me'),
+  'plug/actions/auth/AuthTokenAction': new ActionMatcher('GET', 'auth/token'),
+  'plug/actions/auth/FacebookAuthAction': new ActionMatcher('POST', 'auth/facebook'),
+  'plug/actions/auth/KillSessionAction': new ActionMatcher('DELETE', 'auth/session'),
+  'plug/actions/bans/BanAction': new ActionMatcher('POST', 'bans/add'),
+  'plug/actions/bans/ListBansAction': new ActionMatcher('GET', 'bans'),
+  'plug/actions/bans/UnbanAction': new ActionMatcher('DELETE', 'bans/'),
+  'plug/actions/booth/JoinWaitlistAction': new ActionMatcher('POST', 'booth'),
+  'plug/actions/booth/LeaveWaitlistAction': new ActionMatcher('DELETE', 'booth'),
+  'plug/actions/booth/ModerateAddDJAction': new ActionMatcher('POST', 'booth/add'),
+  'plug/actions/booth/ModerateForceSkipAction': new ActionMatcher('POST', 'booth/skip"'),
+  'plug/actions/booth/ModerateRemoveDJAction': new ActionMatcher('DELETE', 'booth/remove/'),
+  'plug/actions/booth/SkipTurnAction': new ActionMatcher('POST', 'booth/skip/me'),
+  'plug/actions/booth/BoothLockAction': new ActionMatcher('PUT', 'booth/lock'),
+  'plug/actions/booth/BoothMoveAction': new ActionMatcher('POST', 'booth/move'),
+  'plug/actions/booth/BoothSetCycleAction': new ActionMatcher('PUT', 'booth/cycle'),
+  'plug/actions/friends/BefriendAction': new ActionMatcher('POST', 'friends'),
+  'plug/actions/friends/ListFriendsAction': new ActionMatcher('GET', 'friends"'),
+  'plug/actions/friends/ListInvitesAction': new ActionMatcher('GET', 'friends/invites'),
+  'plug/actions/friends/IgnoreRequestAction': new ActionMatcher('PUT', 'friends/ignore'),
+  'plug/actions/friends/UnfriendAction': new ActionMatcher('DELETE', 'friends/'),
+  'plug/actions/ignores/IgnoreAction': new ActionMatcher('POST', 'ignores'),
+  'plug/actions/ignores/UnignoreAction': new ActionMatcher('DELETE', 'ignores/'),
+  'plug/actions/ignores/IgnoresListAction': new ActionMatcher('GET', 'ignores'),
+  'plug/actions/media/ListMediaAction': new ActionMatcher('GET', 'playlists/'),
+  'plug/actions/media/MediaDeleteAction': new ActionMatcher('POST', 'playlists/"+this.id+"/media/delete'),
+  'plug/actions/media/MediaGrabAction': new ActionMatcher('POST', 'grabs'),
+  'plug/actions/media/MediaInsertAction': new ActionMatcher('POST', 'playlists/"+this.id+"/media/insert'),
+  'plug/actions/media/MediaMoveAction': new ActionMatcher('PUT', 'playlists/"+this.id+"/media/move'),
+  'plug/actions/media/MediaUpdateAction': new ActionMatcher('PUT', 'playlists/"+this.id+"/media/update'),
+  'plug/actions/media/SearchPlaylistsAction': new ActionMatcher('GET', 'playlists/media?q='),
+  'plug/actions/mutes/MuteAction': new ActionMatcher('POST', 'mutes'),
+  'plug/actions/mutes/UnmuteAction': new ActionMatcher('DELETE', 'mutes/'),
+  'plug/actions/mutes/MutesListAction': new ActionMatcher('GET', 'mutes'),
+  'plug/actions/news/NewsListAction': new ActionMatcher('GET', 'news'),
+  'plug/actions/notifications/NotificationReadAction': new ActionMatcher('DELETE', 'notifications/'),
+  'plug/actions/playlists/ListPlaylistsAction': new ActionMatcher('GET', 'playlists'),
+  'plug/actions/playlists/PlaylistActivateAction': new ActionMatcher('PUT', 'playlists/"+this.data+"/activate'),
+  'plug/actions/playlists/PlaylistCreateAction': new ActionMatcher('POST', 'playlists"'),
+  'plug/actions/playlists/PlaylistDeleteAction': new ActionMatcher('DELETE', 'playlists/'),
+  'plug/actions/playlists/PlaylistRenameAction': new ActionMatcher('PUT', 'playlists/"+this.id+"/rename'),
+  'plug/actions/playlists/PlaylistShuffleAction': new ActionMatcher('PUT', 'playlists/"+this.data+"/shuffle'),
+  'plug/actions/profile/SetBlurbAction': new ActionMatcher('PUT', 'profile/blurb'),
+  'plug/actions/rooms/ListFavoritesAction': new ActionMatcher('GET', 'rooms/favorites'),
+  'plug/actions/rooms/ListMyRoomsAction': new ActionMatcher('GET', 'rooms/me'),
+  'plug/actions/rooms/ListRoomsAction': new ActionMatcher('GET', 'rooms"'),
+  'plug/actions/rooms/ModerateDeleteChatAction': new ActionMatcher('DELETE', 'chat/"+this.data'),
+  'plug/actions/rooms/RoomCreateAction': new ActionMatcher('POST', 'rooms'),
+  'plug/actions/rooms/RoomFavoriteAction': new ActionMatcher('POST', 'rooms/favorites'),
+  'plug/actions/rooms/RoomHistoryAction': new ActionMatcher('GET', 'rooms/history'),
+  'plug/actions/rooms/RoomJoinAction': new ActionMatcher('POST', 'rooms/join'),
+  'plug/actions/rooms/RoomStateAction': new ActionMatcher('GET', 'rooms/state'),
+  'plug/actions/rooms/RoomUnfavoriteAction': new ActionMatcher('DELETE', 'rooms/favorites'),
+  'plug/actions/rooms/RoomUpdateAction': new ActionMatcher('POST', 'rooms/update'),
+  'plug/actions/rooms/RoomValidateAction': new ActionMatcher('GET', 'rooms/validate'),
+  'plug/actions/rooms/VoteAction': new ActionMatcher('POST', 'votes'),
+  'plug/actions/soundcloud/SoundCloudSearchService': function (m) {
+    return _.isFunction(m) && _.isFunction(m.prototype.onResolve) && _.isFunction(m.prototype.parse);
+  },
+  'plug/actions/soundcloud/SoundCloudFavoritesService': function (m) {
+    return _.isFunction(m) && _.isFunction(m.prototype.auth) &&
+      functionContains(m.prototype.load, '/me/favorites');
+  },
+  'plug/actions/soundcloud/SoundCloudTracksService': function (m) {
+    return _.isFunction(m) && _.isFunction(m.prototype.auth) &&
+      functionContains(m.prototype.load, '/me/tracks');
+  },
+  'plug/actions/soundcloud/SoundCloudSetsService': function (m) {
+    return _.isFunction(m) && _.isFunction(m.prototype.auth) &&
+      functionContains(m.prototype.load, '/me/playlists');
+  },
+  'plug/actions/soundcloud/SoundCloudPermalinkService': function (m) {
+    return _.isFunction(m) && functionContains(m.prototype.load, 'api.soundcloud.com/tracks') &&
+      !functionContains(m.prototype.onError, 'Search') &&
+      _.isFunction(m.prototype.onComplete);
+  },
+  'plug/actions/staff/StaffListAction': new ActionMatcher('GET', 'staff'),
+  'plug/actions/staff/StaffRemoveAction': new ActionMatcher('DELETE', 'staff/'),
+  'plug/actions/staff/StaffUpdateAction': new ActionMatcher('POST', 'staff/update'),
+  'plug/actions/store/ChangeUsernameAction': new ActionMatcher('POST', 'store/purchase/username'),
+  'plug/actions/store/PurchaseAction': new ActionMatcher('POST', 'store/purchase'),
+  'plug/actions/store/ProductsAction': new ActionMatcher('GET', 'store/products'),
+  'plug/actions/store/InventoryAction': new ActionMatcher('GET', 'store/inventory'),
+  'plug/actions/users/ValidateNameAction': new ActionMatcher('GET', 'users/validate/'),
+  'plug/actions/users/SetStatusAction': new ActionMatcher('PUT', 'users/status'),
+  'plug/actions/users/SetLanguageAction': new ActionMatcher('PUT', 'users/language'),
+  'plug/actions/users/SetAvatarAction': new ActionMatcher('PUT', 'users/avatar'),
+  'plug/actions/users/SetBadgeAction': new ActionMatcher('PUT', 'users/badge'),
+  'plug/actions/users/MeAction': new ActionMatcher('GET', '"users/me"'),
+  'plug/actions/users/ListTransactionsAction': new ActionMatcher('GET', 'users/me/transactions'),
+  'plug/actions/users/UserHistoryAction': new ActionMatcher('GET', 'users/me/history'),
+  'plug/actions/users/UserFindAction': new ActionMatcher('GET', 'users/"+this.data'),
+  'plug/actions/users/BulkFindAction': new ActionMatcher('POST', 'users/bulk'),
+  'plug/actions/users/SendGiftAction': new ActionMatcher('POST', 'gift'),
+  'plug/actions/users/SaveSettingsAction': new ActionMatcher('PUT', 'users/settings'),
+  'plug/actions/youtube/YouTubePlaylistService': function (m) {
+    return _.isFunction(m) && _.isFunction(m.prototype.sortByName) && _.isFunction(m.prototype.next);
+  },
+  'plug/actions/youtube/YouTubeImportService': function (m) {
+    return _.isFunction(m) && _.isFunction(m.prototype.getURL) && _.isFunction(m.prototype.next);
+  },
+  'plug/actions/youtube/YouTubeSearchService': function (m) {
+    return _.isFunction(m) && functionContains(m.prototype.load, 'paid-content=false');
+  },
+  'plug/actions/youtube/YouTubeSuggestService': function (m) {
+    return _.isFunction(m) && functionContains(m.prototype.load, 'google.com/complete/search');
+  },
 
   'plug/core/EventManager': function (m) {
     return _.isObject(m.eventTypeMap) && _.isObject(m.commandClassMap._map);
@@ -1986,8 +2330,12 @@ var plugModules = {
            // this is a bit lame, unfortunately plug.dj's "classes" don't publicly store their superclasses
            functionsSeemEqual(m.prototype.execute, function () { this.event = undefined, delete this.event });
   },
+  'plug/core/__unknown0__': function (m) {
+    // subclass of EventHandler
+    return _.isFunction(m) && m.prototype.hasOwnProperty('listenTo') && m.prototype.hasOwnProperty('finish');
+  },
 
-  'plug/settings/settings': function (m) {
+  'plug/store/settings': function (m) {
     return _.isObject(m.settings);
   },
   'plug/lang/Lang': function (m) {
@@ -2000,14 +2348,20 @@ var plugModules = {
   'plug/util/API': function (m) {
     return 'WAIT_LIST_UPDATE' in m && 'CHAT_COMMAND' in m ;
   },
+  'plug/util/audienceGrid': function (m) {
+    return _.isFunction(m.defaultInvalidation) && _.isFunction(m.invalidateRoomElements);
+  },
+  'plug/util/AvatarManifest': function (m) {
+    return _.isFunction(m.getAvatarUrl) && _.isFunction(m.getHitSlot);
+  },
   'plug/util/comparators': function (m) {
     return _.isFunction(m.uIndex) && _.isFunction(m.priority);
   },
-  'plug/util/Dictionary': function (m) {
-    return m.prototype && m.prototype._map === null && _.isFunction(m.prototype.adopt);
-  },
   'plug/util/DateTime': function (m) {
     return _.isFunction(m.ServerDate);
+  },
+  'plug/util/Dictionary': function (m) {
+    return m.prototype && m.prototype._map === null && _.isFunction(m.prototype.adopt);
   },
   'plug/util/emoji': function (m) {
     return _.isFunction(m.emojify) && m.map && 'shipit' in m.map;
@@ -2018,8 +2372,17 @@ var plugModules = {
   'plug/util/Random': function (m) {
     return _.isFunction(m) && m.MASTER instanceof m && _.isFunction(m.MASTER.newSeed);
   },
+  'plug/util/soundCloudSdkLoader': function (m) {
+    return _.isFunction(m.g) && _.isString(m.id);
+  },
+  'plug/util/twitterWidgetLoader': function (m) {
+    return m.f && _.isFunction(m.i);
+  },
   'plug/util/urls': function (m) {
     return 'csspopout' in m && 'scThumbnail' in m;
+  },
+  'plug/util/userSuggestion': function (m) {
+    return _.isArray(m.groups) && _.isFunction(m.initGroups) && _.isFunction(m.lookup);
   },
   'plug/util/util': function (m) {
     return _.isFunction(m.h2t);
@@ -2028,46 +2391,111 @@ var plugModules = {
     return 'PLAYLIST_OFFSET' in m;
   },
 
-  'plug/events/Event': eventModule('Event'),
-  'plug/events/AlertEvent': eventModule('AlertEvent'),
-  'plug/events/ChatFacadeEvent': eventModule('ChatFacadeEvent'),
-  'plug/events/CustomRoomEvent': eventModule('CustomRoomEvent'),
-  'plug/events/DJEvent': eventModule('DJEvent'),
-  'plug/events/FacebookLoginEvent': eventModule('FacebookLoginEvent'),
-  'plug/events/HistorySyncEvent': eventModule('HistorySyncEvent'),
-  'plug/events/ImportSoundCloudEvent': eventModule('ImportSoundCloudEvent'),
-  'plug/events/ImportYouTubeEvent': eventModule('ImportYouTubeEvent'),
-  'plug/events/MediaActionEvent': eventModule('MediaActionEvent'),
-  'plug/events/MediaDeleteEvent': eventModule('MediaDeleteEvent'),
-  'plug/events/MediaGrabEvent': eventModule('MediaGrabEvent'),
-  'plug/events/MediaInsertEvent': eventModule('MediaInsertEvent'),
-  'plug/events/MediaMoveEvent': eventModule('MediaMoveEvent'),
-  'plug/events/MediaUpdateEvent': eventModule('MediaUpdateEvent'),
-  'plug/events/ModerateEvent': eventModule('ModerateEvent'),
-  'plug/events/PlaylistActionEvent': eventModule('PlaylistActionEvent'),
-  'plug/events/PlaylistCreateEvent': eventModule('PlaylistCreateEvent'),
-  'plug/events/PlaylistDeleteEvent': eventModule('PlaylistDeleteEvent'),
-  'plug/events/PlaylistRenameEvent': eventModule('PlaylistRenameEvent'),
-  'plug/events/PlayMediaEvent': eventModule('PlayMediaEvent'),
-  'plug/events/PreviewEvent': eventModule('PreviewEvent'),
-  'plug/events/RelatedBackEvent': eventModule('RelatedBackEvent'),
-  'plug/events/RestrictedSearchEvent': eventModule('RestrictedSearchEvent'),
-  'plug/events/RoomCreateEvent': eventModule('RoomCreateEvent'),
-  'plug/events/RoomEvent': eventModule('RoomEvent'),
-  'plug/events/ShowDialogEvent': eventModule('ShowDialogEvent'),
-  'plug/events/ShowUserRolloverEvent': eventModule('ShowUserRolloverEvent'),
-  'plug/events/StoreEvent': eventModule('StoreEvent'),
-  'plug/events/UserEvent': eventModule('UserEvent'),
-  'plug/events/UserListEvent': eventModule('UserListEvent'),
+  'plug/server/request': function (m) {
+    return !_.isFunction(m) && _.isFunction(m.execute) &&
+      functionContains(m.execute, 'application/json');
+  },
+
+  'plug/events/Event': new EventMatcher('Event'),
+  'plug/events/AlertEvent': new EventMatcher('AlertEvent'),
+  'plug/events/ChatFacadeEvent': new EventMatcher('ChatFacadeEvent'),
+  'plug/events/CustomRoomEvent': new EventMatcher('CustomRoomEvent'),
+  'plug/events/DJEvent': new EventMatcher('DJEvent'),
+  'plug/events/FacebookLoginEvent': new EventMatcher('FacebookLoginEvent'),
+  'plug/events/FriendEvent': new EventMatcher('UserEvent').and(function (m) {
+    return m.ACCEPT === 'UserEvent:accept' && m.UNFRIEND === 'UserEvent:unfriend';
+  }),
+  'plug/events/HistorySyncEvent': new EventMatcher('HistorySyncEvent'),
+  'plug/events/ImportSoundCloudEvent': new EventMatcher('ImportSoundCloudEvent'),
+  'plug/events/ImportYouTubeEvent': new EventMatcher('ImportYouTubeEvent'),
+  'plug/events/MediaActionEvent': new EventMatcher('MediaActionEvent'),
+  'plug/events/MediaDeleteEvent': new EventMatcher('MediaDeleteEvent'),
+  'plug/events/MediaGrabEvent': new EventMatcher('MediaGrabEvent'),
+  'plug/events/MediaInsertEvent': new EventMatcher('MediaInsertEvent'),
+  'plug/events/MediaMoveEvent': new EventMatcher('MediaMoveEvent'),
+  'plug/events/MediaUpdateEvent': new EventMatcher('MediaUpdateEvent'),
+  'plug/events/ModerateEvent': new EventMatcher('ModerateEvent'),
+  'plug/events/PlaylistActionEvent': new EventMatcher('PlaylistActionEvent'),
+  'plug/events/PlaylistCreateEvent': new EventMatcher('PlaylistCreateEvent'),
+  'plug/events/PlaylistDeleteEvent': new EventMatcher('PlaylistDeleteEvent'),
+  'plug/events/PlaylistRenameEvent': new EventMatcher('PlaylistRenameEvent'),
+  'plug/events/PlayMediaEvent': new EventMatcher('PlayMediaEvent'),
+  'plug/events/PreviewEvent': new EventMatcher('PreviewEvent'),
+  'plug/events/RelatedBackEvent': new EventMatcher('RelatedBackEvent'),
+  'plug/events/RestrictedSearchEvent': new EventMatcher('RestrictedSearchEvent'),
+  'plug/events/RoomCreateEvent': new EventMatcher('RoomCreateEvent'),
+  'plug/events/RoomEvent': new EventMatcher('RoomEvent'),
+  'plug/events/ShowDialogEvent': new EventMatcher('ShowDialogEvent'),
+  'plug/events/ShowUserRolloverEvent': new EventMatcher('ShowUserRolloverEvent'),
+  'plug/events/StoreEvent': new EventMatcher('StoreEvent'),
+  'plug/events/UserEvent': new EventMatcher('UserEvent').and(function (m) {
+    return m.FRIENDS === 'UserEvent:friends' && m.PRESENCE === 'UserEvent:presence';
+  }),
+  'plug/events/UserListEvent': new EventMatcher('UserListEvent'),
+
+  'plug/handlers/AlertHandler': new HandlerFetcher('AlertEvent:alert'),
+  'plug/handlers/AvatarPurchaseHandler': new HandlerFetcher('StoreEvent:purchaseAvatar'),
+  'plug/handlers/BadgePurchaseHandler': new HandlerFetcher('StoreEvent:purchaseBadge'),
+  'plug/handlers/BoostPurchaseHandler': new HandlerFetcher('StoreEvent:purchaseBoost'),
+  'plug/handlers/CustomRoomHandler': new HandlerFetcher('CustomRoomEvent:custom'),
+  'plug/handlers/DJHandler': new HandlerFetcher('DJEvent:join'),
+  'plug/handlers/FacebookLoginHandler': new HandlerFetcher('FacebookLoginEvent:login'),
+  'plug/handlers/FriendHandler': new HandlerFetcher('UserEvent:accept'),
+  'plug/handlers/GrabHandler': new HandlerFetcher('MediaGrabEvent:grab'),
+  'plug/handlers/ImportSoundCloudHandler': new HandlerFetcher('ImportSoundCloudEvent:sets'),
+  'plug/handlers/ImportYouTubeHandler': new HandlerFetcher('ImportYouTubeEvent:import'),
+  'plug/handlers/ListBansHandler': new HandlerFetcher('UserListEvent:bans'),
+  'plug/handlers/ListFriendsHandler': new HandlerFetcher('UserEvent:friends'),
+  'plug/handlers/ListIgnoresHandler': new HandlerFetcher('UserListEvent:ignored'),
+  'plug/handlers/ListInvitesHandler': new HandlerFetcher('UserEvent:invites'),
+  'plug/handlers/ListMutesHandler': new HandlerFetcher('UserListEvent:mutes'),
+  'plug/handlers/ListPlaylistsHandler': new HandlerFetcher('PlaylistActionEvent:sync'),
+  'plug/handlers/ListStaffHandler': new HandlerFetcher('UserListEvent:staff'),
+  'plug/handlers/MediaDeleteHandler': new HandlerFetcher('MediaDeleteEvent:delete'),
+  'plug/handlers/MediaHandler': new HandlerFetcher('MediaActionEvent:add'),
+  'plug/handlers/MediaInsertHandler': new HandlerFetcher('MediaInsertEvent:insert'),
+  'plug/handlers/MediaMoveHandler': new HandlerFetcher('MediaMoveEvent:move'),
+  'plug/handlers/MediaPlayHandler': new HandlerFetcher('PlayMediaEvent:play'),
+  'plug/handlers/MediaUpdateHandler': new HandlerFetcher('MediaUpdateEvent:update'),
+  'plug/handlers/ModerateHandler': new HandlerFetcher('ModerateEvent:skip'),
+  'plug/handlers/NameChangeHandler': new HandlerFetcher('StoreEvent:purchaseName'),
+  'plug/handlers/PlaylistActivateHandler': new HandlerFetcher('PlaylistActionEvent:activate'),
+  'plug/handlers/PlaylistCreateHandler': new HandlerFetcher('PlaylistCreateEvent:create'),
+  'plug/handlers/PlaylistDeleteHandler': new HandlerFetcher('PlaylistDeleteEvent:delete'),
+  'plug/handlers/PlaylistLoadHandler': new HandlerFetcher('PlaylistActionEvent:load'),
+  'plug/handlers/PlaylistRenameHandler': new HandlerFetcher('PlaylistRenameEvent:rename'),
+  'plug/handlers/PlaylistUpdateHandler': new HandlerFetcher('PlaylistActionEvent:rename'),
+  'plug/handlers/PreviewHandler': new HandlerFetcher('PreviewEvent:preview'),
+  'plug/handlers/RelatedBackHandler': new HandlerFetcher('RelatedBackEvent:back'),
+  'plug/handlers/RestrictedSearchHandler': new HandlerFetcher('RestrictedSearchEvent:search'),
+  'plug/handlers/RoomCreateHandler': new HandlerFetcher('RoomCreateEvent:create'),
+  'plug/handlers/RoomHistoryHandler': new HandlerFetcher('HistorySyncEvent:room'),
+  'plug/handlers/RoomJoinHandler': new HandlerFetcher('RoomEvent:join'),
+  'plug/handlers/RoomStateHandler': new HandlerFetcher('RoomEvent:state'),
+  'plug/handlers/StoreAvatarsHandler': new HandlerFetcher('StoreEvent:storeAvatars'),
+  'plug/handlers/StoreBadgesHandler': new HandlerFetcher('StoreEvent:storeBadges'),
+  'plug/handlers/StoreMiscHandler': new HandlerFetcher('StoreEvent:storeMisc'),
+  'plug/handlers/StoreTransactionsHandler': new HandlerFetcher('StoreEvent:userTransactions'),
+  'plug/handlers/UnbanHandler': new HandlerFetcher('ModerateEvent:unban'),
+  'plug/handlers/UnmuteHandler': new HandlerFetcher('ModerateEvent:unmute'),
+  'plug/handlers/UserAvatarsHandler': new HandlerFetcher('StoreEvent:userAvatars'),
+  'plug/handlers/UserBadgesHandler': new HandlerFetcher('StoreEvent:userBadges'),
+  'plug/handlers/UserHistoryHandler': new HandlerFetcher('HistorySyncEvent:user'),
+  'plug/handlers/UserMeHandler': new HandlerFetcher('UserEvent:me'),
+  'plug/handlers/UserRolloverHandler': new HandlerFetcher('ShowUserRolloverEvent:show'),
 
   'plug/models/Avatar': function (m) {
     return m.AUDIENCE && m.DJ && _.isObject(m.IMAGES);
+  },
+  'plug/models/Badge': function (m) {
+    return hasDefaults(m) && 'level' in m.prototype.defaults && 'name' in m.prototype.defaults &&
+      !('category' in m.prototype.defaults) && 'active' in m.prototype.defaults;
   },
   'plug/models/BannedUser': function (m) {
     return hasDefaults(m) && 'moderator' in m.prototype.defaults && 'duration' in m.prototype.defaults;
   },
   'plug/models/booth': function (m) {
-    return 'isLocked' in m && 'shouldCycle' in m;
+    return hasAttributes(m, [ 'isLocked', 'shouldCycle' ]);
   },
   'plug/models/currentMedia': function (m) {
     return _.isFunction(m.onMediaChange) && _.isFunction(m.onStartTimeChange);
@@ -2100,30 +2528,46 @@ var plugModules = {
     return hasDefaults(m) && 'action' in m.prototype.defaults && 'value' in m.prototype.defaults;
   },
   'plug/models/Playlist': function (m) {
-    return hasDefaults(m) && 'playlistID' in m.prototype.defaults && 'username' in m.prototype.defaults;
+    return hasDefaults(m) && 'active' in m.prototype.defaults && 'syncing' in m.prototype.defaults;
   },
   'plug/models/Room': function (m) {
     return hasDefaults(m) && 'slug' in m.prototype.defaults && 'capacity' in m.prototype.defaults;
   },
+  'plug/models/StoreExtra': function (m) {
+    return hasDefaults(m) && 'category' in m.prototype.defaults && 'name' in m.prototype.defaults &&
+      !('active' in m.prototype.defaults);
+  },
+  'plug/models/Transaction': function (m) {
+    return hasDefaults(m) && 'type' in m.prototype.defaults && 'item' in m.prototype.defaults;
+  },
   'plug/models/User': function (m) {
     return hasDefaults(m) && 'avatarID' in m.prototype.defaults && 'role' in m.prototype.defaults;
   },
-  'plug/models/YouTubeRelatedMedia': todo,
+  'plug/models/YouTubePlaylist': function (m) {
+    return hasDefaults(m) && 'playlistID' in m.prototype.defaults && 'username' in m.prototype.defaults;
+  },
+  'plug/models/relatedSearch': function (m) {
+    return hasAttributes(m, [ 'related', 'relatedPlaylist' ]);
+  },
 
   'plug/collections/allAvatars': function (m) {
     return m instanceof Backbone.Collection && _.isFunction(m.__generate);
   },
-  'plug/collections/bannedUsers': function (m) {
-    return isCollectionOf(m, require('plug/models/BannedUser'));
-  },
-  'plug/collections/currentPlaylistFilter': function (m) {
-    return isCollectionOf(m, require('plug/models/Media')) &&
+  'plug/collections/bannedUsers': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/BannedUser'));
+  }).needs('plug/models/BannedUser'),
+  'plug/collections/currentPlaylist': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/Media'));
+  }).needs('plug/models/Media'),
+  'plug/collections/currentPlaylistFiltered': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/Media')) &&
       _.isFunction(m.setFilter) && _.isFunction(m.isActualFirst);
-  },
-  'plug/collections/dashboardRooms': function (m) {
-    if (!isCollectionOf(m, require('plug/models/Room'))) {
+  }).needs('plug/models/Media'),
+  'plug/collections/dashboardRooms': new SimpleMatcher(function (m) {
+    if (!isCollectionOf(m, this.require('plug/models/Room'))) {
       return false;
     }
+    // the dashboardRooms collection has its own comparator that we can check!
     var fakeRoomA = { get: function (key) { return key === 'population' ? 10 : 'a'; } },
         fakeRoomB = { get: function (key) { return key === 'population' ? 10 : 'b'; } },
         fakeRoomC = { get: function (key) { return key === 'population' ? 20 : 'c'; } };
@@ -2131,54 +2575,132 @@ var plugModules = {
       functionContains(m.comparator, 'name') &&
       m.comparator(fakeRoomA, fakeRoomB) === 1 &&
       m.comparator(fakeRoomC, fakeRoomB) === -1;
-  },
-  'plug/collections/history': function (m) {
-    return m instanceof Backbone.Collection && _.isFunction(m.onPointsChange);
-  },
-  'plug/collections/ignores': todo,
+  }).needs('plug/models/Room'),
+  'plug/collections/friendRequests': new SimpleFetcher(function () {
+    var FriendRequestsView = this.require('plug/views/users/friends/FriendRequestsView');
+    return FriendRequestsView.prototype.collection;
+  }).needs('plug/views/users/friends/FriendRequestsView'),
+  'plug/collections/friends': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/User')) &&
+      _.isFunction(m.onUsersAdd) &&
+      _.isFunction(m.lookup) &&
+      _.isFunction(m.onRemove) &&
+      _.isFunction(m.onAdd) &&
+      'MAX' in m.constructor;
+  }).needs('plug/models/User'),
+  'plug/collections/history': new SimpleFetcher(function () {
+    var RoomHistoryHandler = this.require('plug/handlers/RoomHistoryHandler');
+    return RoomHistoryHandler.prototype.collection;
+  }).needs('plug/handlers/RoomHistoryHandler'),
+  'plug/collections/ignores': new StepwiseMatcher({
+    // The IgnoreAction puts the received data in the `ignores` collection in the
+    // `parse` method. So here we pretend to have a new ignore, add it to the collection,
+    // and then find which collection was changed.
+    setup: function () {
+      var IgnoreAction = this.require('plug/actions/ignores/IgnoreAction');
+      var User = this.require('plug/models/User')
+      IgnoreAction.prototype.parse.call(
+        // fake context with an empty trigger function to
+        // 1) prevent an error, and
+        // 2) not show the notification box that this would otherwise show.
+        { trigger: function () {} },
+        // fake "response"
+        { code: 200, data: [ { id: -1000, username: '__test__' } ] }
+      );
+    },
+    check: function (m) {
+      return isCollectionOf(m, this.require('plug/models/User')) &&
+        m.comparator === 'username' &&
+        m.length > 0 && m.last().get('id') === -1000;
+    },
+    cleanup: function (ignores) {
+      // get rid of the fake user
+      ignores.pop();
+    }
+  }).needs('plug/models/User', 'plug/actions/ignores/IgnoreAction'),
   'plug/collections/imports': todo,
-  'plug/collections/inventory': function (m) {
-    return isCollectionOf(m, require('plug/models/Avatar')) && todo();
-  },
-  'plug/collections/mutes': function (m) {
-    return isCollectionOf(m, require('plug/models/MutedUser'));
-  },
-  'plug/collections/notifications': function (m) {
-    return isCollectionOf(m, require('plug/models/Notification'));
-  },
-  'plug/collections/playlists': function (m) {
-    return isCollectionOf(m, require('plug/models/Playlist')) &&
+  'plug/collections/mutes': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/MutedUser'));
+  }).needs('plug/models/MutedUser'),
+  'plug/collections/myAvatars': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/Avatar')) && _.isFunction(m.onChange);
+  }).needs('plug/models/Avatar'),
+  'plug/collections/myBadges': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/Badge')) && _.isFunction(m.onChange);
+  }).needs('plug/models/Badge'),
+  'plug/collections/notifications': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/Notification'));
+  }).needs('plug/models/Notification'),
+  'plug/collections/playlists': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/Playlist')) &&
       _.isFunction(m.jumpToMedia) && _.isArray(m.activeMedia);
-  },
-  'plug/collections/currentPlaylist': function (m) {
-    return isCollectionOf(m, require('plug/models/Media')) && todo();
-  },
+  }).needs('plug/models/Playlist'),
   'plug/collections/probablySoundCloudPlaylists': todo,
   'plug/collections/purchasableAvatars': todo,
   'plug/collections/searchResults2': todo,
   'plug/collections/searchResults': todo,
-  'plug/collections/staffFiltered': function (m) {
-    return isCollectionOf(m, require('plug/models/User')) && _.isFunction(m.setFilter) &&
+  // staff is only updated when a StaffListAction is triggered
+  // eg. when the user navigates to the staff tab
+  'plug/collections/staff': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/User')) &&
+      // differ from the general users collection
+      !_.isFunction(m.getAudience) &&
+      m.comparator === this.require('plug/util/comparators').role;
+  }).needs('plug/models/User', 'plug/util/comparators'),
+  'plug/collections/staffFiltered': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/User')) && _.isFunction(m.setFilter) &&
       !('sourceCollection' in m);
-  },
-  'plug/collections/staff': function (m) {
-    return isCollectionOf(m, require('plug/models/User')) &&
-      m.comparator === require('plug/util/comparators').role;
-  },
-  'plug/collections/unknown0': todo,
-  'plug/collections/userHistory': todo,
-  'plug/collections/userRooms': function (m) {
-    return isCollectionOf(m, require('plug/models/Room')) && todo();
-  },
-  'plug/collections/usersFiltered': function (m) {
-    return isCollectionOf(m, require('plug/models/User')) && _.isFunction(m.setFilter) &&
-      'sourceCollection' in m;
-  },
+  }).needs('plug/models/User'),
+  'plug/collections/storeExtras': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/StoreExtra'));
+  }).needs('plug/models/StoreExtra'),
+  'plug/collections/transactions': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/Transaction'));
+  }).needs('plug/models/Transaction'),
+  'plug/collections/__unknown0__': todo,
+  'plug/collections/userHistory': new SimpleFetcher(function () {
+    var UserHistoryHandler = this.require('plug/handlers/UserHistoryHandler');
+    return UserHistoryHandler.prototype.collection;
+  }).needs('plug/handlers/UserHistoryHandler'),
+  'plug/collections/userRooms': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/Room')) &&
+      m !== this.require('plug/collections/dashboardRooms');
+  }).needs('plug/models/Room', 'plug/collections/dashboardRooms'),
   'plug/collections/users': function (m) {
     return m instanceof Backbone.Collection && _.isFunction(m.getAudience);
   },
+  'plug/collections/usersFiltered': new SimpleMatcher(function (m) {
+    return isCollectionOf(m, this.require('plug/models/User')) && _.isFunction(m.setFilter) &&
+      'sourceCollection' in m;
+  }).needs('plug/models/User'),
   'plug/collections/waitlist': function (m) {
     return m instanceof Backbone.Collection && 'isTheUserPlaying' in m;
+  },
+
+  // facades
+  'plug/facades/chatFacade': function (m) {
+    return _.isFunction(m.onChatReceived) && _.isFunction(m.checkMutes);
+  },
+  'plug/facades/dashboardRoomsFacade': function (m) {
+    return _.isFunction(m.more) && _.isFunction(m.loadFavorites);
+  },
+  'plug/facades/importSoundCloudFacade': function (m) {
+    return _.isFunction(m.importAllAlert) && _.isFunction(m.importSelectedAlert);
+  },
+  'plug/facades/importYouTubeFacade': function (m) {
+    return _.isFunction(m.importAlert) && _.isFunction(m.onImportMediaComplete);
+  },
+  'plug/facades/ImportMediaFacade': function (m) {
+    return 'instance' in m && _.isFunction(m.instance.onCIDResult);
+  },
+  'plug/facades/relatedMediaFacade': function (m) {
+    return _.isFunction(m.appendUnknown) && _.isFunction(m.resetRelated);
+  },
+  'plug/facades/remoteMediaFacade': function (m) {
+    return _.isFunction(m.ytSearch) && _.isFunction(m.ytRelated) && _.isFunction(m.scPermalink);
+  },
+  'plug/facades/playlistsSearchFacade': function (m) {
+    return _.isFunction(m.setQuery) && _.isFunction(m.onTimeout);
   },
 
   // application views
@@ -2197,7 +2719,8 @@ var plugModules = {
     return isView(m) && m.prototype.id === 'dashboard';
   },
   'plug/views/dashboard/SearchView': function (m) {
-    return isView(m) && m.prototype.className === 'search' && _.isFunction(m.prototype.clear);
+    return isView(m) && m.prototype.className === 'search' && _.isFunction(m.prototype.clear) &&
+      m.prototype.template === this.require('hbs!templates/dashboard/Search');
   },
   'plug/views/dashboard/TutorialView': function (m) {
     return isView(m) && m.prototype.id === 'tutorial';
@@ -2205,15 +2728,24 @@ var plugModules = {
   'plug/views/dashboard/list/CellView': function (m) {
     return isView(m) && _.isFunction(m.prototype.onFavorite) && _.isFunction(m.prototype.onFriends);
   },
-  'plug/views/dashboard/list/GridMenuView': todo,
+  'plug/views/dashboard/list/GridView': new SimpleMatcher(function (m, name) {
+    return isView(m) && m.prototype.className === 'grid' &&
+      this.isInSameNamespace(name, 'plug/views/dashboard/list/CellView');
+  }).needs('plug/views/dashboard/list/CellView'),
   'plug/views/dashboard/list/TabMenuView': function (m) {
     return isView(m) && m.prototype.className === 'tab-menu' && _.isFunction(m.prototype.select);
   },
-  'plug/views/dashboard/header/DashboardHeaderView': todo,
+  'plug/views/dashboard/header/DashboardHeaderView': function (m) {
+    return isView(m) && m.prototype.className === 'app-header' &&
+      viewHasElement(m, '.event-calendar');
+  },
   'plug/views/dashboard/news/NewsView': function (m) {
     return isView(m) && m.prototype.id === 'news';
   },
-  'plug/views/dashboard/news/NewsRowView': todo,
+  'plug/views/dashboard/news/NewsRowView': new SimpleMatcher(function (m, name) {
+    return isView(m) && m.prototype.className === 'row' &&
+      this.isInSameNamespace(name, 'plug/views/dashboard/news/NewsView');
+  }).needs('plug/views/dashboard/news/NewsView'),
 
   // footer
   'plug/views/footer/FacebookMenuView': function (m) {
@@ -2278,16 +2810,25 @@ var plugModules = {
   'plug/views/dialogs/AlertDialog': function (m) {
     return isDialog(m) && m.prototype.id === 'dialog-alert';
   },
-  // BoothLockDialog is the only dialog with a "dialog-confirm" id and a "destructive" class.
+  'plug/views/dialogs/BadgeUnlockedDialog': function (m) {
+    return isDialog(m) && m.prototype.id === 'dialog-badge-unlocked';
+  },
   'plug/views/dialogs/BoothLockDialog': function (m) {
+    // BoothLockDialog pretends to be a confirm dialog! ):
     return isDialog(m) && m.prototype.id === 'dialog-confirm' &&
-      m.prototype.className.indexOf('destructive') === -1;
+      functionContains(m.prototype.adjustTop, 'dialog.lockBoothCancel');
   },
   'plug/views/dialogs/ConfirmDialog': function (m) {
     return isDialog(m) && m.prototype.id === 'dialog-confirm';
   },
   'plug/views/dialogs/ForceSkipDialog': function (m) {
     return isDialog(m) && m.prototype.id === 'dialog-skip';
+  },
+  'plug/views/dialogs/GiftSendDialog': function (m) {
+    return isDialog(m) && m.prototype.id === 'dialog-gift-send';
+  },
+  'plug/views/dialogs/GiftReceiveDialog': function (m) {
+    return isDialog(m) && m.prototype.id === 'dialog-gift-receive';
   },
   'plug/views/dialogs/LevelUpDialog': function (m) {
     return isDialog(m) && m.prototype.id === 'dialog-level-up';
@@ -2315,8 +2856,11 @@ var plugModules = {
       // tutorial dialogs also have the dialog-preview ID
       m.prototype.className.indexOf('tutorial') === -1;
   },
-  'plug/views/dialogs/PurchaseAvatarDialog': function (m) {
-    return isDialog(m) && m.prototype.id === 'dialog-purchase-avatar';
+  'plug/views/dialogs/PurchaseNameChangeView': function (m) {
+    return isView(m) && m.prototype.className === 'username-box';
+  },
+  'plug/views/dialogs/PurchaseDialog': function (m) {
+    return isDialog(m) && m.prototype.id === 'dialog-purchase';
   },
   'plug/views/dialogs/RoomCreateDialog': function (m) {
     return isDialog(m) && m.prototype.id === 'dialog-room-create';
@@ -2343,10 +2887,26 @@ var plugModules = {
     // TODO ensure that there are no other modules that match this footprint
     return isView(m) && m.prototype.id === 'playlist-panel';
   },
+  'plug/views/playlists/help/PlaylistHelpView': function (m) {
+    return isView(m) && m.prototype.className === 'media-list' &&
+      _.isFunction(m.prototype.onResize)
+      viewHasElement(m, '.playlist-overlay-help');
+  },
+  'plug/views/playlists/import/PlaylistImportPanelView': function (m) {
+    return isView(m) && m.prototype.id === 'playlist-import-panel';
+  },
+  'plug/views/playlists/media/headers/ImportHeaderView': function (m) {
+    return isView(m) && m.prototype.className === 'header import' &&
+      m.prototype.template === this.require('hbs!templates/playlist/media/headers/ImportHeader')();
+  },
   'plug/views/playlists/media/MediaPanelView': function (m) {
     // TODO ensure that there are no other modules that match this footprint
     return isView(m) && m.prototype.id === 'media-panel';
   },
+  'plug/views/playlists/media/panels/HistoryPanelView': new SimpleMatcher(function (m) {
+    return isView(m) && m.prototype.listClass === 'history' &&
+      m.prototype.collection === this.require('plug/collections/history');
+  }).needs('plug/collections/history'),
   'plug/views/playlists/menu/PlaylistMenuView': function (m) {
     return m instanceof Backbone.View && m.id === 'playlist-menu';
   },
@@ -2364,62 +2924,164 @@ var plugModules = {
   },
 
   // user views
-  'plug/views/user/userRolloverView': function (m) {
-    return _.isObject(m) && m instanceof Backbone.View && m.id === 'user-rollover';
+  'plug/views/users/userRolloverView': function (m) {
+    return m instanceof Backbone.View && m.id === 'user-rollover';
   },
-  'plug/views/user/UserView': function (m) {
+  'plug/views/users/UserView': function (m) {
     return isView(m) && m.prototype.id === 'user-view';
   },
+  'plug/views/users/TabbedPanelView': function (m) {
+    return isView(m) && 'defaultTab' in m.prototype && m.prototype.defaultTab === undefined;
+  },
 
-  'plug/views/user/communities/CommunitiesView': function (m) {
+  'plug/views/users/communities/CommunitiesView': function (m) {
     return isView(m) && m.prototype.id === 'user-communities';
   },
-  'plug/views/user/communities/CommunityGridView': todo,
-
-  'plug/views/user/profile/ExperienceView': function (m) {
+  'plug/views/users/communities/CommunityGridView': new SimpleMatcher(function (m, name) {
+    return isView(m) && m.prototype.className === 'grid' &&
+      this.isInSameNamespace(name, 'plug/views/users/communities/CommunitiesView');
+  }).needs('plug/views/users/communities/CommunitiesView'),
+  'plug/views/users/friends/FriendsView': function (m) {
+    return isView(m) && m.prototype.id === 'user-friends';
+  },
+  'plug/views/users/friends/FriendsTabMenuView': new SimpleMatcher(function (m, name) {
+    return isView(m) && m.prototype.className === 'tab-menu' &&
+      this.isInSameNamespace(name, 'plug/views/users/friends/FriendsView');
+  }).needs('plug/views/users/friends/FriendsView'),
+  'plug/views/users/friends/FriendRowView': function (m) {
+    return isView(m) && m.prototype.className === 'row' &&
+      m.prototype.buttonTemplate === this.require('hbs!templates/user/friends/UserFriendButtons');
+  },
+  'plug/views/users/friends/FriendsListView': new SimpleMatcher(function (m) {
+    return isView(m) && m.prototype.className === 'all section' &&
+      m.prototype.RowClass === this.require('plug/views/users/friends/FriendRowView');
+  }).needs('plug/views/users/friends/FriendRowView'),
+  'plug/views/users/friends/FriendRequestRowView': function (m) {
+    return isView(m) && m.prototype.className === 'row' &&
+      m.prototype.buttonTemplate === this.require('hbs!templates/user/friends/UserRequestButtons');
+  },
+  'plug/views/users/friends/FriendRequestsView': new SimpleMatcher(function (m) {
+    return isView(m) && m.prototype.className === 'requests section' &&
+      m.prototype.RowClass === this.require('plug/views/users/friends/FriendRequestRowView');
+  }).needs('plug/views/users/friends/FriendRequestRowView'),
+  'plug/views/users/friends/ListView': new SimpleMatcher(function (m, name) {
+    return isView(m) && 'collection' in m.prototype && 'RowClass' in m.prototype &&
+      m.prototype.collection === undefined && m.prototype.RowClass === undefined &&
+      this.isInSameNamespace(name, 'plug/views/users/friends/FriendsView');
+  }).needs('plug/views/users/friends/FriendsView'),
+  'plug/views/users/friends/SearchView': function (m) {
+    return isView(m) && m.prototype.template === this.require('hbs!templates/user/friends/Search');
+  },
+  'plug/views/users/inventory/InventoryView': function (m) {
+    return isView(m) && m.prototype.id === 'user-inventory';
+  },
+  'plug/views/users/inventory/InventoryTabMenuView': function (m) {
+    return isView(m) && m.prototype.template === this.require('hbs!templates/user/inventory/TabMenu');
+  },
+  'plug/views/users/inventory/InventoryCategoryView': function (m) {
+    return isView(m) && 'collection' in m.prototype && 'eventName' in m.prototype &&
+      m.prototype.collection === undefined && m.prototype.eventName === undefined;
+  },
+  'plug/views/users/inventory/AvatarsView': new SimpleMatcher(function (m) {
+    return isView(m) && m.prototype.className === 'avatars' &&
+      m.prototype.eventName === this.require('plug/events/StoreEvent').GET_USER_AVATARS;
+  }).needs('plug/events/StoreEvent'),
+  'plug/views/users/inventory/AvatarsDropdownView': function (m) {
+    return isView(m) && m.prototype.className === 'dropdown' &&
+      functionContains(m.prototype.draw, '.userAvatars.base');
+  },
+  'plug/views/users/inventory/AvatarCellView': new SimpleMatcher(function (m, name) {
+    return isView(m) && m.prototype.className === 'cell' &&
+      _.isFunction(m.prototype.getBlinkFrame) &&
+     this.isInSameNamespace(name, 'plug/views/users/inventory/InventoryView');
+  }).needs('plug/views/users/inventory/InventoryView'),
+  'plug/views/users/inventory/BadgesView': new SimpleMatcher(function (m) {
+    return isView(m) && m.prototype.className === 'badges' &&
+      m.prototype.eventName === this.require('plug/events/StoreEvent').GET_USER_BADGES;
+  }).needs('plug/events/StoreEvent'),
+  'plug/views/users/inventory/BadgeCellView': function (m, name) {
+    return isView(m) && m.prototype.className === 'cell' &&
+      functionContains(m.prototype.render, 'change:badge');
+  },
+  'plug/views/users/inventory/TransactionHistoryView': new SimpleMatcher(function (m, name) {
+    return isView(m) && m.prototype.className === 'history' &&
+     functionContains(m.prototype.render, 'GET_USER_TRANSACTIONS') &&
+     this.isInSameNamespace(name, 'plug/views/users/inventory/InventoryView');
+  }).needs('plug/views/users/inventory/InventoryView'),
+  'plug/views/users/inventory/TransactionRowView': function (m) {
+    return isView(m) && m.prototype.className === 'row' &&
+      functionContains(m.prototype.render, 'boost3x');
+  },
+  'plug/views/users/profile/ExperienceView': function (m) {
     return isView(m) && m.prototype.className === 'experience section';
   },
-  'plug/views/user/profile/MetaView': function (m) {
+  'plug/views/users/profile/MetaView': function (m) {
     return isView(m) && m.prototype.className === 'meta section';
   },
-  'plug/views/user/profile/NotificationsView': function (m) {
+  'plug/views/users/profile/NotificationsView': function (m) {
     return isView(m) && m.prototype.className === 'notifications section';
   },
-  'plug/views/user/profile/NotificationView': todo,
-  'plug/views/user/profile/PointsView': function (m) {
+  'plug/views/users/profile/NotificationView': function (m) {
+    return isView(m) && m.prototype.className === 'row' &&
+      // Lang.userNotifications
+      functionContains(m.prototype.render, 'userNotifications');
+  },
+  'plug/views/users/profile/PointsView': function (m) {
     return isView(m) && m.prototype.className === 'points';
   },
   // Current User Profile,
-  'plug/views/user/profile/ProfileView': function (m) {
+  'plug/views/users/profile/ProfileView': function (m) {
     return isView(m) && m.prototype.id === 'the-user-profile';
   },
   // Other user profiles? (On the profile pages?)
-  'plug/views/user/profile/UnusedProfileView': function (m) {
+  'plug/views/users/profile/UnusedProfileView': function (m) {
     return isView(m) && m.prototype.id === 'user-profile';
   },
 
-  'plug/views/user/menu/UserMenuView': function (m) {
+  'plug/views/users/menu/UserMenuView': function (m) {
     return isView(m) && m.prototype.id === 'user-menu';
   },
+  'plug/views/users/menu/TabMenuView': function (m) {
+    return isView(m) && m.prototype.className === 'tab-menu' &&
+      'template' in m.prototype && m.prototype.template === undefined;
+  },
 
-  'plug/views/user/history/UserHistoryView': function (m) {
+  'plug/views/users/history/UserHistoryView': function (m) {
     return isView(m) && m.prototype.id === 'user-history';
   },
 
-  'plug/views/user/settings/SettingsView': function (m) {
+  'plug/views/users/settings/SettingsView': function (m) {
     return isView(m) && m.prototype.id === 'user-settings';
   },
   // there's a bunch of different TabMenuViews, this one is only different from the rest in the methods it lacks
-  'plug/views/user/settings/TabMenuView': function (m) {
-    return m.prototype && m.prototype.className === 'tab-menu' &&
+  'plug/views/users/settings/TabMenuView': function (m) {
+    return isView(m) && m.prototype.className === 'tab-menu' &&
       !('selectStore' in m.prototype) && !('select' in m.prototype) && !('selectRequests' in m.prototype);
   },
-  'plug/views/user/settings/SettingsApplicationView': function (m) {
-    return m.prototype && m.prototype.className === 'application section';
+  'plug/views/users/settings/SettingsApplicationView': function (m) {
+    return isView(m) && m.prototype.className === 'application section';
   },
-  'plug/views/user/settings/SettingsAccountView': function (m) {
-    return m.prototype && m.prototype.className === 'account section';
+  'plug/views/users/settings/LanguageDropdownView': function (m) {
+    return isView(m) && functionContains(m.prototype.render, '.languages') &&
+      functionContains(m.prototype.render, '.get("language")');
   },
+  'plug/views/users/settings/SettingsAccountView': function (m) {
+    return isView(m) && m.prototype.className === 'account section';
+  },
+  'plug/views/users/store/StoreView': function (m) {
+    return isView(m) && m.prototype.id === 'user-store';
+  },
+  'plug/views/users/store/CategoryView': todo,
+  'plug/views/users/store/AvatarsView': todo,
+  'plug/views/users/store/AvatarsDropdownView': todo,
+  'plug/views/users/store/AvatarCellView': todo,
+  'plug/views/users/store/BundleCellView': todo,
+  'plug/views/users/store/BadgesView': todo,
+  'plug/views/users/store/BadgeCellView': todo,
+  'plug/views/users/store/MiscView': todo,
+  'plug/views/users/store/MiscCellView': todo,
+  'plug/views/users/store/TabMenuView': todo,
+
   'plug/views/rooms/audienceView': function (m) {
     return m instanceof Backbone.View && m.id === 'audience';
   },
@@ -2438,14 +3100,91 @@ var plugModules = {
   'plug/views/rooms/VotePanelView': function (m) {
     return isView(m) && m.prototype.id === 'vote';
   },
+  'plug/views/rooms/header/HistoryPanelView': function (m) {
+    return isView(m) && m.prototype.id === 'history-panel';
+  },
+  'plug/views/rooms/header/NowPlayingView': function (m) {
+    return isView(m) && m.prototype.id === 'now-playing-bar';
+  },
+  'plug/views/rooms/header/RoomMetaView': function (m) {
+    return isView(m) && m.prototype.id === 'room-meta';
+  },
+  'plug/views/rooms/header/RoomBarView': function (m) {
+    return isView(m) && m.prototype.id === 'room-bar';
+  },
+  'plug/views/rooms/header/HeaderPanelBarView': function (m) {
+    return isView(m) && m.prototype.id === 'header-panel-bar';
+  },
+  'plug/views/rooms/header/RoomHeaderView': new SimpleMatcher(function (m, name) {
+    return isView(m) && m.prototype.className === 'app-header' &&
+      this.isInSameNamespace(name, 'plug/views/rooms/header/HeaderPanelBarView');
+  }).needs('plug/views/rooms/header/HeaderPanelBarView'),
   'plug/views/rooms/playback/PlaybackView': function (m) {
     return isView(m) && m.prototype.id === 'playback';
   },
   'plug/views/rooms/playback/VolumeView': function (m) {
     return isView(m) && m.prototype.id === 'volume';
   },
-  'plug/views/rooms/users/RoomUserRowView': function (m) {
-    return _.isFunction(m) && _.isFunction(m.prototype.vote);
+  'plug/views/rooms/users/BansListView': function (m) {
+    return isView(m) && m.prototype.className === 'list bans';
+  },
+  'plug/views/rooms/users/BanRowView': new SimpleFetcher(function () {
+    var BansListView = this.require('plug/views/rooms/users/BansListView');
+    return BansListView.prototype.RowClass;
+  }).needs('plug/views/rooms/users/BansListView'),
+  'plug/views/rooms/users/FriendsListView': function (m) {
+    return isView(m) && m.prototype.className === 'friends';
+  },
+  'plug/views/rooms/users/FriendRowView': new SimpleMatcher(function (m, name) {
+   return isView(m) && m.prototype.className === 'row' &&
+     _.isFunction(m.prototype.onAvatarChange) &&
+     _.isFunction(m.prototype.onStatusChange) &&
+     this.isInSameNamespace(name, 'plug/views/rooms/users/FriendsListView');
+  }).needs('plug/views/rooms/users/FriendsListView'),
+  'plug/views/rooms/users/IgnoresListView': function (m) {
+    return isView(m) && m.prototype.className === 'list ignored';
+  },
+  'plug/views/rooms/users/IgnoreRowView': new SimpleFetcher(function () {
+    var IgnoresListView = this.require('plug/views/rooms/users/IgnoresListView');
+    return IgnoresListView.prototype.RowClass;
+  }).needs('plug/views/rooms/users/IgnoresListView'),
+  'plug/views/rooms/users/MutesListView': function (m) {
+    return isView(m) && m.prototype.className === 'list mutes';
+  },
+  'plug/views/rooms/users/MuteRowView': new SimpleFetcher(function () {
+    var MutesListView = this.require('plug/views/rooms/users/MutesListView');
+    return MutesListView.prototype.RowClass;
+  }).needs('plug/views/rooms/users/MutesListView'),
+  'plug/views/rooms/users/RoomUsersListView': function (m) {
+    return isView(m) && m.prototype.className === 'list room';
+  },
+  'plug/views/rooms/users/RoomUserRowView': new SimpleFetcher(function () {
+    var RoomUsersListView = this.require('plug/views/rooms/users/RoomUsersListView');
+    return RoomUsersListView.prototype.RowClass;
+  }).needs('plug/views/rooms/users/RoomUsersListView'),
+  'plug/views/rooms/users/StaffListView': function (m) {
+    return isView(m) && m.prototype.className === 'list staff';
+  },
+  'plug/views/rooms/users/StaffGroupView': function (m) {
+    return isView(m) && m.prototype.className === 'group';
+  },
+  'plug/views/rooms/users/StaffRowView': function (m) {
+    return isView(m) && m.prototype.className === 'user' &&
+      !('onConfirm' in m.prototype); // not WaitListRowView, BanRowView, MuteRowView & IgnoreRowView
+  },
+  'plug/views/rooms/users/UserListView': new SimpleMatcher(function (m) {
+    return isView(m) && m.prototype.className === 'list' &&
+      m.prototype.collection === this.require('plug/collections/usersFiltered');
+  }).needs('plug/collections/usersFiltered'),
+  'plug/views/rooms/users/userListsPanelView': function (m) {
+    return m instanceof Backbone.View && m.id === 'user-lists';
+  },
+  'plug/views/rooms/users/WaitListView': function (m) {
+    return isView(m) && m.prototype.id === 'waitlist';
+  },
+  'plug/views/rooms/users/WaitListRowView': function (m) {
+    return isView(m) && m.prototype.className === 'user' &&
+      _.isFunction(m.prototype.onRemoveClick);
   },
   'plug/views/rooms/chat/ChatView': function (m) {
     return isView(m) && m.prototype.id === 'chat';
@@ -2465,19 +3204,57 @@ var plugModules = {
     return isView(m) && m.prototype.id === 'meta';
   },
   'plug/views/rooms/popout/PopoutView': function (m) {
-    return isView(m) && functionContains(m.prototype.show, 'plugdjpopout');
+    return m instanceof Backbone.View && functionContains(m.show, 'plugdjpopout');
   },
   'plug/views/rooms/popout/PopoutVoteView': function (m) {
     // subclass of VotePanelView
     return isView(m) && m.__super__ && m.__super__.id === 'vote';
   },
+  'plug/views/rooms/settings/GeneralSettingsView': function (m) {
+    return isView(m) && m.prototype.className === 'general-settings';
+  },
+  'plug/views/rooms/settings/RoomSettingsMenuView': function (m) {
+    return isView(m) && m.prototype.id === 'room-settings-menu';
+  },
+  'plug/views/rooms/settings/RoomSettingsView': function (m) {
+    return isView(m) && m.prototype.id === 'room-settings';
+  },
+  'plug/views/rooms/settings/ChatLevelDropdownView': function (m) {
+    return isView(m) && m.prototype.className === 'dropdown' &&
+      functionContains(m.prototype.render, 'minChatLevel');
+  }
 
 };
 
-_.each(plugModules, function (filter, name) {
-  setDefine(name, plugRequire(filter));
+// Build an array of Detectives with their module names, so we can walk through it in order and
+// move things around. This is useful because Detectives that aren't "ready" can be pushed to
+// the end to be revisited later.
+var detectives = [];
+_.each(plugModules, function (matcher, name) {
+  if (!(matcher instanceof Detective)) {
+    matcher = new SimpleMatcher(matcher);
+  }
+  detectives.push({ name: name, detective: matcher });
 });
-;    require([ 'extplug/ExtPlug' ], function (ExtPlug) {
+
+var notFound = [];
+var context = new Context();
+// < 5000 to prevent an infinite loop if a detective's dependency was not found.
+for (var i = 0; i < detectives.length && i < 5000; i++) {
+  var current = detectives[i];
+  if (current.detective.isReady(context)) {
+    current.detective.run(context, current.name);
+  }
+  else {
+    // revisit later.
+    detectives.push(current);
+  }
+}
+
+return context;
+
+}());    plugModules.register();
+    require([ 'extplug/ExtPlug' ], function (ExtPlug) {
 
       var cbs = window.extp || [];
       var ext = new ExtPlug();
