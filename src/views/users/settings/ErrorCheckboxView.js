@@ -21,7 +21,6 @@ define('extplug/views/users/settings/ErrorCheckboxView', function (require, expo
         this.$el.addClass('selected');
       }
 
-      this.$el.on('click', this.onChange);
       return this;
     },
     getValue: function () {

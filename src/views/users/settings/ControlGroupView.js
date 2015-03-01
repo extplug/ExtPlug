@@ -1,10 +1,11 @@
 define('extplug/views/users/settings/ControlGroupView', function (require, exports, module) {
 
   var $ = require('jquery'),
-    BaseView = require('extplug/views/BaseView');
+    BaseView = require('extplug/views/BaseView'),
+    Style = require('extplug/Style');
 
   var ControlGroupView = BaseView.extend({
-    className: 'extplug group',
+    className: 'extplug control-group',
 
     initialize: function (o) {
       this.name = o.name;
@@ -30,6 +31,12 @@ define('extplug/views/users/settings/ControlGroupView', function (require, expor
     add: function (control) {
       this.controls.push(control);
       return this;
+    }
+  });
+
+  ControlGroupView._style = new Style({
+    '.extplug.control-group:not(:first-child) .header': {
+      'margin': '35px 0 8px 0 !important'
     }
   });
 
