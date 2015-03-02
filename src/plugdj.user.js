@@ -6,6 +6,7 @@
 //= models/Settings
 //= models/RoomSettings
 //= models/Module
+//= collections/ModulesCollection
 //= views/BaseView
 //= views/users/ExtUserView
 //= views/users/settings/SettingsView

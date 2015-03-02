@@ -25,7 +25,10 @@ define('extplug/views/users/settings/SettingsView', function (require, exports, 
 
     initialize: function (o) {
       this.modules = o.modules;
-      this.modules.on('reset add remove', this.refresh.bind(this));
+      this.modules.on('reset add remove', function () {
+        this.refresh()
+        this.render();
+      }.bind(this));
       this.ext = o.ext;
 
       this.refresh();

@@ -18,6 +18,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     Settings = require('extplug/models/Settings'),
     RoomSettings = require('extplug/models/RoomSettings'),
     Module = require('extplug/models/Module'),
+    ModulesCollection = require('extplug/collections/ModulesCollection'),
     ExtUserView = require('extplug/views/users/ExtUserView'),
     ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView'),
     ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
@@ -40,16 +41,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
    * @return {ApplicationView} The ApplicationView instance of this page.
    */
   function getApplicationView() {
-    var evts = Events._events['show:room'],
-      i = 0,
-      l = evts ? evts.length : 0;
-    for (; i < l; i++) {
-      // Backbone event handlers have a .ctx property, containing what they will be bound to.
-      // And ApplicationView adds a handler that's bound to itself!
-      if (evts[i].ctx instanceof ApplicationView) {
-        return evts[i].ctx;
-      }
-    }
+    var evts = Events._events['show:room'];
+    // Backbone event handlers have a .ctx property, containing what they will be bound to.
+    // And ApplicationView adds a handler that's bound to itself!
+    return evts && _.find(evts, function (event) { return event.ctx instanceof ApplicationView; })
   }
 
   /**
@@ -63,7 +58,6 @@ define('extplug/ExtPlug', function (require, exports, module) {
   function ExtPlug() {
     _.extend(this, Backbone.Events);
 
-    var ModulesCollection = Backbone.Collection.extend({ model: Module });
     /**
      * Internal map of registered modules.
      * @type {Object.<string, Module>}
@@ -174,10 +168,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
     if (Mod._name) {
       try {
         var mod = new Mod(id, this);
-        this._modules.push(new Module({ module: mod, name: Mod._name }));
+        this._modules.add(new Module({ module: mod, name: Mod._name }));
       }
       catch (e) {
-        this._modules.push(new Module({ module: e, name: Mod._name }));
+        this._modules.add(new Module({ module: e, name: Mod._name }));
       }
     }
     return this;
