@@ -44,7 +44,11 @@ define('extplug/ExtPlug', function (require, exports, module) {
     var evts = Events._events['show:room'];
     // Backbone event handlers have a .ctx property, containing what they will be bound to.
     // And ApplicationView adds a handler that's bound to itself!
-    return evts && _.find(evts, function (event) { return event.ctx instanceof ApplicationView; })
+    var appView
+    if (evts) {
+      appView = _.find(evts, function (event) { return event.ctx instanceof ApplicationView; })
+    }
+    return appView && appView.ctx;
   }
 
   /**
