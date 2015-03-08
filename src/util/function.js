@@ -47,7 +47,7 @@ define('extplug/util/function', function (require, exports, module) {
    *
    * @return {function()} The patched class.
    */
-  exports.replaceClass = function (oldClass, newClass) {
+  exports.replaceClass = function (oldClass, newClass, instances) {
     Object.defineProperty(oldClass, '$replaced', {
       writable: true,
       enumerable: false,
@@ -56,6 +56,13 @@ define('extplug/util/function', function (require, exports, module) {
     });
     oldClass.extend = newClass.extend;
     oldClass.prototype = newClass.prototype;
+
+    if (instances) {
+      _.each(instances, function (instance) {
+        instance.__proto__ = newClass.prototype;
+      });
+    }
+
     return oldClass;
   };
 
