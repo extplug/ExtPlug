@@ -19,22 +19,21 @@ define('extplug/Style', function (require, exports, module) {
   Style.prototype.set = function (sel, props) {
     var rules = this._rules;
     if (props) {
-      if (rules[sel]) {
-        _.extend(rules[sel], props);
-      }
-      else {
-        rules[sel] = props;
-      }
+      _.each(props, function (val, prop) {
+        if (_.isObject(val)) {
+          // nested rules
+          this.set(sel + ' ' + prop, val);
+        }
+        else {
+          if (!(sel in this._rules)) this._rules[sel] = {};
+          this._rules[sel][prop] = val;
+        }
+      }, this);
     }
     else {
       _.each(sel, function (ruleset, selector) {
-        if (rules[selector]) {
-          _.extend(rules[selector], ruleset);
-        }
-        else {
-          rules[selector] = ruleset;
-        }
-      });
+        this.set(selector, ruleset);
+      }, this);
     }
 
     // throttle updates
