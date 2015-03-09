@@ -18,6 +18,7 @@
 //= views/users/settings/ErrorCheckboxView
 
 //= modules/Autowoot
+//= modules/ChatImages
 //= modules/ChatNotifications
 //= modules/CompactHistory
 //= modules/RoomStyles
