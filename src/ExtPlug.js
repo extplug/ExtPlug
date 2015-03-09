@@ -29,6 +29,10 @@ define('extplug/ExtPlug', function (require, exports, module) {
     _ = require('underscore'),
     Backbone = require('backbone');
 
+  var hooks = [
+    require('extplug/hooks/chat')
+  ];
+
   /**
    * Gets a reference to the main Plug.DJ ApplicationView instance.
    *
@@ -266,9 +270,13 @@ define('extplug/ExtPlug', function (require, exports, module) {
       fnUtils.unreplaceMethod(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
     });
 
+    // install extra events
+    hooks.forEach(function (hook) {
+      hook.install();
+      this.on('deinit', hook.uninstall);
+    }, this);
+
     // add custom chat message type
-    // still a bit broked since the new chat system
-    // TODO fix that^
     function addCustomChatType(oldReceived, message) {
       if (message.type === 'custom') {
         message.type += ' update';

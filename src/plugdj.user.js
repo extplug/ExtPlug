@@ -1,6 +1,7 @@
 //= ExtPlug
 //= Style
 //= Module
+//= hooks/chat
 //= util/function
 //= util/request
 //= models/Settings
