@@ -14,16 +14,20 @@
 
       enable: function () {
         this.wootElement = this.$('#woot');
-        this.ext.woot();
-        this.ext.on('advance', this.onAdvance);
+        this.woot();
+        API.on(API.ADVANCE, this.onAdvance);
       },
 
       disable: function () {
-        this.ext.off('advance', this.onAdvance);
+        API.off(API.ADVANCE, this.onAdvance);
+      },
+
+      woot: function () {
+        this.wootElement.click();
       },
 
       onAdvance: function () {
-        setTimeout(this.ext.woot.bind(this.ext), 3000 + Math.floor(Math.random() * 5000));
+        setTimeout(this.woot.bind(this), 3000 + Math.floor(Math.random() * 5000));
       }
 
     });

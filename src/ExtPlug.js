@@ -30,7 +30,8 @@ define('extplug/ExtPlug', function (require, exports, module) {
     Backbone = require('backbone');
 
   var hooks = [
-    require('extplug/hooks/chat')
+    require('extplug/hooks/chat'),
+    require('extplug/hooks/playback')
   ];
 
   /**
@@ -92,9 +93,6 @@ define('extplug/ExtPlug', function (require, exports, module) {
     // bound methods
     this.onClick = this.onClick.bind(this);
     this.onVolume = this.onVolume.bind(this);
-    this.onRefresh = this.onRefresh.bind(this);
-    this.onQuality = this.onQuality.bind(this);
-    this.onSnooze = this.onSnooze.bind(this);
     this.onJoinedChange = this.onJoinedChange.bind(this);
   }
 
@@ -198,7 +196,6 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
     this.syncPlugSettings();
     this.appView = getApplicationView();
-    this.applicationSettingsView = AppSettingsSectionView.prototype;
 
     this.document = $(document);
 
@@ -217,36 +214,9 @@ define('extplug/ExtPlug', function (require, exports, module) {
       }
     });
 
-    // TODO remove everything that is not used by ExtPlug directly
-    // Modules can just $() them anyway.
-    // video container
-    this.playbackContainer = $('#playback-container');
-    this.ytFrame = $('#yt-frame');
-    // song duration countdown
-    this.timeLeft = $('#now-playing-time span');
-    // plug.dj video controls
-    this.refreshButton = $('.refresh.button');
-    this.hdButton = $('.hd.button');
-    this.snoozeButton = $('.snooze.button');
-    // vote buttons
-    this.wootButton = $('#woot');
-    this.mehButton = $('#meh');
-    // waitlist
-    this.djButton = $('#dj-button');
-    // volume controls
-    this.volumeElement = $('#volume');
-    this.volumeSlider = this.volumeElement.find('.slider');
-    this.volumeButton = this.volumeElement.find('.button');
-    // user settings
-    this.userSettings = $('#user-settings');
-
     this.document.on('click.extplug', this.onClick);
 
     currentMedia.on('change:volume', this.onVolume);
-
-    this.refreshButton.on('click.extplug', this.onRefresh);
-    this.hdButton.on('click.extplug', this.onQuality);
-    this.snoozeButton.on('click.extplug', this.onSnooze);
 
     // add an ExtPlug settings tab to User Settings
     fnUtils.replaceClass(SettingsTabMenuView, ExtSettingsTabMenuView);
@@ -325,21 +295,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     this.roomSettings = roomSettings;
     this.on('deinit', function () {
       roomSettings.dispose();
-    });
-
-    /**
-     * Maps a Plug.DJ API event to an event on the ExtPlug object.
-     * @param {string} from API event name.
-     * @param {string} to ExtPlug event name.
-     */
-    function mapEvent(from, to) {
-      var fn = ext.trigger.bind(ext, to);
-      API.on(from, fn);
-      ext.on('deinit', function () { API.off(from, fn); });
-    }
-    mapEvent(API.ADVANCE, 'advance');
-    mapEvent(API.USER_JOIN, 'userJoin');
-    mapEvent(API.USER_LEAVE, 'userLeave');
+    })
 
     currentRoom.on('change:joined', this.onJoinedChange);
 
@@ -442,33 +398,6 @@ define('extplug/ExtPlug', function (require, exports, module) {
   };
 
   /**
-   * Snooze button click handler.
-   *
-   * @private
-   */
-  ExtPlug.prototype.onSnooze = function () {
-    this.trigger('snooze');
-  };
-
-  /**
-   * HD button click handler.
-   *
-   * @private
-   */
-  ExtPlug.prototype.onQuality = function () {
-    this.syncPlugSettings();
-  };
-
-  /**
-   * Refresh button click handler.
-   *
-   * @private
-   */
-  ExtPlug.prototype.onRefresh = function () {
-    this.trigger('refresh');
-  };
-
-  /**
    * Room join/leave handler.
    *
    * @private
@@ -500,39 +429,6 @@ define('extplug/ExtPlug', function (require, exports, module) {
    */
   ExtPlug.prototype.notify = function (icon, text) {
     Events.trigger('notify', icon, text);
-  };
-
-  /**
-   * "Woot!"s the current song.
-   */
-  ExtPlug.prototype.woot = function () {
-    this.wootButton.click();
-  };
-
-  /**
-   * "Meh"s the current song.
-   */
-  ExtPlug.prototype.meh = function () {
-    this.mehButton.click();
-  };
-
-  /**
-   * Snoozes the current song.
-   */
-  ExtPlug.prototype.snooze = function () {
-    this.snoozeButton.click();
-  };
-
-  /**
-   * Tries to join the wait list.
-   */
-  ExtPlug.prototype.joinWaitlist = function () {
-    if (this.djButton.hasClass('is-full')) {
-      this.notify('icon-waitlist-full', lang.alerts.waitListFull);
-    }
-    else {
-      this.djButton.click();
-    }
   };
 
   /**

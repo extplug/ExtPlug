@@ -2,6 +2,7 @@
 //= Style
 //= Module
 //= hooks/chat
+//= hooks/playback
 //= util/function
 //= util/request
 //= models/Settings
