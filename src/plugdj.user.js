@@ -17,6 +17,7 @@
 //= views/users/settings/CheckboxView
 //= views/users/settings/DropdownView
 //= views/users/settings/ErrorCheckboxView
+//= views/users/settings/SliderView
 
 //= modules/Autowoot
 //= modules/ChatNotifications
