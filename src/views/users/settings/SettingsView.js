@@ -4,6 +4,7 @@ define('extplug/views/users/settings/SettingsView', function (require, exports, 
     ErrorCheckboxView = require('extplug/views/users/settings/ErrorCheckboxView'),
     CheckboxView = require('extplug/views/users/settings/CheckboxView'),
     DropdownView = require('extplug/views/users/settings/DropdownView'),
+    SliderView = require('extplug/views/users/settings/SliderView'),
     _ = require('underscore'),
     $ = require('jquery');
 
@@ -14,8 +15,8 @@ define('extplug/views/users/settings/SettingsView', function (require, exports, 
    * @param {Backbone.Model} settings Model to reflect the settings to.
    * @param {string} target Relevant property on the model.
    */
-  function wireSettingToModel(el, settings, target) {
-    el.on('change', function (value) {
+  function wireSettingToModel(view, settings, target) {
+    view.on('change', function (value) {
       settings.set(target, value);
     });
   }
@@ -106,8 +107,12 @@ define('extplug/views/users/settings/SettingsView', function (require, exports, 
     createExtPlugGroup: function () {
       // global ExtPlug settings
       var extGroup = new ControlGroupView({ name: 'ExtPlug' });
-      var useCorsProxy = new CheckboxView({ label: 'Use CORS proxy', enabled: true });
+      var useCorsProxy = new CheckboxView({
+        label: 'Use CORS proxy',
+        enabled: this.ext.settings.get('corsProxy')
+      });
       extGroup.add(useCorsProxy);
+      extGroup.add(historySize);
       wireSettingToModel(useCorsProxy, this.ext.settings, 'corsProxy');
       return extGroup;
     },
@@ -134,7 +139,15 @@ define('extplug/views/users/settings/SettingsView', function (require, exports, 
             control = new DropdownView({
               label: setting.label,
               options: setting.options,
-              selected: setting.default
+              selected: settings.get(name)
+            });
+            break;
+          case 'slider':
+            control = new SliderView({
+              label: setting.label,
+              min: setting.min,
+              max: setting.max,
+              value: settings.get(name)
             });
             break;
           default:
