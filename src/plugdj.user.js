@@ -1,6 +1,7 @@
 //= ExtPlug
 //= Style
 //= Module
+//= hooks/api-early
 //= hooks/chat
 //= hooks/playback
 //= util/function

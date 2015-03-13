@@ -30,6 +30,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     Backbone = require('backbone');
 
   var hooks = [
+    require('extplug/hooks/api-early'),
     require('extplug/hooks/chat'),
     require('extplug/hooks/playback')
   ];
