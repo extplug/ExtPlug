@@ -13,8 +13,8 @@ define('extplug/views/users/settings/SliderView', function (require, exports, mo
            '</div>' +
            '<div class="slider">' +
              '<div class="bar"></div>' +
-             '<div class="hit"></div>' +
              '<div class="circle"></div>' +
+             '<div class="hit"></div>' +
            '</div>';
   }
 
@@ -29,8 +29,8 @@ define('extplug/views/users/settings/SliderView', function (require, exports, mo
     render: function () {
       this.$el.append(template(this.options));
       this.$bar = this.$('.bar');
-      this.$hit = this.$('.hit');
-      this.$circle = this.$('.circle').on('mousedown', this.onStart);
+      this.$hit = this.$('.hit').on('mousedown', this.onStart);
+      this.$circle = this.$('.circle');
       this.$value = this.$('.value');
       _.delay(function () {
         this.setValue(this._value, true);
