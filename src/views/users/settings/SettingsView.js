@@ -164,7 +164,9 @@ define('extplug/views/users/settings/SettingsView', function (require, exports, 
       this.groups.sort(function (a, b) {
         var c = b.priority - a.priority;
         if (c === 0) {
-          c = a.name > b.name ? 1 : a.name < b.name ? -1 : 0;
+          c = a.items.get('name') > b.items.get('name') ? 1
+            : a.items.get('name') < b.items.get('name') ? -1
+            : 0;
         }
         return c;
       });
