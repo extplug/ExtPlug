@@ -30,7 +30,7 @@ define('extplug/hooks/api-early', function (require, exports, module) {
       // before dispatching. We might run into situations where there is a BEFORE_
       // handler, but not a normal one, and we do need to get the BEFORE_ event to
       // trigger there. So we just pretend like we have handlers for all the things.
-      API.on(key, nop);
+      API.on(API[key], nop);
     });
   };
 
