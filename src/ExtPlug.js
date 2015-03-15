@@ -249,7 +249,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
     // add custom chat message type
     function addCustomChatType(oldReceived, message) {
-      if (message.type === 'custom') {
+      if (message.type.split(' ').indexOf('custom') !== -1) {
         message.type += ' update';
         if (!message.timestamp) {
           message.timestamp = plugUtil.getChatTimestamp();
@@ -268,6 +268,12 @@ define('extplug/ExtPlug', function (require, exports, module) {
               );
             }
           }
+          else if (/^icon-(.*?)$/.test(message.badge)) {
+            var badgeBox = this.$chatMessages.children().last().find('.badge-box')
+            badgeBox.find('i')
+              .removeClass()
+              .addClass('icon').addClass(message.badge);
+          }
         }
         if (message.color) {
           this.$chatMessages.children().last().find('.msg .text').css('color', message.color);
@@ -277,6 +283,33 @@ define('extplug/ExtPlug', function (require, exports, module) {
         oldReceived(message);
       }
     }
+
+    new Style({
+      '#chat-messages .cm.inline': {
+        '.badge-box': {
+          'margin': '5px 8px 6px',
+          'height': '17px',
+          'border-radius': '0px',
+          'background': 'transparent',
+
+          // center badge icons
+          '.icon': {
+            'top': '50%',
+            'margin-top': '-15px'
+          }
+        },
+        '.from': { 'display': 'inline' },
+        '.text': { 'display': 'inline', 'margin-left': '5px' }
+      },
+      '#chat-messages .cm .no-badge .icon': {
+        'width': '30px',
+        'height': '30px',
+        'top': '0px',
+        'left': '0px',
+        'border': 'none',
+        'border-radius': '0px'
+      }
+    });
 
     // Replace the event listener too
     var chatView = this.appView.room.chat;
