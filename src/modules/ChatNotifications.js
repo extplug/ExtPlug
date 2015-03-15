@@ -9,6 +9,7 @@
       name: 'Chat Notifications',
 
       settings: {
+        inline: { type: 'boolean', label: 'Small Notifications', default: true },
         userJoin: { type: 'boolean', label: 'User Join', default: true },
         userLeave: { type: 'boolean', label: 'User Leave', default: true },
         advance: { type: 'boolean', label: 'DJ Advance', default: true },
@@ -21,55 +22,105 @@
         this.onLeave = this.onLeave.bind(this);
         this.onAdvance = this.onAdvance.bind(this);
         this.onGrab = this.onGrab.bind(this);
+        this.onVote = this.onVote.bind(this);
+        this.onInline = this.onInline.bind(this);
       },
 
       enable: function () {
         API.on(API.USER_JOIN, this.onJoin);
-        API.on(API.USER_LEAVE, this.onLeave);
+        API.on(API.BEFORE_USER_LEAVE, this.onLeave);
         API.on(API.ADVANCE, this.onAdvance);
         API.on(API.GRAB_UPDATE, this.onGrab);
+        API.on(API.VOTE_UPDATE, this.onVote);
+        this.settings.on('change:inline', this.onInline);
       },
 
       disable: function () {
         API.off(API.USER_JOIN, this.onJoin);
-        API.off(API.USER_LEAVE, this.onLeave);
+        API.off(API.BEFORE_USER_LEAVE, this.onLeave);
         API.off(API.ADVANCE, this.onAdvance);
         API.off(API.GRAB_UPDATE, this.onGrab);
+        API.off(API.VOTE_UPDATE, this.onVote);
+      },
+
+      _class: function () {
+        return 'custom extplug-notification ' + (this.settings.get('inline') ? 'inline ' : '');
+      },
+
+      onInline: function () {
+        var nots = this.$('#chat-messages .extplug-notification');
+        if (this.settings.get('inline')) {
+          nots.filter(':not(.extplug-advance)').addClass('inline');
+        }
+        else {
+          nots.removeClass('inline');
+        }
       },
 
       onJoin: function (e) {
         if (this.settings.get('userJoin')) {
-          this.log('joined the room', e.id, e.username, '#2ECC40');
+          Events.trigger('chat:receive', {
+            type: this._class() + 'extplug-user-join',
+            message: 'joined the room',
+            uid: e.id,
+            un: e.username,
+            color: '#2ECC40',
+            badge: 'icon-community-users'
+          });
         }
       },
 
-      onLeave: function (e) {
+      onLeave: function (user) {
         if (this.settings.get('userLeave')) {
-          this.log('left the room', e.id, e.username, '#FF4136');
+          Events.trigger('chat:receive', {
+            type: this._class() + 'extplug-user-leave',
+            message: 'left the room',
+            uid: user.id,
+            un: user.username,
+            color: '#FF851B',
+            badge: 'icon-community-users'
+          });
         }
       },
 
       onAdvance: function (e) {
         if (this.settings.get('advance')) {
-          this.log('Now Playing: ' + e.media.author + ' – ' + e.media.title, e.dj.id, e.dj.username, '#7FDBFF');
+          Events.trigger('chat:receive', {
+            type: 'custom extplug-advance',
+            message: e.media.author + ' – ' + e.media.title,
+            uid: e.dj.id,
+            un: e.dj.username,
+            color: '#7FDBFF',
+            badge: 'icon-play-next'
+          });
         }
       },
 
       onGrab: function (e) {
         if (this.settings.get('grab')) {
           var media = API.getMedia();
-          this.log('grabbed ' + media.author + ' – ' + media.title, e.user.id, e.user.username, '#B10DC9');
+          Events.trigger('chat:receive', {
+            type: this._class() + 'extplug-grab',
+            message: 'grabbed this track',
+            uid: e.user.id,
+            un: e.user.username,
+            color: '#a670fe',
+            badge: 'icon-grab'
+          });
         }
       },
 
-      log: function (msg, uid, username, color, badge) {
-        Events.trigger('chat:receive', {
-          type: 'custom',
-          color: color,
-          message: msg,
-          uid: uid,
-          un: username
-        });
+      onVote: function (e) {
+        if (this.settings.get('meh') && e.vote === -1) {
+          Events.trigger('chat:receive', {
+            type: this._class() + 'extplug-meh',
+            message: 'meh\'d this track',
+            uid: e.user.id,
+            un: e.user.username,
+            color: '#FF4136',
+            badge: 'icon-meh'
+          });
+        }
       }
     });
 
