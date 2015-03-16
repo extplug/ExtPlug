@@ -21,6 +21,7 @@
 //= views/users/settings/SliderView
 
 //= modules/Autowoot
+//= modules/ChatImages
 //= modules/ChatNotifications
 //= modules/CompactHistory
 //= modules/RoomStyles
