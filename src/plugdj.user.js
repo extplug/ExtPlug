@@ -1,11 +1,11 @@
 //= ExtPlug
-//= Style
 //= Module
 //= hooks/api-early
 //= hooks/chat
 //= hooks/playback
 //= util/function
 //= util/request
+//= util/Style
 //= models/Settings
 //= models/RoomSettings
 //= models/Module

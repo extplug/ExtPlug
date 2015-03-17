@@ -22,7 +22,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     ExtUserView = require('extplug/views/users/ExtUserView'),
     ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView'),
     ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
-    Style = require('extplug/Style'),
+    Style = require('extplug/util/Style'),
     fnUtils = require('extplug/util/function'),
 
     $ = require('jquery'),

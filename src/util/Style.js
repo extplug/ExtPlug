@@ -1,4 +1,4 @@
-define('extplug/Style', function (require, exports, module) {
+define('extplug/util/Style', function (require, exports, module) {
 
   var _ = require('underscore'),
     $ = require('jquery');

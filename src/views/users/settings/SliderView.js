@@ -1,7 +1,7 @@
 define('extplug/views/users/settings/SliderView', function (require, exports, module) {
   var Backbone = require('backbone'),
     $ = require('jquery'),
-    Style = require('extplug/Style');
+    Style = require('extplug/util/Style');
 
   function template(o) {
     return '<span class="title">' + o.label + '</span>' +

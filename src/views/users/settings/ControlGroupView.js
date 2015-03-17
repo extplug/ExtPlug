@@ -2,7 +2,7 @@ define('extplug/views/users/settings/ControlGroupView', function (require, expor
 
   var $ = require('jquery'),
     BaseView = require('extplug/views/BaseView'),
-    Style = require('extplug/Style');
+    Style = require('extplug/util/Style');
 
   var ControlGroupView = BaseView.extend({
     className: 'extplug control-group',
