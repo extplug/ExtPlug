@@ -5,7 +5,7 @@
     var Module = require('extplug/Module'),
       Events = require('plug/core/Events');
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Chat Notifications',
 
       settings: {
@@ -17,7 +17,8 @@
         meh: { type: 'boolean', label: 'Meh Vote', default: true }
       },
 
-      init: function () {
+      init: function (id, ext) {
+        this._super(id, ext);
         this.onJoin = this.onJoin.bind(this);
         this.onLeave = this.onLeave.bind(this);
         this.onAdvance = this.onAdvance.bind(this);
@@ -27,6 +28,7 @@
       },
 
       enable: function () {
+        this._super();
         API.on(API.USER_JOIN, this.onJoin);
         API.on(API.BEFORE_USER_LEAVE, this.onLeave);
         API.on(API.ADVANCE, this.onAdvance);
@@ -36,6 +38,7 @@
       },
 
       disable: function () {
+        this._super();
         API.off(API.USER_JOIN, this.onJoin);
         API.off(API.BEFORE_USER_LEAVE, this.onLeave);
         API.off(API.ADVANCE, this.onAdvance);

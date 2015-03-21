@@ -3,30 +3,18 @@ define('extplug/Module', function (require, exports, module) {
   var jQuery = require('jquery'),
     _ = require('underscore'),
     Backbone = require('backbone'),
+    Class = require('plug/core/Class'),
     Settings = require('extplug/models/Settings'),
     Style = require('extplug/util/Style'),
     fnUtils = require('extplug/util/function');
 
-  /**
-   * @param {string}  name      Module name.
-   * @param {Object=} prototype Module prototype.
-   */
-  function Module(prototype) {
-    function Constructor(id, ext) {
-      if (!(this instanceof Constructor)) return new Constructor(ext);
+  var Module = Class.extend({
+    init: function (id, ext) {
       _.extend(this, Backbone.Events);
 
       this.id = id;
-
-      /**
-       * @type {Array.<Style>}
-       */
-      this._styles = [];
-
-      /**
-       * @type {ExtPlug}
-       */
       this.ext = ext;
+      this._styles = [];
 
       var settings = new Settings({});
       if (this.settings) {
@@ -45,66 +33,46 @@ define('extplug/Module', function (require, exports, module) {
       fnUtils.bound(this, 'saveSettings');
 
       this.settings.on('change', this.saveSettings);
+    },
 
-      this.init();
-    }
+    $: function (sel) {
+      return sel ? jQuery(sel, this.ext.document) : this.ext.document;
+    },
 
-    Constructor._name = prototype.name;
-    delete prototype.name;
-
-    _.extend(Constructor.prototype, Module.prototype);
-
-    if (prototype) {
-      if (prototype.disable) {
-        prototype._disable = prototype.disable;
-        delete prototype.disable;
+    loadSettings: function () {
+      var settings = localStorage.getItem('extPlugModule_' + this.id);
+      if (settings) {
+        this.settings.set(JSON.parse(settings));
       }
-      _.extend(Constructor.prototype, prototype);
+    },
+
+    saveSettings: function () {
+      localStorage.setItem('extPlugModule_' + this.id, JSON.stringify(this.settings));
+    },
+
+    disable: function () {
+      this.removeStyles();
+    },
+    enable: function () {
+    },
+
+    refresh: function () {
+      this.disable();
+      this.enable();
+    },
+
+    Style: function (o) {
+      var style = new Style(o);
+      this._styles.push(style);
+      return style;
+    },
+
+    removeStyles: function () {
+      while (this._styles.length > 0) {
+        this._styles.pop().remove();
+      }
     }
-
-    return Constructor;
-  }
-
-  Module.prototype.init = function () {};
-
-  Module.prototype.$ = function (sel) {
-    return sel ? jQuery(sel, this.ext.document) : this.ext.document;
-  };
-
-  Module.prototype.loadSettings = function () {
-    var settings = localStorage.getItem('extPlugModule_' + this.id);
-    if (settings) {
-      this.settings.set(JSON.parse(settings));
-    }
-  };
-
-  Module.prototype.saveSettings = function () {
-    localStorage.setItem('extPlugModule_' + this.id, JSON.stringify(this.settings));
-  };
-
-  Module.prototype.disable = function () {
-    if (this._disable) {
-      this._disable();
-    }
-    this.removeStyles();
-  };
-
-  Module.prototype.refresh = function () {
-    this.disable();
-    this.enable();
-  };
-
-  Module.prototype.Style = function (o) {
-    var style = new Style(o);
-    this._styles.push(style);
-    return style;
-  };
-
-  Module.prototype.removeStyles = function () {
-    while (this._styles.length > 0) {
-      this._styles.pop().remove();
-    }
-  };
+  });
 
   module.exports = Module;
 

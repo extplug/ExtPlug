@@ -7,19 +7,15 @@
       _ = require('underscore'),
       $ = require('jquery');
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Compact History',
       description: 'Lays out the room history in a much more compact view.',
 
-      init: function () {
-      },
-
-      /**
-       * We'll just use CSS!
-       */
+      // We'll just use CSS
       enable: function () {
-        var ITEM_HEIGHT = 20
-        var heightPx = ITEM_HEIGHT + 'px'
+        this._super();
+        var ITEM_HEIGHT = 20;
+        var heightPx = ITEM_HEIGHT + 'px';
         this.Style({
           '#history-panel .media-list.history .playlist-media-item:not(.selected)': {
             'height': heightPx
@@ -64,9 +60,7 @@
             'top': '-4px'
           }
         });
-      },
-
-      disable: function () {}
+      }
 
     });
 

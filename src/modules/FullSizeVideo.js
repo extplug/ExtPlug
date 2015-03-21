@@ -5,15 +5,17 @@
       fnUtils = require('extplug/util/function'),
       win = require('plug/util/window');
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Full-Size Video',
 
-      init: function () {
+      init: function (id, ext) {
+        this._super(id, ext);
         fnUtils.bound(this, 'enter');
         fnUtils.bound(this, 'leave');
       },
 
       enable: function () {
+        this._super();
         this.Style({
           '#playback': {
             left: '0px !important',
@@ -58,6 +60,7 @@
       },
 
       disable: function () {
+        this._super();
         this.enter();
         this.$('#playback').off('mouseenter', this.enter).off('mouseleave', this.leave);
         setTimeout(function () {

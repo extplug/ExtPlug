@@ -6,10 +6,11 @@
       UserRowView = require('plug/views/rooms/users/RoomUserRowView'),
       $ = require('jquery');
 
-    var MehIcon = Module({
+    var MehIcon = Module.extend({
       name: 'Meh Icons',
 
       enable: function () {
+        this._super();
         var mehIcon = this;
         this._vote = UserRowView.prototype.vote;
         UserRowView.prototype.vote = function () {
@@ -26,6 +27,7 @@
       },
 
       disable: function () {
+        this._super();
         UserRowView.prototype.vote = this._vote;
       },
 

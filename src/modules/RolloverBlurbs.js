@@ -11,11 +11,12 @@
     var emoji = $('<span />').addClass('emoji-glow')
       .append($('<span />').addClass('emoji emoji-1f4dd'));
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Rollover Blurb (Experimental)',
       description: 'Show user "Blurb" / bio in rollover popups.',
 
       enable: function () {
+        this._super();
         this.Style({
           '.extplug-blurb': {
             padding: '10px',
@@ -36,6 +37,7 @@
       },
 
       disable: function () {
+        this._super();
         fnUtils.unreplaceMethod(rolloverView, 'showModal', this.addBlurb);
         fnUtils.unreplaceMethod(rolloverView, 'hide', this.removeBlurb);
       },

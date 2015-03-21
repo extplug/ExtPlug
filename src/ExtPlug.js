@@ -172,13 +172,13 @@ define('extplug/ExtPlug', function (require, exports, module) {
    * @return {ExtPlug} `this`.
    */
   ExtPlug.prototype.register = function (id, Mod) {
-    if (Mod._name) {
+    if (Mod) {
       try {
         var mod = new Mod(id, this);
-        this._modules.add(new Module({ module: mod, name: Mod._name }));
+        this._modules.add(new Module({ module: mod, name: mod.name }));
       }
       catch (e) {
-        this._modules.add(new Module({ module: e, name: Mod._name }));
+        this._modules.add(new Module({ module: e, name: mod && mod.name || mod.prototype.name }));
       }
     }
     return this;
