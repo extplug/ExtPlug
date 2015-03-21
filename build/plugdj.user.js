@@ -22,7 +22,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     ExtUserView = require('extplug/views/users/ExtUserView'),
     ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView'),
     ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
-    Style = require('extplug/Style'),
+    Style = require('extplug/util/Style'),
     fnUtils = require('extplug/util/function'),
 
     $ = require('jquery'),
@@ -172,13 +172,13 @@ define('extplug/ExtPlug', function (require, exports, module) {
    * @return {ExtPlug} `this`.
    */
   ExtPlug.prototype.register = function (id, Mod) {
-    if (Mod._name) {
+    if (Mod) {
       try {
         var mod = new Mod(id, this);
-        this._modules.add(new Module({ module: mod, name: Mod._name }));
+        this._modules.add(new Module({ module: mod, name: mod.name }));
       }
       catch (e) {
-        this._modules.add(new Module({ module: e, name: Mod._name }));
+        this._modules.add(new Module({ module: e, name: mod && mod.name || mod.prototype.name }));
       }
     }
     return this;
@@ -477,104 +477,23 @@ define('extplug/ExtPlug', function (require, exports, module) {
   module.exports = ExtPlug;
 
 });
-;define('extplug/Style', function (require, exports, module) {
-
-  var _ = require('underscore'),
-    $ = require('jquery');
-
-  function Style(defaults) {
-    this._rules = {};
-    this._timeout = null;
-
-    this.refresh = this.refresh.bind(this);
-
-    this.el = $('<style>').attr('type', 'text/css').appendTo('head');
-
-    if (_.isObject(defaults)) {
-      this.set(defaults);
-    }
-  }
-
-  Style.prototype.set = function (sel, props) {
-    var rules = this._rules;
-    if (props) {
-      _.each(props, function (val, prop) {
-        if (_.isObject(val)) {
-          // nested rules
-          this.set(sel + ' ' + prop, val);
-        }
-        else {
-          if (!(sel in this._rules)) this._rules[sel] = {};
-          this._rules[sel][prop] = val;
-        }
-      }, this);
-    }
-    else {
-      _.each(sel, function (ruleset, selector) {
-        this.set(selector, ruleset);
-      }, this);
-    }
-
-    // throttle updates
-    clearTimeout(this._timeout);
-    this._timeout = setTimeout(this.refresh, 1);
-    return this;
-  };
-
-  Style.prototype.refresh = function () {
-    this.el.text(this.toString());
-  };
-
-  Style.prototype.remove = function () {
-    this.el.remove();
-  };
-
-  Style.prototype.toString = function () {
-    var str = '',
-      rules = this._rules;
-    Object.keys(rules).forEach(function (selector) {
-      var ruleset = rules[selector];
-      str += selector + ' {\n';
-      Object.keys(ruleset).forEach(function (property) {
-        str += '  ' + property + ': ' + ruleset[property] + ';\n';
-      });
-      str += '}\n\n';
-    });
-    return str;
-  };
-
-  return Style;
-
-});
 ;define('extplug/Module', function (require, exports, module) {
 
   var jQuery = require('jquery'),
     _ = require('underscore'),
     Backbone = require('backbone'),
+    Class = require('plug/core/Class'),
     Settings = require('extplug/models/Settings'),
-    Style = require('extplug/Style'),
+    Style = require('extplug/util/Style'),
     fnUtils = require('extplug/util/function');
 
-  /**
-   * @param {string}  name      Module name.
-   * @param {Object=} prototype Module prototype.
-   */
-  function Module(prototype) {
-    function Constructor(id, ext) {
-      if (!(this instanceof Constructor)) return new Constructor(ext);
+  var Module = Class.extend({
+    init: function (id, ext) {
       _.extend(this, Backbone.Events);
 
       this.id = id;
-
-      /**
-       * @type {Array.<Style>}
-       */
-      this._styles = [];
-
-      /**
-       * @type {ExtPlug}
-       */
       this.ext = ext;
+      this._styles = [];
 
       var settings = new Settings({});
       if (this.settings) {
@@ -593,66 +512,46 @@ define('extplug/ExtPlug', function (require, exports, module) {
       fnUtils.bound(this, 'saveSettings');
 
       this.settings.on('change', this.saveSettings);
+    },
 
-      this.init();
-    }
+    $: function (sel) {
+      return sel ? jQuery(sel, this.ext.document) : this.ext.document;
+    },
 
-    Constructor._name = prototype.name;
-    delete prototype.name;
-
-    _.extend(Constructor.prototype, Module.prototype);
-
-    if (prototype) {
-      if (prototype.disable) {
-        prototype._disable = prototype.disable;
-        delete prototype.disable;
+    loadSettings: function () {
+      var settings = localStorage.getItem('extPlugModule_' + this.id);
+      if (settings) {
+        this.settings.set(JSON.parse(settings));
       }
-      _.extend(Constructor.prototype, prototype);
+    },
+
+    saveSettings: function () {
+      localStorage.setItem('extPlugModule_' + this.id, JSON.stringify(this.settings));
+    },
+
+    disable: function () {
+      this.removeStyles();
+    },
+    enable: function () {
+    },
+
+    refresh: function () {
+      this.disable();
+      this.enable();
+    },
+
+    Style: function (o) {
+      var style = new Style(o);
+      this._styles.push(style);
+      return style;
+    },
+
+    removeStyles: function () {
+      while (this._styles.length > 0) {
+        this._styles.pop().remove();
+      }
     }
-
-    return Constructor;
-  }
-
-  Module.prototype.init = function () {};
-
-  Module.prototype.$ = function (sel) {
-    return sel ? jQuery(sel, this.ext.document) : this.ext.document;
-  };
-
-  Module.prototype.loadSettings = function () {
-    var settings = localStorage.getItem('extPlugModule_' + this.id);
-    if (settings) {
-      this.settings.set(JSON.parse(settings));
-    }
-  };
-
-  Module.prototype.saveSettings = function () {
-    localStorage.setItem('extPlugModule_' + this.id, JSON.stringify(this.settings));
-  };
-
-  Module.prototype.disable = function () {
-    if (this._disable) {
-      this._disable();
-    }
-    this.removeStyles();
-  };
-
-  Module.prototype.refresh = function () {
-    this.disable();
-    this.enable();
-  };
-
-  Module.prototype.Style = function (o) {
-    var style = new Style(o);
-    this._styles.push(style);
-    return style;
-  };
-
-  Module.prototype.removeStyles = function () {
-    while (this._styles.length > 0) {
-      this._styles.pop().remove();
-    }
-  };
+  });
 
   module.exports = Module;
 
@@ -903,6 +802,75 @@ define('extplug/ExtPlug', function (require, exports, module) {
     }
     return false;
   }
+
+});
+;define('extplug/util/Style', function (require, exports, module) {
+
+  var _ = require('underscore'),
+    $ = require('jquery');
+
+  function Style(defaults) {
+    this._rules = {};
+    this._timeout = null;
+
+    this.refresh = this.refresh.bind(this);
+
+    this.el = $('<style>').attr('type', 'text/css').appendTo('head');
+
+    if (_.isObject(defaults)) {
+      this.set(defaults);
+    }
+  }
+
+  Style.prototype.set = function (sel, props) {
+    var rules = this._rules;
+    if (props) {
+      _.each(props, function (val, prop) {
+        if (_.isObject(val)) {
+          // nested rules
+          this.set(sel + ' ' + prop, val);
+        }
+        else {
+          if (!(sel in this._rules)) this._rules[sel] = {};
+          this._rules[sel][prop] = val;
+        }
+      }, this);
+    }
+    else {
+      _.each(sel, function (ruleset, selector) {
+        this.set(selector, ruleset);
+      }, this);
+    }
+
+    // throttle updates
+    clearTimeout(this._timeout);
+    this._timeout = setTimeout(this.refresh, 1);
+    return this;
+  };
+
+  Style.prototype.refresh = function () {
+    this.el.text(this.toString());
+  };
+
+  Style.prototype.remove = function () {
+    this.el.remove();
+  };
+
+  Style.prototype.toString = function () {
+    var str = '',
+      rules = this._rules;
+    Object.keys(rules).forEach(function (selector) {
+      var ruleset = rules[selector];
+      str += selector + ' {\n';
+      Object.keys(ruleset).forEach(function (property) {
+        str += '  ' + property + ': ' + ruleset[property] + ';\n';
+      });
+      str += '}\n\n';
+    });
+    return str;
+  };
+
+  return Style;
 
 });
 ;define('extplug/models/Settings', function (require, exports, module) {
@@ -1299,7 +1267,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
 
   var $ = require('jquery'),
     BaseView = require('extplug/views/BaseView'),
-    Style = require('extplug/Style');
+    Style = require('extplug/util/Style');
 
   var ControlGroupView = BaseView.extend({
     className: 'extplug control-group',
@@ -1531,7 +1499,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
 ;define('extplug/views/users/settings/SliderView', function (require, exports, module) {
   var Backbone = require('backbone'),
     $ = require('jquery'),
-    Style = require('extplug/Style');
+    Style = require('extplug/util/Style');
 
   function template(o) {
     return '<span class="title">' + o.label + '</span>' +
@@ -1618,20 +1586,24 @@ define('extplug/ExtPlug', function (require, exports, module) {
     var Module = require('extplug/Module'),
       fnUtils = require('extplug/util/function');
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Autowoot',
 
-      init: function () {
+      init: function (id, ext) {
+        this._super(id, ext);
         fnUtils.bound(this, 'onAdvance');
+        fnUtils.bound(this, 'woot');
       },
 
       enable: function () {
+        this._super();
         this.wootElement = this.$('#woot');
         this.woot();
         API.on(API.ADVANCE, this.onAdvance);
       },
 
       disable: function () {
+        this._super();
         API.off(API.ADVANCE, this.onAdvance);
       },
 
@@ -1640,7 +1612,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
       },
 
       onAdvance: function () {
-        setTimeout(this.woot.bind(this), 3000 + Math.floor(Math.random() * 5000));
+        setTimeout(this.woot, 3000 + Math.floor(Math.random() * 5000));
       }
 
     });
@@ -1654,7 +1626,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     var Module = require('extplug/Module'),
       Events = require('plug/core/Events');
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Chat Notifications',
 
       settings: {
@@ -1666,7 +1638,8 @@ define('extplug/ExtPlug', function (require, exports, module) {
         meh: { type: 'boolean', label: 'Meh Vote', default: true }
       },
 
-      init: function () {
+      init: function (id, ext) {
+        this._super(id, ext);
         this.onJoin = this.onJoin.bind(this);
         this.onLeave = this.onLeave.bind(this);
         this.onAdvance = this.onAdvance.bind(this);
@@ -1676,6 +1649,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
       },
 
       enable: function () {
+        this._super();
         API.on(API.USER_JOIN, this.onJoin);
         API.on(API.BEFORE_USER_LEAVE, this.onLeave);
         API.on(API.ADVANCE, this.onAdvance);
@@ -1685,6 +1659,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
       },
 
       disable: function () {
+        this._super();
         API.off(API.USER_JOIN, this.onJoin);
         API.off(API.BEFORE_USER_LEAVE, this.onLeave);
         API.off(API.ADVANCE, this.onAdvance);
@@ -1785,19 +1760,15 @@ define('extplug/ExtPlug', function (require, exports, module) {
       _ = require('underscore'),
       $ = require('jquery');
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Compact History',
       description: 'Lays out the room history in a much more compact view.',
 
-      init: function () {
-      },
-
-      /**
-       * We'll just use CSS!
-       */
+      // We'll just use CSS
       enable: function () {
-        var ITEM_HEIGHT = 20
-        var heightPx = ITEM_HEIGHT + 'px'
+        this._super();
+        var ITEM_HEIGHT = 20;
+        var heightPx = ITEM_HEIGHT + 'px';
         this.Style({
           '#history-panel .media-list.history .playlist-media-item:not(.selected)': {
             'height': heightPx
@@ -1842,9 +1813,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
             'top': '-4px'
           }
         });
-      },
-
-      disable: function () {}
+      }
 
     });
 
@@ -1861,10 +1830,11 @@ define('extplug/ExtPlug', function (require, exports, module) {
       _ = require('underscore'),
       $ = require('jquery');
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Room Styles',
 
-      init: function () {
+      init: function (id, ext) {
+        this._super(id, ext);
         fnUtils.bound(this, 'colors');
         fnUtils.bound(this, 'css');
         fnUtils.bound(this, 'images');
@@ -1872,6 +1842,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
       },
 
       enable: function () {
+        this._super();
         this.all();
 
         this.ext.roomSettings
@@ -1883,6 +1854,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
       },
 
       disable: function () {
+        this._super();
         this.ext.roomSettings
           .off('change:colors', this.colors)
           .off('change:css', this.css)
@@ -1992,10 +1964,11 @@ define('extplug/ExtPlug', function (require, exports, module) {
       UserRowView = require('plug/views/rooms/users/RoomUserRowView'),
       $ = require('jquery');
 
-    var MehIcon = Module({
+    var MehIcon = Module.extend({
       name: 'Meh Icons',
 
       enable: function () {
+        this._super();
         var mehIcon = this;
         this._vote = UserRowView.prototype.vote;
         UserRowView.prototype.vote = function () {
@@ -2012,6 +1985,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
       },
 
       disable: function () {
+        this._super();
         UserRowView.prototype.vote = this._vote;
       },
 
@@ -2043,11 +2017,12 @@ define('extplug/ExtPlug', function (require, exports, module) {
     var emoji = $('<span />').addClass('emoji-glow')
       .append($('<span />').addClass('emoji emoji-1f4dd'));
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Rollover Blurb (Experimental)',
       description: 'Show user "Blurb" / bio in rollover popups.',
 
       enable: function () {
+        this._super();
         this.Style({
           '.extplug-blurb': {
             padding: '10px',
@@ -2068,6 +2043,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
       },
 
       disable: function () {
+        this._super();
         fnUtils.unreplaceMethod(rolloverView, 'showModal', this.addBlurb);
         fnUtils.unreplaceMethod(rolloverView, 'hide', this.removeBlurb);
       },
@@ -2113,15 +2089,17 @@ define('extplug/ExtPlug', function (require, exports, module) {
       fnUtils = require('extplug/util/function'),
       win = require('plug/util/window');
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Full-Size Video',
 
-      init: function () {
+      init: function (id, ext) {
+        this._super(id, ext);
         fnUtils.bound(this, 'enter');
         fnUtils.bound(this, 'leave');
       },
 
       enable: function () {
+        this._super();
         this.Style({
           '#playback': {
             left: '0px !important',
@@ -2166,6 +2144,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
       },
 
       disable: function () {
+        this._super();
         this.enter();
         this.$('#playback').off('mouseenter', this.enter).off('mouseleave', this.leave);
         setTimeout(function () {
