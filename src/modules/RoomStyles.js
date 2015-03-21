@@ -8,10 +8,11 @@
       _ = require('underscore'),
       $ = require('jquery');
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Room Styles',
 
-      init: function () {
+      init: function (id, ext) {
+        this._super(id, ext);
         fnUtils.bound(this, 'colors');
         fnUtils.bound(this, 'css');
         fnUtils.bound(this, 'images');
@@ -19,6 +20,7 @@
       },
 
       enable: function () {
+        this._super();
         this.all();
 
         this.ext.roomSettings
@@ -30,6 +32,7 @@
       },
 
       disable: function () {
+        this._super();
         this.ext.roomSettings
           .off('change:colors', this.colors)
           .off('change:css', this.css)

@@ -36,7 +36,7 @@ A module definition looks roughly like this:
 (extp = window.extp || []).push(function (ext) {
 
   // ext.define takes care of registering your module with ExtPlug, so you can just
-  // return a Module definition from the callback.
+  // return a Module class from the callback.
   ext.define('ExampleModule', function (require, exports, module) {
 
     var Events = require('plug/core/Events'),
@@ -49,21 +49,24 @@ A module definition looks roughly like this:
       else return num;
     }
 
-    module.exports = Module({
+    module.exports = Module.extend({
       name: 'Example Module',
 
-      init: function () {
+      init: function (id, ext) {
+        this._super(id, ext);
         // do class initialization here
         // binding methods, maybe!
         this.showTime = _.bind(this.showTime, this);
       },
 
       enable: function () {
+        this._super();
         // kick off your module here.
         // attach events, start intervals, manipulate DOM elements…
         this._interval = setInterval(this.showTime, 60 * 1000);
       },
       disable: function () {
+        this._super();
         // basically just revert everything you did in enable!
         clearInterval(this._interval);
       },
