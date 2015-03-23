@@ -3,7 +3,8 @@ define('extplug/models/RoomSettings', function (require, exports, module) {
   var currentRoom = require('plug/models/currentRoom'),
     request = require('extplug/util/request'),
     fnUtils = require('extplug/util/function'),
-    Backbone = require('backbone');
+    Backbone = require('backbone'),
+    Events = require('plug/core/Events');
 
   var RoomSettings = Backbone.Model.extend({
 
@@ -34,10 +35,25 @@ define('extplug/models/RoomSettings', function (require, exports, module) {
           this.onLoad(this._loaded[m[1]]);
         }
         else {
-          request.json(m[1]).then(function (response) {
-            this._loaded[m[1]] = response;
-            this.onLoad(response);
-          }.bind(this));
+          request.json(m[1])
+            .then(function (response) {
+              this._loaded[m[1]] = response;
+              this.onLoad(response);
+            }.bind(this))
+            .fail(function (e) {
+              var message = ''
+              if (e.status === 0) {
+                message += ' Your browser or an extension may be blocking its URL.';
+              }
+              else if (e.status >= 400) {
+                message += ' Its URL is not accessible.';
+              }
+              else if (e.status) {
+                message += ' Status code: ' + e.status;
+              }
+              Events.trigger('notify', 'icon-chat-system',
+                             'Room Settings could not be loaded for this room.' + message);
+            });
         }
       }
     },
@@ -61,7 +77,7 @@ define('extplug/models/RoomSettings', function (require, exports, module) {
     },
 
     dispose: function () {
-      currentRoom.off('change:description', this.refresh);
+      currentRoom.off('change:description', this.reload);
     }
 
   });
