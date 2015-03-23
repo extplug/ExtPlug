@@ -887,7 +887,8 @@ define('extplug/ExtPlug', function (require, exports, module) {
   var currentRoom = require('plug/models/currentRoom'),
     request = require('extplug/util/request'),
     fnUtils = require('extplug/util/function'),
-    Backbone = require('backbone');
+    Backbone = require('backbone'),
+    Events = require('plug/core/Events');
 
   var RoomSettings = Backbone.Model.extend({
 
@@ -918,10 +919,25 @@ define('extplug/ExtPlug', function (require, exports, module) {
           this.onLoad(this._loaded[m[1]]);
         }
         else {
-          request.json(m[1]).then(function (response) {
-            this._loaded[m[1]] = response;
-            this.onLoad(response);
-          }.bind(this));
+          request.json(m[1])
+            .then(function (response) {
+              this._loaded[m[1]] = response;
+              this.onLoad(response);
+            }.bind(this))
+            .fail(function (e) {
+              var message = ''
+              if (e.status === 0) {
+                message += ' Your browser or an extension may be blocking its URL.';
+              }
+              else if (e.status >= 400) {
+                message += ' Its URL is not accessible.';
+              }
+              else if (e.status) {
+                message += ' Status code: ' + e.status;
+              }
+              Events.trigger('notify', 'icon-chat-system',
+                             'Room Settings could not be loaded for this room.' + message);
+            });
         }
       }
     },
@@ -945,7 +961,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     },
 
     dispose: function () {
-      currentRoom.off('change:description', this.refresh);
+      currentRoom.off('change:description', this.reload);
     }
 
   });
@@ -1839,28 +1855,28 @@ define('extplug/ExtPlug', function (require, exports, module) {
         fnUtils.bound(this, 'css');
         fnUtils.bound(this, 'images');
         fnUtils.bound(this, 'unload');
+        fnUtils.bound(this, 'reload');
       },
 
       enable: function () {
         this._super();
         this.all();
 
-        this.ext.roomSettings
-          .on('change:colors', this.colors)
-          .on('change:css', this.css)
-          .on('change:images', this.images);
+        this.ext.roomSettings.on('change', this.reload);
 
         this.ext.on('room:left', this.unload);
       },
 
       disable: function () {
         this._super();
-        this.ext.roomSettings
-          .off('change:colors', this.colors)
-          .off('change:css', this.css)
-          .off('change:images', this.images);
+        this.ext.roomSettings.off('change', this.reload);
 
         this.ext.off('room:left', this.unload);
+      },
+
+      reload: function () {
+        this.unload();
+        this.all();
       },
 
       colors: function () {
