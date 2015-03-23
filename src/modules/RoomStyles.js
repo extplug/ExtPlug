@@ -17,28 +17,28 @@
         fnUtils.bound(this, 'css');
         fnUtils.bound(this, 'images');
         fnUtils.bound(this, 'unload');
+        fnUtils.bound(this, 'reload');
       },
 
       enable: function () {
         this._super();
         this.all();
 
-        this.ext.roomSettings
-          .on('change:colors', this.colors)
-          .on('change:css', this.css)
-          .on('change:images', this.images);
+        this.ext.roomSettings.on('change', this.reload);
 
         this.ext.on('room:left', this.unload);
       },
 
       disable: function () {
         this._super();
-        this.ext.roomSettings
-          .off('change:colors', this.colors)
-          .off('change:css', this.css)
-          .off('change:images', this.images);
+        this.ext.roomSettings.off('change', this.reload);
 
         this.ext.off('room:left', this.unload);
+      },
+
+      reload: function () {
+        this.unload();
+        this.all();
       },
 
       colors: function () {
