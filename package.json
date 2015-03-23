@@ -3,7 +3,7 @@
   "version": "0.4.1",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
-    "plug-modules": "1.x"
+    "plug-modules": "3.x"
   },
   "scripts": {
     "build": "node build.js",
