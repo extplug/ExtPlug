@@ -1,49 +1,47 @@
-;(extp = window.extp || []).push(function (ext) {
+define('extplug/modules/meh-icon/main', function (require, exports, module) {
 
-  ext.define('MehIcon', function (require, exports, module) {
+  var Module = require('extplug/Module'),
+    UserRowView = require('plug/views/rooms/users/RoomUserRowView'),
+    $ = require('jquery');
 
-    var Module = require('extplug/Module'),
-      UserRowView = require('plug/views/rooms/users/RoomUserRowView'),
-      $ = require('jquery');
+  var MehIcon = Module.extend({
+    name: 'Meh Icons',
 
-    var MehIcon = Module.extend({
-      name: 'Meh Icons',
-
-      enable: function () {
-        this._super();
-        var mehIcon = this;
-        this._vote = UserRowView.prototype.vote;
-        UserRowView.prototype.vote = function () {
-          mehIcon._vote.call(this);
-          mehIcon.showMeh.call(this);
-        };
-        this.Style({
-          '#user-lists .list.room .user .icon-meh': {
-            'top': '-1px',
-            'right': '9px',
-            'left': 'auto'
-          }
-        });
-      },
-
-      disable: function () {
-        this._super();
-        UserRowView.prototype.vote = this._vote;
-      },
-
-      showMeh: function () {
-        if (this.model.get('vote') === -1 && !this.model.get('grab')) {
-          if (!this.$icon) {
-            this.$icon = $('<i />');
-            this.$el.append(this.$icon);
-          }
-          this.$icon.removeClass().addClass('icon icon-meh extplug-meh-icon');
+    enable: function () {
+      this._super();
+      var mehIcon = this;
+      this._vote = UserRowView.prototype.vote;
+      UserRowView.prototype.vote = function () {
+        mehIcon._vote.call(this);
+        mehIcon.showMeh.call(this);
+      };
+      this.Style({
+        '#user-lists .list.room .user .icon-meh': {
+          'top': '-1px',
+          'right': '9px',
+          'left': 'auto'
         }
+      });
+    },
+
+    disable: function () {
+      this._super();
+      UserRowView.prototype.vote = this._vote;
+    },
+
+    showMeh: function () {
+      if (this.model.get('vote') === -1 && !this.model.get('grab')) {
+        if (!this.$icon) {
+          this.$icon = $('<i />');
+          this.$el.append(this.$icon);
+        }
+        this.$icon.removeClass().addClass('icon icon-meh extplug-meh-icon');
       }
-    });
-
-    module.exports = MehIcon;
-
+    }
   });
 
+  module.exports = MehIcon;
+
 });
+
+(extp = window.extp || []).push('extplug/modules/meh-icon/main');
