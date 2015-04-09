@@ -1,7 +1,6 @@
 ;(function _initExtPlug() {
 
   if (window.API) {
-    //= ../node_modules/plug-modules/plug-modules
     plugModules.register();
     require([ 'extplug/ExtPlug' ], function _loaded(ExtPlug) {
       if (!appViewExists()) {
