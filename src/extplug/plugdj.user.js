@@ -16,7 +16,7 @@
 
       ext.init();
       cbs.forEach(function (cb) {
-        cb(ext);
+        ext.push(cb);
       });
 
     });

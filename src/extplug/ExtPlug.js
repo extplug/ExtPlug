@@ -171,6 +171,8 @@ define(function (require, exports, module) {
    * @param {function()} Mod A module constructor created with {@link Module}.
    *
    * @return {ExtPlug} `this`.
+   * @deprecated Use registerModule() instead. It integrates better with plug.dj's
+   *             require.js-based app, and properly takes care of dependencies.
    */
   ExtPlug.prototype.register = function (id, Mod) {
     if (Mod) {
@@ -182,6 +184,18 @@ define(function (require, exports, module) {
         this._modules.add(new Module({ module: e, name: mod && mod.name || mod.prototype.name }));
       }
     }
+    return this;
+  };
+
+  /**
+   * Register an ExtPlug module by require.js module name.
+   * This can be anything that is accepted by require.js, including
+   * modules using require.js plugins or modules on remote URLs.
+   */
+  ExtPlug.prototype.registerModule = function (id) {
+    require([ id ], function (Mod) {
+      this.register(id, Mod);
+    }.bind(this));
     return this;
   };
 
@@ -447,13 +461,19 @@ define(function (require, exports, module) {
   };
 
   /**
-   * 3rd party modules should use `extp.push` to register callbacks for when ExtPlug is loaded.
+   * 3rd party modules should use `extp.push` to register callbacks or modules
+   * for when ExtPlug is loaded.
    * This ensures that modules that are loaded *after* ExtPlug will also register.
    *
    * @param {function()} cb
    */
   ExtPlug.prototype.push = function (cb) {
-    cb(this);
+    if (typeof cb === 'string') {
+      this.registerModule(cb);
+    }
+    else {
+      cb(this);
+    }
   };
 
   /**
