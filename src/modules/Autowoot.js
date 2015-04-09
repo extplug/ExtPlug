@@ -1,4 +1,4 @@
-(extp = window.extp || []).push(function (ext) {
+;(extp = window.extp || []).push(function (ext) {
 
   ext.define('Autowoot', function (require, exports, module) {
 

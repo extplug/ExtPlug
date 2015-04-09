@@ -1,33 +1,3 @@
-//= ExtPlug
-//= Module
-//= hooks/api-early
-//= hooks/chat
-//= hooks/playback
-//= util/function
-//= util/request
-//= util/Style
-//= models/Settings
-//= models/RoomSettings
-//= models/Module
-//= collections/ModulesCollection
-//= views/BaseView
-//= views/users/ExtUserView
-//= views/users/settings/SettingsView
-//= views/users/settings/TabMenuView
-//= views/users/settings/ControlGroupView
-//= views/users/settings/CheckboxView
-//= views/users/settings/DropdownView
-//= views/users/settings/ErrorCheckboxView
-//= views/users/settings/SliderView
-
-//= modules/Autowoot
-//= modules/ChatNotifications
-//= modules/CompactHistory
-//= modules/RoomStyles
-//= modules/MehIcon
-//= modules/RolloverBlurbs
-//= modules/FullSizeVideo
-
 ;(function _initExtPlug() {
 
   if (window.API) {

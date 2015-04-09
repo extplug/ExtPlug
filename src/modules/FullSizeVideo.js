@@ -1,4 +1,4 @@
-(extp = window.extp || []).push(function (ext) {
+;(extp = window.extp || []).push(function (ext) {
 
   ext.define('FullSizeVideo', function (require, exports, module) {
     var Module = require('extplug/Module'),

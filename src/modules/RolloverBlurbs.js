@@ -1,4 +1,4 @@
-(extp = window.extp || []).push(function (ext) {
+;(extp = window.extp || []).push(function (ext) {
 
   ext.define('RolloverBlurbs', function (require, exports, module) {
 

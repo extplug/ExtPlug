@@ -1,4 +1,4 @@
-define('extplug/ExtPlug', function (require, exports, module) {
+define(function (require, exports, module) {
 
   var currentMedia = require('plug/models/currentMedia'),
     currentRoom = require('plug/models/currentRoom'),
@@ -24,6 +24,7 @@ define('extplug/ExtPlug', function (require, exports, module) {
     ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
     Style = require('extplug/util/Style'),
     fnUtils = require('extplug/util/function'),
+    _Module = require('extplug/Module'),
 
     $ = require('jquery'),
     _ = require('underscore'),
