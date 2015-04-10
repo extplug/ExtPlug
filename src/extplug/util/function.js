@@ -1,4 +1,4 @@
-define('extplug/util/function', function (require, exports, module) {
+define(function (require, exports, module) {
 
   var _ = require('underscore');
 

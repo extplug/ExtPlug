@@ -1,4 +1,4 @@
-define('extplug/collections/ModulesCollection', function (require, exports, module) {
+define(function (require, exports, module) {
 
   var Backbone = require('backbone'),
     Module = require('extplug/models/Module');

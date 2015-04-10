@@ -1,4 +1,4 @@
-define('extplug/hooks/api-early', function (require, exports, module) {
+define(function (require, exports, module) {
 
   var fnUtils = require('extplug/util/function');
 

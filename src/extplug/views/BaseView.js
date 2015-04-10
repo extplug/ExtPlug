@@ -1,4 +1,4 @@
-define('extplug/views/BaseView', function (require, exports, module) {
+define(function (require, exports, module) {
 
   var Backbone = require('backbone');
 

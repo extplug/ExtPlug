@@ -1,4 +1,4 @@
-define('extplug/views/users/settings/SettingsView', function (require, exports, module) {
+define(function (require, exports, module) {
   var BaseView = require('extplug/views/BaseView'),
     ControlGroupView = require('extplug/views/users/settings/ControlGroupView'),
     ErrorCheckboxView = require('extplug/views/users/settings/ErrorCheckboxView'),

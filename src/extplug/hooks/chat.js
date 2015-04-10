@@ -1,4 +1,4 @@
-define('extplug/hooks/chat', function (require, exports, module) {
+define(function (require, exports, module) {
 
   // Adds a bunch of new chat events.
   // "chat:incoming" is fired as soon as a new message is received from the socket.

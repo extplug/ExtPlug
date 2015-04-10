@@ -1,4 +1,4 @@
-define('extplug/views/users/ExtUserView', function (require, exports, module) {
+define(function (require, exports, module) {
 
   var UserView = require('plug/views/users/UserView');
 

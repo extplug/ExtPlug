@@ -1,4 +1,4 @@
-define('extplug/hooks/playback', function (require, exports, module) {
+define(function (require, exports, module) {
 
   var Events = require('plug/core/Events');
 

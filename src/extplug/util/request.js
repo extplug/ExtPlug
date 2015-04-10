@@ -1,4 +1,4 @@
-define('extplug/util/request', function (require, exports, module) {
+define(function (require, exports, module) {
 
   var $ = require('jquery');
 

@@ -1,4 +1,4 @@
-define('extplug/views/users/settings/TabMenuView', function (require, exports, module) {
+define(function (require, exports, module) {
 
   var SettingsTabMenuView = require('plug/views/users/settings/TabMenuView'),
     $ = require('jquery');

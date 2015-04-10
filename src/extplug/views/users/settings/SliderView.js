@@ -1,4 +1,4 @@
-define('extplug/views/users/settings/SliderView', function (require, exports, module) {
+define(function (require, exports, module) {
   var Backbone = require('backbone'),
     $ = require('jquery'),
     Style = require('extplug/util/Style');
