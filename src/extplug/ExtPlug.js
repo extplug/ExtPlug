@@ -2,7 +2,7 @@ define(function (require, exports, module) {
 
   var currentMedia = require('plug/models/currentMedia'),
     currentRoom = require('plug/models/currentRoom'),
-    settings = require('plug/store/settings'),
+    settings = require('extplug/store/settings'),
     Events = require('plug/core/Events'),
     ApplicationView = require('plug/views/app/ApplicationView'),
     SettingsTabMenuView = require('plug/views/users/settings/TabMenuView'),
@@ -74,12 +74,7 @@ define(function (require, exports, module) {
     this._modules = new ModulesCollection();
 
     /**
-     * ExtPlug global settings. Includes global plug.dj settings.
-     *
-     * Plug.dj settings are a plain object internally, mirroring it here
-     * as a Backbone model allows modules to listen for changes.
-     * It's also nice to have a single global settings object instead of
-     * one for extplug and one for plug...
+     * ExtPlug settings.
      *
      * @type {Settings}
      */
@@ -181,7 +176,7 @@ define(function (require, exports, module) {
   ExtPlug.prototype.init = function () {
     var ext = this;
 
-    this.syncPlugSettings();
+    settings.update();
     this.appView = getApplicationView();
 
     this.document = $(document);
@@ -339,20 +334,6 @@ define(function (require, exports, module) {
   };
 
   /**
-   * Sets plug.dj settings on the ExtPlug settings model.
-   */
-  ExtPlug.prototype.syncPlugSettings = function () {
-    var newSettings = _.extend({}, settings.settings);
-    // when you mute a song using the volume button, plug.dj does not change the associated setting.
-    // here we fake a volume of 0% anyway if the volume is muted, so ExtPlug modules can just
-    // use volume throughout and have it work.
-    if (newSettings.volume !== 0 && $('#volume .icon').hasClass('icon-volume-off')) {
-      newSettings.volume = 0;
-    }
-    this.settings.set(newSettings);
-  };
-
-  /**
    * Persists enabled modules to localStorage.
    * @private
    */
@@ -397,7 +378,7 @@ define(function (require, exports, module) {
   ExtPlug.prototype.onClick = function (e) {
     var target = $(e.target);
     if (target.parents('#user-settings').length === 1) {
-      this.syncPlugSettings();
+      settings.update();
     }
   };
 
@@ -408,8 +389,8 @@ define(function (require, exports, module) {
    */
   ExtPlug.prototype.onVolume = function () {
     var newVolume = API.getVolume();
-    if (this.settings.get('volume') !== newVolume) {
-      this.settings.set('volume', newVolume);
+    if (settings.get('volume') !== newVolume) {
+      settings.set('volume', newVolume);
     }
   };
 
