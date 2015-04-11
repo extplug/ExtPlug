@@ -9,11 +9,9 @@ define(function (require, exports, module) {
     AppSettingsSectionView = require('plug/views/users/settings/SettingsApplicationView'),
     UserView = require('plug/views/users/UserView'),
     UserSettingsView = require('plug/views/users/settings/SettingsView'),
-    ShowDialogEvent = require('plug/events/ShowDialogEvent'),
     ChatView = require('plug/views/rooms/chat/ChatView'),
     plugUtil = require('plug/util/util'),
     emoji = require('plug/util/emoji'),
-    lang = require('plug/lang/Lang'),
 
     Settings = require('extplug/models/Settings'),
     RoomSettings = require('extplug/models/RoomSettings'),
@@ -97,33 +95,6 @@ define(function (require, exports, module) {
     this.onVolume = this.onVolume.bind(this);
     this.onJoinedChange = this.onJoinedChange.bind(this);
   }
-
-  /**
-   * Installs a Module from a script URL.
-   *
-   * @param {string}     path URL to the Module script.
-   * @param {function()} cb   Function to call when the Module script has loaded.
-   */
-  ExtPlug.prototype.install = function (path, cb) {
-    $.getScript(path, cb);
-  };
-
-  /**
-   * Define an ExtPlug module.
-   *
-   * @param {string}            name    Module name. This should be unique,
-   *    and will not be displayed to the user.
-   * @param {?Array.<string>}   deps    Array of Module Dependencies, like in requirejs.
-   * @param {function():Module} factory Module factory function, like in requirejs.
-   */
-  ExtPlug.prototype.define = function (name, deps, factory) {
-    var ext = this;
-    var path = 'extplug/modules/' + name;
-    define(path, deps, factory);
-    require([ path ], function (Mod) {
-      ext.register(name, Mod);
-    });
-  };
 
   /**
    * Enables a module.
@@ -344,13 +315,13 @@ define(function (require, exports, module) {
     this.roomSettings = roomSettings;
     this.on('deinit', function () {
       roomSettings.dispose();
-    })
+    });
 
     currentRoom.on('change:joined', this.onJoinedChange);
 
     this._loadEnabledModules();
 
-    this.notify('icon-plug-dj', 'ExtPlug loaded');
+    Events.trigger('notify', 'icon-plug-dj', 'ExtPlug loaded');
 
     return this;
   };
@@ -416,10 +387,6 @@ define(function (require, exports, module) {
     }
   };
 
-  ExtPlug.prototype.showSettings = function () {
-    Events.trigger('show:user', 'settings', 'ext-plug');
-  };
-
   /**
    * Full-page onclick handler.
    *
@@ -474,25 +441,6 @@ define(function (require, exports, module) {
     else {
       cb(this);
     }
-  };
-
-  /**
-   * Displays a notification in the top right of the screen.
-   *
-   * @param {string} icon Notification icon class name.
-   * @param {string} text Message.
-   */
-  ExtPlug.prototype.notify = function (icon, text) {
-    Events.trigger('notify', icon, text);
-  };
-
-  /**
-   * Shows a Dialog.
-   *
-   * @param {Dialog} dialog A dialog view instance. (Should extend "plug/views/dialogs/Dialog".)
-   */
-  ExtPlug.prototype.showDialog = function (dialog) {
-    Events.dispatch(new ShowDialogEvent(ShowDialogEvent.SHOW, dialog));
   };
 
   module.exports = ExtPlug;
