@@ -50,7 +50,7 @@ define('extplug/modules/room-styles/main', function (require, exports, module) {
               if (colors.chat[level]) {
                 var value = { color: '#' + colors.chat[level] + ' !important' };
                 colorStyles
-                  .set('#chat-messages .icon-chat-' + level + ' ~ .from', value)
+                  .set('#chat-messages .icon-chat-' + level + ' ~ .un', value)
                   .set('#user-rollover .icon-chat-' + level + ' + span', value)
                   .set('#user-lists    .icon-chat-' + level + ' + span', value)
                   .set('#waitlist      .icon-chat-' + level + ' + span', value);
