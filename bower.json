@@ -1,0 +1,28 @@
+{
+  "name": "ExtPlug",
+  "version": "0.4.1",
+  "description": "Highly flexible, modular userscript extension for plug.dj.",
+  "homepage": "https://github.com/PlugLynn/ExtPlug",
+  "authors": [ "PlugLynn <PlugLynn@Hushmail.com>" ],
+  "main": "src/ExtPlug.js",
+  "dependencies": {
+    "meld": ""
+  },
+  "moduleType": [
+    "amd"
+  ],
+  "keywords": [
+    "plug.dj",
+    "extension",
+    "plug",
+    "userscript"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

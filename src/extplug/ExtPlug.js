@@ -26,7 +26,8 @@ define(function (require, exports, module) {
 
     $ = require('jquery'),
     _ = require('underscore'),
-    Backbone = require('backbone');
+    Backbone = require('backbone'),
+    meld = require('meld');
 
   var hooks = [
     require('extplug/hooks/api-early'),
@@ -210,17 +211,15 @@ define(function (require, exports, module) {
     this.appView.user = userView;
 
     // add the ExtPlug settings pane
-    function addExtPlugSettingsPane(old, itemName) {
-      if (itemName === 'ext-plug') {
+    function addExtPlugSettingsPane(joinpoint) {
+      if (joinpoint.args[0] === 'ext-plug') {
         return new ExtSettingsSectionView({ modules: ext._modules, ext: ext });
       }
-      return old(itemName);
+      return joinpoint.proceed();
     }
-    fnUtils.replaceMethod(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
 
-    this.on('deinit', function () {
-      fnUtils.unreplaceMethod(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
-    });
+    var settingsPaneAdvice = meld.around(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
+    this.on('deinit', function () { settingsPaneAdvice.remove() });
 
     // install extra events
     hooks.forEach(function (hook) {
@@ -229,13 +228,14 @@ define(function (require, exports, module) {
     }, this);
 
     // add custom chat message type
-    function addCustomChatType(oldReceived, message) {
+    function addCustomChatType(joinpoint) {
+      var message = joinpoint.args[0];
       if (message.type.split(' ').indexOf('custom') !== -1) {
         message.type += ' update';
         if (!message.timestamp) {
           message.timestamp = plugUtil.getChatTimestamp();
         }
-        oldReceived(message);
+        joinpoint.proceed();
         if (message.badge) {
           if (/^:(.*?):$/.test(message.badge)) {
             var badgeBox = this.$chatMessages.children().last().find('.badge-box'),
@@ -261,7 +261,7 @@ define(function (require, exports, module) {
         }
       }
       else {
-        oldReceived(message);
+        joinpoint.proceed(message);
       }
     }
 
@@ -297,10 +297,8 @@ define(function (require, exports, module) {
     if (chatView) {
       Events.off('chat:receive', chatView.onReceived);
     }
-    fnUtils.replaceMethod(ChatView.prototype, 'onReceived', addCustomChatType);
-    this.on('deinit', function () {
-      fnUtils.unreplaceMethod(ChatView.prototype, 'onReceived', addCustomChatType);
-    });
+    var chatTypeAdvice = meld.around(ChatView.prototype, 'onReceived', addCustomChatType);
+    this.on('deinit', function () { chatTypeAdvice.remove(); });
     if (chatView) {
       Events.on('chat:receive', chatView.onReceived, chatView);
     }

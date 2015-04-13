@@ -14,11 +14,13 @@ define(function (require, exports, module) {
 
   var chatFacade = require('plug/facades/chatFacade'),
     Events = require('plug/core/Events'),
-    fnUtils = require('extplug/util/function');
+    fnUtils = require('extplug/util/function'),
+    meld = require('meld');
 
-  var onChatReceived = function (oldChatReceived, message, isSystemMessage, isMine) {
+  var onChatReceived = function (joinpoint) {
+    let [ message, isSystemMessage, isMine ] = joinpoint.args;
     Events.trigger('chat:incoming', message, isSystemMessage, isMine);
-    var result = oldChatReceived(message, isSystemMessage, isMine);
+    var result = joinpoint.proceed(message, isSystemMessage, isMine);
     var element = $('#chat-messages .cm:last-child');
     Events.trigger('chat:afterreceive', message, element);
     return result;
@@ -33,16 +35,17 @@ define(function (require, exports, module) {
     return oldChatSend(param1);
   };
 
+  var ocradvice;
   exports.install = function () {
     Events.on('chat:receive', fireBeforeReceive);
     // ensure fireBeforeReceive is the first event handler to be called
     Events._events['chat:receive'].unshift(Events._events['chat:receive'].pop());
-    fnUtils.replaceMethod(chatFacade, 'onChatReceived', onChatReceived);
+    ocradvice = meld.around(chatFacade, 'onChatReceived', onChatReceived);
   };
 
   exports.uninstall = function () {
     Events.off('chat:receive', fireBeforeReceive);
-    fnUtils.unreplaceMethod(chatFacade, 'onChatReceive', onChatReceived);
+    ocradvice.remove();
   };
 
 });
