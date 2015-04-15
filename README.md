@@ -1,5 +1,7 @@
 # ExtPlug
 
+[![Join the chat at https://gitter.im/PlugLynn/ExtPlug](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/PlugLynn/ExtPlug?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ExtPlug is a flexible, modular extension for plug.dj.
 
 ## Building
