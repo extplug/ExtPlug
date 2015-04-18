@@ -2,19 +2,15 @@ define('extplug/modules/meh-icon/main', function (require, exports, module) {
 
   var Module = require('extplug/Module'),
     UserRowView = require('plug/views/rooms/users/RoomUserRowView'),
-    $ = require('jquery');
+    $ = require('jquery'),
+    meld = require('meld');
 
   var MehIcon = Module.extend({
     name: 'Meh Icons',
 
     enable: function () {
       this._super();
-      var mehIcon = this;
-      this._vote = UserRowView.prototype.vote;
-      UserRowView.prototype.vote = function () {
-        mehIcon._vote.call(this);
-        mehIcon.showMeh.call(this);
-      };
+      this.advice = meld.after(UserRowView.prototype, 'vote', this.showMeh);
       this.Style({
         '#user-lists .list.room .user .icon-meh': {
           'top': '-1px',
@@ -25,8 +21,8 @@ define('extplug/modules/meh-icon/main', function (require, exports, module) {
     },
 
     disable: function () {
+      this.advice.remove();
       this._super();
-      UserRowView.prototype.vote = this._vote;
     },
 
     showMeh: function () {

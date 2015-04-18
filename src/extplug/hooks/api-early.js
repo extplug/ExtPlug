@@ -1,17 +1,17 @@
 define(function (require, exports, module) {
 
-  var fnUtils = require('extplug/util/function');
+  var meld = require('meld');
 
-  function intercept(dispatch, eventName /*, ...params */) {
-    var params = [].slice.call(arguments, 2);
+  function intercept(joinpoint) {
+    let [ eventName, ...params ] = joinpoint.args;
 
     API.trigger.apply(
       API,
       // userLeave → beforeUserLeave
-      [ 'before' + eventName.charAt(0).toUpperCase() + eventName.slice(1) ].concat(params)
+      [ 'before' + eventName.charAt(0).toUpperCase() + eventName.slice(1), ...params ]
     );
 
-    dispatch.apply(null, [ eventName ].concat(params));
+    return joinpoint.proceed();
   }
 
   function nop() { return 'Dummy handler to ensure that plug.dj actually triggers the event'; }
@@ -21,8 +21,9 @@ define(function (require, exports, module) {
     return key.toUpperCase() === key && typeof API[key] === 'string';
   });
 
+  var advice;
   exports.install = function () {
-    fnUtils.replaceMethod(API, 'dispatch', intercept);
+    advice = meld.around(API, 'dispatch', intercept);
     eventKeys.forEach(function (key) {
       // add the API constants for these, too
       API['BEFORE_' + key] = 'before' + API[key].charAt(0).toUpperCase() + API[key].slice(1);
@@ -39,7 +40,7 @@ define(function (require, exports, module) {
       delete API['BEFORE_' + key];
       API.off(key, nop);
     });
-    fnUtils.unreplaceMethod(API, 'dispatch', intercept);
+    advice.remove();
   };
 
 });
