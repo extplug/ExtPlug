@@ -2,6 +2,7 @@ var gulp   = require('gulp')
 var babel  = require('gulp-babel')
 var concat = require('gulp-concat')
 var rjs    = require('gulp-requirejs')
+var packg  = require('./package.json')
 
 gulp.task('babel', function () {
   return gulp.src('src/**/*')
@@ -11,6 +12,7 @@ gulp.task('babel', function () {
 
 gulp.task('rjs', [ 'babel' ], function () {
   var bower = '../../bower_components/'
+  packg.builtAt = Date.now();
   rjs({
     baseUrl: 'build/babel/',
     name: 'extplug/ExtPlug',
@@ -23,8 +25,12 @@ gulp.task('rjs', [ 'babel' ], function () {
       underscore: 'empty:',
       meld: bower + 'meld/meld'
     },
+    rawText: {
+      'extplug/package': 'define(' + JSON.stringify(packg) + ')'
+    },
     out: 'build.rjs.js'
   }).pipe(gulp.dest('build/'))
+  delete packg.builtAt;
 })
 
 gulp.task('build', [ 'rjs' ], function () {

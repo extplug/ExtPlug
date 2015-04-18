@@ -23,6 +23,9 @@ define(function (require, exports, module) {
     Style = require('extplug/util/Style'),
     fnUtils = require('extplug/util/function'),
     _Module = require('extplug/Module'),
+    chatFacade = require('extplug/facades/chatFacade'),
+
+    _package = require('extplug/package'),
 
     $ = require('jquery'),
     _ = require('underscore'),
@@ -200,6 +203,18 @@ define(function (require, exports, module) {
     this.document.on('click.extplug', this.onClick);
 
     currentMedia.on('change:volume', this.onVolume);
+
+    const pad = x => x < 10 ? `0${x}` : x
+    let ba = new Date(_package.builtAt)
+    let builtAt = ba.getUTCFullYear() + '-'
+                + pad(ba.getUTCMonth()   + 1) + '-'
+                + pad(ba.getUTCDate()    + 1) + ' '
+                + pad(ba.getUTCHours()   + 1) + ':'
+                + pad(ba.getUTCMinutes() + 1) + ':'
+                + pad(ba.getUTCSeconds() + 1) + ' UTC'
+    chatFacade.registerCommand('version', () => {
+      API.chatLog(`${_package.name} v${_package.version} (${builtAt})`);
+    });
 
     // add an ExtPlug settings tab to User Settings
     fnUtils.replaceClass(SettingsTabMenuView, ExtSettingsTabMenuView);
