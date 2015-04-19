@@ -3,7 +3,7 @@
   "version": "0.5.0",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
-    "plug-modules": "^3.0.0"
+    "plug-modules": "^4.0.0"
   },
   "devDependencies": {
     "gulp": "^3.8.11",
