@@ -28,8 +28,6 @@ ExtPlug comes bundled with a bunch of commonly-used modules:
 
 ### Creating your own
 
-Documentation is a bit sparse, as I haven't quite figured out some stuff yet. So don't do too many complex things just yet, this system might change significantly!
-
 For inspiration, check out one of the bundled modules. Autowoot is very simple, so that might be a good place to start. ChatNotifications is also very simple, and includes a nice example for using Module-specific settings.
 
 Your module should have `enable` and `disable` methods. Ideally, your `disable` method cleans up entirely, leaving no trace of your module on the page.
@@ -37,54 +35,69 @@ Your module should have `enable` and `disable` methods. Ideally, your `disable` 
 A module definition looks roughly like this:
 
 ```javascript
-// This first line ensures that you will only call `ext.define` after ExtPlug has fully loaded
-(extp = window.extp || []).push(function (ext) {
+// plug.dj has require.js on the page, so you can just define()
+// your modules AMD-style. make sure to use unique module names,
+// though, to prevent clashing with other people's modules.
+define('my-name/my-module/main', function (require, exports, module) {
 
-  // ext.define takes care of registering your module with ExtPlug, so you can just
-  // return a Module class from the callback.
-  ext.define('ExampleModule', function (require, exports, module) {
+  // all plug-modules remapped names are defined on the global require().
+  // see https://github.com/PlugLynn/plug-modules
+  var Events = require('plug/core/Events');
 
-    var Events = require('plug/core/Events'),
-      Module = require('extplug/Module');
+  var Module = require('extplug/Module');
 
-    // this is just a require.js module factory, so we can do anything...
-    // defining helpers, for example!
-    function pad(num) {
-      if (num < 10) return '0' + num;
-      else return num;
+  // this is just a require.js module factory, so we can do anything...
+  // defining helpers, for example!
+  function pad(num) {
+    if (num < 10) return '0' + num;
+    else return num;
+  }
+
+  // your module definition should extend from the extplug/Module class.
+  // override the enable() and disable() methods with your module
+  // functionality. try to clean up perfectly afterwards in the disable()
+  // module, or users might get confused when they cannot disable or
+  // re-enable your module.
+  // you should also define some metadata (name, description) like below.
+  module.exports = Module.extend({
+    name: 'Example Module',
+    description: 'A module descrption that will show in a tooltip ' +
+                 'in the module list.',
+
+    init: function (id, ext) {
+      // _super does some useful things here, don't forget!
+      this._super(id, ext);
+      // do class initialization here
+      // binding methods, maybe!
+      this.showTime = _.bind(this.showTime, this);
+    },
+
+    enable: function () {
+      this._super();
+      // kick off your module here.
+      // attach events, start intervals, manipulate DOM elements…
+      this._interval = setInterval(this.showTime, 60 * 1000);
+    },
+    disable: function () {
+      this._super();
+      // basically just revert everything you did in enable!
+      clearInterval(this._interval);
+    },
+
+    showTime: function () {
+      var now = new Date(),
+        time = 'The time is ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+      // icon-history-white looks like a clock.
+      Events.trigger('notify', 'icon-history-white', time);
     }
-
-    module.exports = Module.extend({
-      name: 'Example Module',
-
-      init: function (id, ext) {
-        this._super(id, ext);
-        // do class initialization here
-        // binding methods, maybe!
-        this.showTime = _.bind(this.showTime, this);
-      },
-
-      enable: function () {
-        this._super();
-        // kick off your module here.
-        // attach events, start intervals, manipulate DOM elements…
-        this._interval = setInterval(this.showTime, 60 * 1000);
-      },
-      disable: function () {
-        this._super();
-        // basically just revert everything you did in enable!
-        clearInterval(this._interval);
-      },
-
-      showTime: function () {
-        var now = new Date(),
-          time = 'The time is ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
-        // icon-history-white looks like a clock.
-        Events.trigger('notify', 'icon-history-white', time);
-      }
-    });
-
   });
 
 });
+
+// finally, push your main module path to the global extp array.
+// if ExtPlug is already loaded, this will immediately load your
+// module. if ExtPlug is not yet loaded, this will create a global
+// array with your module name, and ExtPlug will load it once it
+// is loaded, itself.
+(extp = window.extp || []).push('my-name/my-module/main');
 ```
