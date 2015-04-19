@@ -6,11 +6,14 @@ ExtPlug is a flexible, modular extension for plug.dj.
 
 ## Building
 
+ExtPlug uses Bower and NPM to manage dependencies, and Gulp for building.
+
 ```shell
 git clone https://github.com/PlugLynn/ExtPlug
 cd ExtPlug
+bower install
 npm install
-npm run-script build
+gulp build # outputs to build/build.full.js
 ```
 
 ## Modules
