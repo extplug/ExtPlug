@@ -1,4 +1,16 @@
-window.plugModules = (function () {
+;(function (root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    // AMD. Register as an anonymous module.
+    define('plug-modules',factory);
+  }
+  else if (typeof module === 'object' && module.exports) {
+    module.exports = factory()
+  }
+  else {
+    // Browser globals
+    root.plugModules = factory();
+  }
+}(this, function () {
 
 // Tests if an object is a Backbone collection of a certain type of Model.
 var isCollectionOf = function (m, Model) {
@@ -65,7 +77,36 @@ var todo = function () {
 function Context() {
   this._nameMapping = {};
   this._notFound = [];
+  this._detectives = [];
+  this._ran = false;
 }
+// adds a Detective to this context. these detectives will
+// be run by Context#run.
+Context.prototype.add = function (name, detective) {
+  this._detectives.push({ name: name, detective: detective });
+  return this;
+};
+// runs all known detectives.
+Context.prototype.run = function () {
+  if (this._ran) {
+    return this;
+  }
+  var detectives = this._detectives.slice();
+  // < 5000 to prevent an infinite loop if a detective's dependency was not found.
+  for (var i = 0; i < detectives.length && i < 5000; i++) {
+    var current = detectives[i];
+    if (current.detective.isReady(this)) {
+      current.detective.run(this, current.name);
+    }
+    else {
+      // revisit later.
+      detectives.push(current);
+    }
+  }
+
+  this._ran = true;
+  return this;
+};
 Context.prototype.resolveName = function (path) {
   return this._nameMapping[path] ? this.resolveName(this._nameMapping[path]) : path;
 };
@@ -1058,10 +1099,28 @@ var plugModules = {
     // TODO ensure that there are no other modules that match this footprint
     return isView(m) && m.prototype.id === 'media-panel';
   },
-  'plug/views/playlists/media/panels/HistoryPanelView': new SimpleMatcher(function (m) {
+  'plug/views/playlists/media/panels/RoomHistoryPanelView': new SimpleMatcher(function (m) {
     return isView(m) && m.prototype.listClass === 'history' &&
       m.prototype.collection === this.require('plug/collections/history');
   }).needs('plug/collections/history'),
+  'plug/views/playlists/media/panels/RoomHistoryRowView': new SimpleFetcher(function () {
+    var RoomHistoryPanelView = this.require('plug/views/playlists/media/panels/RoomHistoryPanelView');
+    return RoomHistoryPanelView.prototype.RowClass;
+  }).needs('plug/views/playlists/media/panels/RoomHistoryPanelView'),
+  'plug/views/playlists/media/panels/UserHistoryPanelView': new SimpleMatcher(function (m) {
+    return isView(m) && m.prototype.collection === this.require('plug/collections/userHistory');
+  }).needs('plug/collections/userHistory'),
+  'plug/views/playlists/media/panels/UserHistoryRowView': new SimpleFetcher(function () {
+    var UserHistoryPanelView = this.require('plug/views/playlists/media/panels/UserHistoryPanelView');
+    return UserHistoryPanelView.prototype.RowClass;
+  }).needs('plug/views/playlists/media/panels/UserHistoryPanelView'),
+  'plug/views/playlists/media/panels/PlaylistPanelView': new SimpleMatcher(function (m) {
+     return isView(m) && m.prototype.collection === this.require('plug/collections/currentPlaylistFiltered');
+   }).needs('plug/collections/currentPlaylistFiltered'),
+  'plug/views/playlists/media/panels/PlaylistRowView': new SimpleFetcher(function () {
+    var PlaylistPanel = this.require('plug/views/playlists/media/panels/PlaylistPanelView');
+    return PlaylistPanel.prototype.RowClass;
+  }).needs('plug/views/playlists/media/panels/PlaylistPanelView'),
   'plug/views/playlists/menu/PlaylistMenuView': function (m) {
     return m instanceof Backbone.View && m.id === 'playlist-menu';
   },
@@ -1387,31 +1446,17 @@ var plugModules = {
 
 };
 
-// Build an array of Detectives with their module names, so we can walk through it in order and
-// move things around. This is useful because Detectives that aren't "ready" can be pushed to
-// the end to be revisited later.
-var detectives = [];
-_.each(plugModules, function (matcher, name) {
-  if (!(matcher instanceof Detective)) {
-    matcher = new SimpleMatcher(matcher);
+// build default context
+var context = new Context();
+Object.keys(plugModules).forEach(function (name) {
+  var detective = plugModules[name];
+  if (!(detective instanceof Detective)) {
+    detective = new SimpleMatcher(detective);
   }
-  detectives.push({ name: name, detective: matcher });
+  context.add(name, detective);
 });
 
-var notFound = [];
-var context = new Context();
-// < 5000 to prevent an infinite loop if a detective's dependency was not found.
-for (var i = 0; i < detectives.length && i < 5000; i++) {
-  var current = detectives[i];
-  if (current.detective.isReady(context)) {
-    current.detective.run(context, current.name);
-  }
-  else {
-    // revisit later.
-    detectives.push(current);
-  }
-}
-
+context.Context = Context;
 // expose detective classes
 context.Detective = Detective;
 context.Matcher = Matcher;
@@ -1424,12 +1469,60 @@ context.Fetcher = Fetcher;
 context.SimpleFetcher = SimpleFetcher;
 context.HandlerFetcher = HandlerFetcher;
 
-context.detectives = plugModules;
+context.modules = plugModules;
 
 return context;
 
-}())
+}));
 
+
+
+define('extplug/boot',['plug-modules'],function () {
+
+  var plugModules = require('plug-modules');
+
+  plugModules.run();
+  plugModules.register();
+
+  var timer = null;
+  require(['extplug/ExtPlug'], function _loaded(ExtPlug) {
+    if (appViewExists()) {
+      var cbs = window.extp || [];
+      var ext = new ExtPlug();
+      window.extp = ext;
+
+      ext.init();
+      cbs.forEach(ext.push, ext);
+      if (timer) {
+        clearInterval(timer);
+      }
+    } else if (!timer) {
+      timer = setInterval(function () {
+        _loaded(ExtPlug);
+      }, 20);
+    }
+  });
+
+  function appViewExists() {
+    try {
+      var _ret = (function () {
+        // the ApplicationView attaches an event handler on instantiation.
+        var AppView = plugModules.require('plug/views/app/ApplicationView'),
+            Events = plugModules.require('plug/core/Events');
+        var evts = Events._events['show:room'];
+        return {
+          v: evts.some(function (event) {
+            return event.ctx instanceof AppView;
+          })
+        };
+      })();
+
+      if (typeof _ret === 'object') return _ret.v;
+    } catch (e) {
+      return false;
+    }
+  }
+});
 
 
 define('extplug/models/Settings',['require','exports','module','backbone'],function (require, exports, module) {
@@ -1439,6 +1532,33 @@ define('extplug/models/Settings',['require','exports','module','backbone'],funct
   var Settings = Backbone.Model.extend({});
 
   module.exports = Settings;
+});
+
+
+define('extplug/store/settings',['require','exports','module','underscore','plug/store/settings','extplug/models/Settings'],function (require, exports, module) {
+
+  var _ = require('underscore');
+  var plugSettings = require('plug/store/settings');
+  var Settings = require('extplug/models/Settings');
+
+  var settings = new Settings();
+
+  function sync() {
+    var newSettings = _.extend({}, plugSettings.settings);
+    var muted = $('#volume .icon').hasClass('icon-volume-off');
+    // when you mute a song using the volume button, plug.dj does not change the associated setting.
+    // here we fake a volume of 0% anyway if the volume is muted, so ExtPlug modules can just
+    // use volume throughout and have it work.
+    if (newSettings.volume !== 0 && muted) {
+      newSettings.volume = 0;
+    }
+    newSettings.muted = muted;
+    settings.set(newSettings);
+  }
+
+  settings.update = sync;
+
+  module.exports = settings;
 });
 
 
@@ -1492,48 +1612,6 @@ define('extplug/util/request',['require','exports','module','jquery'],function (
 define('extplug/util/function',['require','exports','module','underscore'],function (require, exports, module) {
 
   var _ = require('underscore');
-
-  // the point of replaceMethod & unreplaceMethod is to be able to mask methods
-  // and then unmask them in any order. It's probably kinda iffy right now
-  // also need to figure out how to replace bound methods on all instances of a prototype...
-  exports.replaceMethod = function (obj, key, fn) {
-    var newFn = (function (_newFn) {
-      function newFn() {
-        return _newFn.apply(this, arguments);
-      }
-
-      newFn.toString = function () {
-        return _newFn.toString();
-      };
-
-      return newFn;
-    })(function () {
-      var args = _.toArray(arguments);
-      return fn.apply(this, [newFn._replaces.bind(this)].concat(args));
-    });
-
-    newFn._replaces = obj[key];
-    newFn._function = fn;
-    obj[key] = newFn;
-  };
-
-  exports.unreplaceMethod = function (obj, key, fn) {
-    var currentFn = obj[key];
-    // this replacement was most recently applied
-    if (currentFn._function === fn) {
-      obj[key] = currentFn._replaces;
-    } else {
-      // this replacement was applied somewhere down the chain
-      var previousFn;
-      while (currentFn._function !== fn && currentFn._replaces) {
-        previousFn = currentFn;
-        currentFn = currentFn._replaces;
-      }
-      if (currentFn._function === fn) {
-        previousFn._replaces = currentFn._replaces;
-      }
-    }
-  };
 
   /**
    * Replaces a Backbone class implementation by a different class implementation.
@@ -2436,18 +2514,676 @@ define('extplug/Module',['require','exports','module','jquery','underscore','bac
 });
 
 
-define('extplug/hooks/api-early',['require','exports','module','extplug/util/function'],function (require, exports, module) {
+define('extplug/facades/chatFacade',['require','exports','module','plug/facades/chatFacade','underscore','backbone'],function (require, exports, module) {
+  var chatFacade = require('plug/facades/chatFacade');
+  var _require = require('underscore');
 
-  var fnUtils = require('extplug/util/function');
+  var clone = _require.clone;
+  var Backbone = require('backbone');
 
-  function intercept(dispatch, eventName /*, ...params */) {
-    var params = [].slice.call(arguments, 2);
+  function onChatCommand(text) {
+    var split = text.indexOf(' ');
+    if (split === -1) {
+      split = text.length;
+    }
+    var command = text.slice(1, split);
+    var params = text.slice(split + 1);
+
+    commands.trigger(command, params);
+  }
+
+  var commands = clone(Backbone.Events);
+
+  var addedListener = false;
+  chatFacade.registerCommand = function (command, callback) {
+    if (!addedListener) {
+      API.on(API.CHAT_COMMAND, onChatCommand);
+    }
+    commands.on(command, callback);
+  };
+
+  return chatFacade;
+});
+define('extplug/package',{
+  "name": "ExtPlug",
+  "version": "0.6.0",
+  "description": "Highly flexible, modular userscript extension for plug.dj.",
+  "dependencies": {
+    "plug-modules": "^4.0.0"
+  },
+  "devDependencies": {
+    "gulp": "^3.8.11",
+    "gulp-babel": "^5.1.0",
+    "gulp-concat": "^2.5.2",
+    "requirejs": "^2.1.17"
+  },
+  "scripts": {
+    "build": "gulp build",
+    "test": "jshint src"
+  },
+  "builtAt": 1429482994412
+});
+/** @license MIT License (c) copyright 2011-2013 original author or authors */
+
+/**
+ * meld
+ * Aspect Oriented Programming for Javascript
+ *
+ * meld is part of the cujo.js family of libraries (http://cujojs.com/)
+ *
+ * Licensed under the MIT License at:
+ * http://www.opensource.org/licenses/mit-license.php
+ *
+ * @author Brian Cavalier
+ * @author John Hann
+ * @version 1.3.1
+ */
+(function (define) {
+define('meld',[],function () {
+
+	//
+	// Public API
+	//
+
+	// Add a single, specific type of advice
+	// returns a function that will remove the newly-added advice
+	meld.before =         adviceApi('before');
+	meld.around =         adviceApi('around');
+	meld.on =             adviceApi('on');
+	meld.afterReturning = adviceApi('afterReturning');
+	meld.afterThrowing =  adviceApi('afterThrowing');
+	meld.after =          adviceApi('after');
+
+	// Access to the current joinpoint in advices
+	meld.joinpoint =      joinpoint;
+
+	// DEPRECATED: meld.add(). Use meld() instead
+	// Returns a function that will remove the newly-added aspect
+	meld.add =            function() { return meld.apply(null, arguments); };
+
+	/**
+	 * Add an aspect to all matching methods of target, or to target itself if
+	 * target is a function and no pointcut is provided.
+	 * @param {object|function} target
+	 * @param {string|array|RegExp|function} [pointcut]
+	 * @param {object} aspect
+	 * @param {function?} aspect.before
+	 * @param {function?} aspect.on
+	 * @param {function?} aspect.around
+	 * @param {function?} aspect.afterReturning
+	 * @param {function?} aspect.afterThrowing
+	 * @param {function?} aspect.after
+	 * @returns {{ remove: function }|function} if target is an object, returns a
+	 *  remover { remove: function } whose remove method will remove the added
+	 *  aspect. If target is a function, returns the newly advised function.
+	 */
+	function meld(target, pointcut, aspect) {
+		var pointcutType, remove;
+
+		if(arguments.length < 3) {
+			return addAspectToFunction(target, pointcut);
+		} else {
+			if (isArray(pointcut)) {
+				remove = addAspectToAll(target, pointcut, aspect);
+			} else {
+				pointcutType = typeof pointcut;
+
+				if (pointcutType === 'string') {
+					if (typeof target[pointcut] === 'function') {
+						remove = addAspectToMethod(target, pointcut, aspect);
+					}
+
+				} else if (pointcutType === 'function') {
+					remove = addAspectToAll(target, pointcut(target), aspect);
+
+				} else {
+					remove = addAspectToMatches(target, pointcut, aspect);
+				}
+			}
+
+			return remove;
+		}
+
+	}
+
+	function Advisor(target, func) {
+
+		var orig, advisor, advised;
+
+		this.target = target;
+		this.func = func;
+		this.aspects = {};
+
+		orig = this.orig = target[func];
+		advisor = this;
+
+		advised = this.advised = function() {
+			var context, joinpoint, args, callOrig, afterType;
+
+			// If called as a constructor (i.e. using "new"), create a context
+			// of the correct type, so that all advice types (including before!)
+			// are called with the correct context.
+			if(this instanceof advised) {
+				// shamelessly derived from https://github.com/cujojs/wire/blob/c7c55fe50238ecb4afbb35f902058ab6b32beb8f/lib/component.js#L25
+				context = objectCreate(orig.prototype);
+				callOrig = function (args) {
+					return applyConstructor(orig, context, args);
+				};
+
+			} else {
+				context = this;
+				callOrig = function(args) {
+					return orig.apply(context, args);
+				};
+
+			}
+
+			args = slice.call(arguments);
+			afterType = 'afterReturning';
+
+			// Save the previous joinpoint and set the current joinpoint
+			joinpoint = pushJoinpoint({
+				target: context,
+				method: func,
+				args: args
+			});
+
+			try {
+				advisor._callSimpleAdvice('before', context, args);
+
+				try {
+					joinpoint.result = advisor._callAroundAdvice(context, func, args, callOrigAndOn);
+				} catch(e) {
+					joinpoint.result = joinpoint.exception = e;
+					// Switch to afterThrowing
+					afterType = 'afterThrowing';
+				}
+
+				args = [joinpoint.result];
+
+				callAfter(afterType, args);
+				callAfter('after', args);
+
+				if(joinpoint.exception) {
+					throw joinpoint.exception;
+				}
+
+				return joinpoint.result;
+
+			} finally {
+				// Restore the previous joinpoint, if necessary.
+				popJoinpoint();
+			}
+
+			function callOrigAndOn(args) {
+				var result = callOrig(args);
+				advisor._callSimpleAdvice('on', context, args);
+
+				return result;
+			}
+
+			function callAfter(afterType, args) {
+				advisor._callSimpleAdvice(afterType, context, args);
+			}
+		};
+
+		defineProperty(advised, '_advisor', { value: advisor, configurable: true });
+	}
+
+	Advisor.prototype = {
+
+		/**
+		 * Invoke all advice functions in the supplied context, with the supplied args
+		 *
+		 * @param adviceType
+		 * @param context
+		 * @param args
+		 */
+		_callSimpleAdvice: function(adviceType, context, args) {
+
+			// before advice runs LIFO, from most-recently added to least-recently added.
+			// All other advice is FIFO
+			var iterator, advices;
+
+			advices = this.aspects[adviceType];
+			if(!advices) {
+				return;
+			}
+
+			iterator = iterators[adviceType];
+
+			iterator(this.aspects[adviceType], function(aspect) {
+				var advice = aspect.advice;
+				advice && advice.apply(context, args);
+			});
+		},
+
+		/**
+		 * Invoke all around advice and then the original method
+		 *
+		 * @param context
+		 * @param method
+		 * @param args
+		 * @param applyOriginal
+		 */
+		_callAroundAdvice: function (context, method, args, applyOriginal) {
+			var len, aspects;
+
+			aspects = this.aspects.around;
+			len = aspects ? aspects.length : 0;
+
+			/**
+			 * Call the next function in the around chain, which will either be another around
+			 * advice, or the orig method.
+			 * @param i {Number} index of the around advice
+			 * @param args {Array} arguments with with to call the next around advice
+			 */
+			function callNext(i, args) {
+				// If we exhausted all aspects, finally call the original
+				// Otherwise, if we found another around, call it
+				return i < 0
+					? applyOriginal(args)
+					: callAround(aspects[i].advice, i, args);
+			}
+
+			function callAround(around, i, args) {
+				var proceedCalled, joinpoint;
+
+				proceedCalled = 0;
+
+				// Joinpoint is immutable
+				// TODO: Use Object.freeze once v8 perf problem is fixed
+				joinpoint = pushJoinpoint({
+					target: context,
+					method: method,
+					args: args,
+					proceed: proceedCall,
+					proceedApply: proceedApply,
+					proceedCount: proceedCount
+				});
+
+				try {
+					// Call supplied around advice function
+					return around.call(context, joinpoint);
+				} finally {
+					popJoinpoint();
+				}
+
+				/**
+				 * The number of times proceed() has been called
+				 * @return {Number}
+				 */
+				function proceedCount() {
+					return proceedCalled;
+				}
+
+				/**
+				 * Proceed to the original method/function or the next around
+				 * advice using original arguments or new argument list if
+				 * arguments.length > 0
+				 * @return {*} result of original method/function or next around advice
+				 */
+				function proceedCall(/* newArg1, newArg2... */) {
+					return proceed(arguments.length > 0 ? slice.call(arguments) : args);
+				}
+
+				/**
+				 * Proceed to the original method/function or the next around
+				 * advice using original arguments or new argument list if
+				 * newArgs is supplied
+				 * @param [newArgs] {Array} new arguments with which to proceed
+				 * @return {*} result of original method/function or next around advice
+				 */
+				function proceedApply(newArgs) {
+					return proceed(newArgs || args);
+				}
+
+				/**
+				 * Create proceed function that calls the next around advice, or
+				 * the original.  May be called multiple times, for example, in retry
+				 * scenarios
+				 * @param [args] {Array} optional arguments to use instead of the
+				 * original arguments
+				 */
+				function proceed(args) {
+					proceedCalled++;
+					return callNext(i - 1, args);
+				}
+
+			}
+
+			return callNext(len - 1, args);
+		},
+
+		/**
+		 * Adds the supplied aspect to the advised target method
+		 *
+		 * @param aspect
+		 */
+		add: function(aspect) {
+
+			var advisor, aspects;
+
+			advisor = this;
+			aspects = advisor.aspects;
+
+			insertAspect(aspects, aspect);
+
+			return {
+				remove: function () {
+					var remaining = removeAspect(aspects, aspect);
+
+					// If there are no aspects left, restore the original method
+					if (!remaining) {
+						advisor.remove();
+					}
+				}
+			};
+		},
+
+		/**
+		 * Removes the Advisor and thus, all aspects from the advised target method, and
+		 * restores the original target method, copying back all properties that may have
+		 * been added or updated on the advised function.
+		 */
+		remove: function () {
+			delete this.advised._advisor;
+			this.target[this.func] = this.orig;
+		}
+	};
+
+	/**
+	 * Returns the advisor for the target object-function pair.  A new advisor
+	 * will be created if one does not already exist.
+	 * @param target {*} target containing a method with the supplied methodName
+	 * @param methodName {String} name of method on target for which to get an advisor
+	 * @return {Object|undefined} existing or newly created advisor for the supplied method
+	 */
+	Advisor.get = function(target, methodName) {
+		if(!(methodName in target)) {
+			return;
+		}
+
+		var advisor, advised;
+
+		advised = target[methodName];
+
+		if(typeof advised !== 'function') {
+			throw new Error('Advice can only be applied to functions: ' + methodName);
+		}
+
+		advisor = advised._advisor;
+		if(!advisor) {
+			advisor = new Advisor(target, methodName);
+			target[methodName] = advisor.advised;
+		}
+
+		return advisor;
+	};
+
+	/**
+	 * Add an aspect to a pure function, returning an advised version of it.
+	 * NOTE: *only the returned function* is advised.  The original (input) function
+	 * is not modified in any way.
+	 * @param func {Function} function to advise
+	 * @param aspect {Object} aspect to add
+	 * @return {Function} advised function
+	 */
+	function addAspectToFunction(func, aspect) {
+		var name, placeholderTarget;
+
+		name = func.name || '_';
+
+		placeholderTarget = {};
+		placeholderTarget[name] = func;
+
+		addAspectToMethod(placeholderTarget, name, aspect);
+
+		return placeholderTarget[name];
+
+	}
+
+	function addAspectToMethod(target, method, aspect) {
+		var advisor = Advisor.get(target, method);
+
+		return advisor && advisor.add(aspect);
+	}
+
+	function addAspectToAll(target, methodArray, aspect) {
+		var removers, added, f, i;
+
+		removers = [];
+		i = 0;
+
+		while((f = methodArray[i++])) {
+			added = addAspectToMethod(target, f, aspect);
+			added && removers.push(added);
+		}
+
+		return createRemover(removers);
+	}
+
+	function addAspectToMatches(target, pointcut, aspect) {
+		var removers = [];
+		// Assume the pointcut is a an object with a .test() method
+		for (var p in target) {
+			// TODO: Decide whether hasOwnProperty is correct here
+			// Only apply to own properties that are functions, and match the pointcut regexp
+			if (typeof target[p] == 'function' && pointcut.test(p)) {
+				// if(object.hasOwnProperty(p) && typeof object[p] === 'function' && pointcut.test(p)) {
+				removers.push(addAspectToMethod(target, p, aspect));
+			}
+		}
+
+		return createRemover(removers);
+	}
+
+	function createRemover(removers) {
+		return {
+			remove: function() {
+				for (var i = removers.length - 1; i >= 0; --i) {
+					removers[i].remove();
+				}
+			}
+		};
+	}
+
+	// Create an API function for the specified advice type
+	function adviceApi(type) {
+		return function(target, method, adviceFunc) {
+			var aspect = {};
+
+			if(arguments.length === 2) {
+				aspect[type] = method;
+				return meld(target, aspect);
+			} else {
+				aspect[type] = adviceFunc;
+				return meld(target, method, aspect);
+			}
+		};
+	}
+
+	/**
+	 * Insert the supplied aspect into aspectList
+	 * @param aspectList {Object} list of aspects, categorized by advice type
+	 * @param aspect {Object} aspect containing one or more supported advice types
+	 */
+	function insertAspect(aspectList, aspect) {
+		var adviceType, advice, advices;
+
+		for(adviceType in iterators) {
+			advice = aspect[adviceType];
+
+			if(advice) {
+				advices = aspectList[adviceType];
+				if(!advices) {
+					aspectList[adviceType] = advices = [];
+				}
+
+				advices.push({
+					aspect: aspect,
+					advice: advice
+				});
+			}
+		}
+	}
+
+	/**
+	 * Remove the supplied aspect from aspectList
+	 * @param aspectList {Object} list of aspects, categorized by advice type
+	 * @param aspect {Object} aspect containing one or more supported advice types
+	 * @return {Number} Number of *advices* left on the advised function.  If
+	 *  this returns zero, then it is safe to remove the advisor completely.
+	 */
+	function removeAspect(aspectList, aspect) {
+		var adviceType, advices, remaining;
+
+		remaining = 0;
+
+		for(adviceType in iterators) {
+			advices = aspectList[adviceType];
+			if(advices) {
+				remaining += advices.length;
+
+				for (var i = advices.length - 1; i >= 0; --i) {
+					if (advices[i].aspect === aspect) {
+						advices.splice(i, 1);
+						--remaining;
+						break;
+					}
+				}
+			}
+		}
+
+		return remaining;
+	}
+
+	function applyConstructor(C, instance, args) {
+		try {
+			// Try to define a constructor, but don't care if it fails
+			defineProperty(instance, 'constructor', {
+				value: C,
+				enumerable: false
+			});
+		} catch(e) {
+			// ignore
+		}
+
+		C.apply(instance, args);
+
+		return instance;
+	}
+
+	var currentJoinpoint, joinpointStack,
+		ap, prepend, append, iterators, slice, isArray, defineProperty, objectCreate;
+
+	// TOOD: Freeze joinpoints when v8 perf problems are resolved
+//	freeze = Object.freeze || function (o) { return o; };
+
+	joinpointStack = [];
+
+	ap      = Array.prototype;
+	prepend = ap.unshift;
+	append  = ap.push;
+	slice   = ap.slice;
+
+	isArray = Array.isArray || function(it) {
+		return Object.prototype.toString.call(it) == '[object Array]';
+	};
+
+	// Check for a *working* Object.defineProperty, fallback to
+	// simple assignment.
+	defineProperty = definePropertyWorks()
+		? Object.defineProperty
+		: function(obj, prop, descriptor) {
+		obj[prop] = descriptor.value;
+	};
+
+	objectCreate = Object.create ||
+		(function() {
+			function F() {}
+			return function(proto) {
+				F.prototype = proto;
+				var instance = new F();
+				F.prototype = null;
+				return instance;
+			};
+		}());
+
+	iterators = {
+		// Before uses reverse iteration
+		before: forEachReverse,
+		around: false
+	};
+
+	// All other advice types use forward iteration
+	// Around is a special case that uses recursion rather than
+	// iteration.  See Advisor._callAroundAdvice
+	iterators.on
+		= iterators.afterReturning
+		= iterators.afterThrowing
+		= iterators.after
+		= forEach;
+
+	function forEach(array, func) {
+		for (var i = 0, len = array.length; i < len; i++) {
+			func(array[i]);
+		}
+	}
+
+	function forEachReverse(array, func) {
+		for (var i = array.length - 1; i >= 0; --i) {
+			func(array[i]);
+		}
+	}
+
+	function joinpoint() {
+		return currentJoinpoint;
+	}
+
+	function pushJoinpoint(newJoinpoint) {
+		joinpointStack.push(currentJoinpoint);
+		return currentJoinpoint = newJoinpoint;
+	}
+
+	function popJoinpoint() {
+		return currentJoinpoint = joinpointStack.pop();
+	}
+
+	function definePropertyWorks() {
+		try {
+			return 'x' in Object.defineProperty({}, 'x', {});
+		} catch (e) { /* return falsey */ }
+	}
+
+	return meld;
+
+});
+})(typeof define == 'function' && define.amd ? define : function (factory) { module.exports = factory(); }
+);
+
+
+
+var _toArray = function (arr) { return Array.isArray(arr) ? arr : Array.from(arr); };
+
+var _toConsumableArray = function (arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } };
+
+define('extplug/hooks/api-early',['require','exports','module','meld'],function (require, exports, module) {
+
+  var meld = require('meld');
+
+  function intercept(joinpoint) {
+    var _joinpoint$args = _toArray(joinpoint.args);
+
+    var eventName = _joinpoint$args[0];
+
+    var params = _joinpoint$args.slice(1);
 
     API.trigger.apply(API,
     // userLeave → beforeUserLeave
-    ['before' + eventName.charAt(0).toUpperCase() + eventName.slice(1)].concat(params));
+    ['before' + eventName.charAt(0).toUpperCase() + eventName.slice(1)].concat(_toConsumableArray(params)));
 
-    dispatch.apply(null, [eventName].concat(params));
+    return joinpoint.proceed();
   }
 
   function nop() {
@@ -2459,8 +3195,9 @@ define('extplug/hooks/api-early',['require','exports','module','extplug/util/fun
     return key.toUpperCase() === key && typeof API[key] === 'string';
   });
 
+  var advice;
   exports.install = function () {
-    fnUtils.replaceMethod(API, 'dispatch', intercept);
+    advice = meld.around(API, 'dispatch', intercept);
     eventKeys.forEach(function (key) {
       // add the API constants for these, too
       API['BEFORE_' + key] = 'before' + API[key].charAt(0).toUpperCase() + API[key].slice(1);
@@ -2477,12 +3214,14 @@ define('extplug/hooks/api-early',['require','exports','module','extplug/util/fun
       delete API['BEFORE_' + key];
       API.off(key, nop);
     });
-    fnUtils.unreplaceMethod(API, 'dispatch', intercept);
+    advice.remove();
   };
 });
 
 
-define('extplug/hooks/chat',['require','exports','module','plug/facades/chatFacade','plug/core/Events','extplug/util/function'],function (require, exports, module) {
+var _slicedToArray = function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i['return']) _i['return'](); } finally { if (_d) throw _e; } } return _arr; } else { throw new TypeError('Invalid attempt to destructure non-iterable instance'); } };
+
+define('extplug/hooks/chat',['require','exports','module','plug/facades/chatFacade','plug/core/Events','extplug/util/function','meld'],function (require, exports, module) {
 
   // Adds a bunch of new chat events.
   // "chat:incoming" is fired as soon as a new message is received from the socket.
@@ -2498,11 +3237,18 @@ define('extplug/hooks/chat',['require','exports','module','plug/facades/chatFaca
 
   var chatFacade = require('plug/facades/chatFacade'),
       Events = require('plug/core/Events'),
-      fnUtils = require('extplug/util/function');
+      fnUtils = require('extplug/util/function'),
+      meld = require('meld');
 
-  var onChatReceived = function onChatReceived(oldChatReceived, message, isSystemMessage, isMine) {
+  var onChatReceived = function onChatReceived(joinpoint) {
+    var _joinpoint$args = _slicedToArray(joinpoint.args, 3);
+
+    var message = _joinpoint$args[0];
+    var isSystemMessage = _joinpoint$args[1];
+    var isMine = _joinpoint$args[2];
+
     Events.trigger('chat:incoming', message, isSystemMessage, isMine);
-    var result = oldChatReceived(message, isSystemMessage, isMine);
+    var result = joinpoint.proceed(message, isSystemMessage, isMine);
     var element = $('#chat-messages .cm:last-child');
     Events.trigger('chat:afterreceive', message, element);
     return result;
@@ -2517,16 +3263,17 @@ define('extplug/hooks/chat',['require','exports','module','plug/facades/chatFaca
     return oldChatSend(param1);
   };
 
+  var ocradvice;
   exports.install = function () {
     Events.on('chat:receive', fireBeforeReceive);
     // ensure fireBeforeReceive is the first event handler to be called
     Events._events['chat:receive'].unshift(Events._events['chat:receive'].pop());
-    fnUtils.replaceMethod(chatFacade, 'onChatReceived', onChatReceived);
+    ocradvice = meld.around(chatFacade, 'onChatReceived', onChatReceived);
   };
 
   exports.uninstall = function () {
     Events.off('chat:receive', fireBeforeReceive);
-    fnUtils.unreplaceMethod(chatFacade, 'onChatReceive', onChatReceived);
+    ocradvice.remove();
   };
 });
 
@@ -2559,22 +3306,20 @@ define('extplug/hooks/playback',['require','exports','module','plug/core/Events'
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia','plug/models/currentRoom','plug/store/settings','plug/core/Events','plug/views/app/ApplicationView','plug/views/users/settings/TabMenuView','plug/views/users/settings/SettingsApplicationView','plug/views/users/UserView','plug/views/users/settings/SettingsView','plug/events/ShowDialogEvent','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','plug/lang/Lang','extplug/models/Settings','extplug/models/RoomSettings','extplug/models/Module','extplug/collections/ModulesCollection','extplug/views/users/ExtUserView','extplug/views/users/settings/SettingsView','extplug/views/users/settings/TabMenuView','extplug/util/Style','extplug/util/function','extplug/Module','jquery','underscore','backbone','extplug/hooks/api-early','extplug/hooks/chat','extplug/hooks/playback'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia','plug/models/currentRoom','extplug/store/settings','plug/core/Events','plug/views/app/ApplicationView','plug/views/users/settings/TabMenuView','plug/views/users/settings/SettingsApplicationView','plug/views/users/UserView','plug/views/users/settings/SettingsView','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','extplug/models/Settings','extplug/models/RoomSettings','extplug/models/Module','extplug/collections/ModulesCollection','extplug/views/users/ExtUserView','extplug/views/users/settings/SettingsView','extplug/views/users/settings/TabMenuView','extplug/util/Style','extplug/util/function','extplug/Module','extplug/facades/chatFacade','extplug/package','jquery','underscore','backbone','meld','extplug/hooks/api-early','extplug/hooks/chat','extplug/hooks/playback'],function (require, exports, module) {
 
   var currentMedia = require('plug/models/currentMedia'),
       currentRoom = require('plug/models/currentRoom'),
-      settings = require('plug/store/settings'),
+      settings = require('extplug/store/settings'),
       Events = require('plug/core/Events'),
       ApplicationView = require('plug/views/app/ApplicationView'),
       SettingsTabMenuView = require('plug/views/users/settings/TabMenuView'),
       AppSettingsSectionView = require('plug/views/users/settings/SettingsApplicationView'),
       UserView = require('plug/views/users/UserView'),
       UserSettingsView = require('plug/views/users/settings/SettingsView'),
-      ShowDialogEvent = require('plug/events/ShowDialogEvent'),
       ChatView = require('plug/views/rooms/chat/ChatView'),
       plugUtil = require('plug/util/util'),
       emoji = require('plug/util/emoji'),
-      lang = require('plug/lang/Lang'),
       Settings = require('extplug/models/Settings'),
       RoomSettings = require('extplug/models/RoomSettings'),
       Module = require('extplug/models/Module'),
@@ -2585,9 +3330,12 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
       Style = require('extplug/util/Style'),
       fnUtils = require('extplug/util/function'),
       _Module = require('extplug/Module'),
+      chatFacade = require('extplug/facades/chatFacade'),
+      _package = require('extplug/package'),
       $ = require('jquery'),
       _ = require('underscore'),
-      Backbone = require('backbone');
+      Backbone = require('backbone'),
+      meld = require('meld');
 
   var hooks = [require('extplug/hooks/api-early'), require('extplug/hooks/chat'), require('extplug/hooks/playback')];
 
@@ -2633,12 +3381,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     this._modules = new ModulesCollection();
 
     /**
-     * ExtPlug global settings. Includes global plug.dj settings.
-     *
-     * Plug.dj settings are a plain object internally, mirroring it here
-     * as a Backbone model allows modules to listen for changes.
-     * It's also nice to have a single global settings object instead of
-     * one for extplug and one for plug...
+     * ExtPlug settings.
      *
      * @type {Settings}
      */
@@ -2654,33 +3397,6 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     this.onVolume = this.onVolume.bind(this);
     this.onJoinedChange = this.onJoinedChange.bind(this);
   }
-
-  /**
-   * Installs a Module from a script URL.
-   *
-   * @param {string}     path URL to the Module script.
-   * @param {function()} cb   Function to call when the Module script has loaded.
-   */
-  ExtPlug.prototype.install = function (path, cb) {
-    $.getScript(path, cb);
-  };
-
-  /**
-   * Define an ExtPlug module.
-   *
-   * @param {string}            name    Module name. This should be unique,
-   *    and will not be displayed to the user.
-   * @param {?Array.<string>}   deps    Array of Module Dependencies, like in requirejs.
-   * @param {function():Module} factory Module factory function, like in requirejs.
-   */
-  ExtPlug.prototype.define = function (name, deps, factory) {
-    var ext = this;
-    var path = 'extplug/modules/' + name;
-    define(path, deps, factory);
-    require([path], function (Mod) {
-      ext.register(name, Mod);
-    });
-  };
 
   /**
    * Enables a module.
@@ -2766,7 +3482,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
   ExtPlug.prototype.init = function () {
     var ext = this;
 
-    this.syncPlugSettings();
+    settings.update();
     this.appView = getApplicationView();
 
     this.document = $(document);
@@ -2790,6 +3506,15 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
 
     currentMedia.on('change:volume', this.onVolume);
 
+    var pad = function pad(x) {
+      return x < 10 ? '0' + x : x;
+    };
+    var ba = new Date(_package.builtAt);
+    var builtAt = ba.getUTCFullYear() + '-' + pad(ba.getUTCMonth() + 1) + '-' + pad(ba.getUTCDate() + 1) + ' ' + pad(ba.getUTCHours() + 1) + ':' + pad(ba.getUTCMinutes() + 1) + ':' + pad(ba.getUTCSeconds() + 1) + ' UTC';
+    chatFacade.registerCommand('version', function () {
+      API.chatLog('' + _package.name + ' v' + _package.version + ' (' + builtAt + ')');
+    });
+
     // add an ExtPlug settings tab to User Settings
     fnUtils.replaceClass(SettingsTabMenuView, ExtSettingsTabMenuView);
     fnUtils.replaceClass(UserView, ExtUserView);
@@ -2800,16 +3525,16 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     this.appView.user = userView;
 
     // add the ExtPlug settings pane
-    function addExtPlugSettingsPane(old, itemName) {
-      if (itemName === 'ext-plug') {
+    function addExtPlugSettingsPane(joinpoint) {
+      if (joinpoint.args[0] === 'ext-plug') {
         return new ExtSettingsSectionView({ modules: ext._modules, ext: ext });
       }
-      return old(itemName);
+      return joinpoint.proceed();
     }
-    fnUtils.replaceMethod(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
 
+    var settingsPaneAdvice = meld.around(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
     this.on('deinit', function () {
-      fnUtils.unreplaceMethod(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
+      settingsPaneAdvice.remove();
     });
 
     // install extra events
@@ -2819,13 +3544,14 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     }, this);
 
     // add custom chat message type
-    function addCustomChatType(oldReceived, message) {
+    function addCustomChatType(joinpoint) {
+      var message = joinpoint.args[0];
       if (message.type.split(' ').indexOf('custom') !== -1) {
         message.type += ' update';
         if (!message.timestamp) {
           message.timestamp = plugUtil.getChatTimestamp();
         }
-        oldReceived(message);
+        joinpoint.proceed();
         if (message.badge) {
           if (/^:(.*?):$/.test(message.badge)) {
             var badgeBox = this.$chatMessages.children().last().find('.badge-box'),
@@ -2843,7 +3569,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
           this.$chatMessages.children().last().find('.msg .text').css('color', message.color);
         }
       } else {
-        oldReceived(message);
+        joinpoint.proceed(message);
       }
     }
 
@@ -2879,9 +3605,9 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     if (chatView) {
       Events.off('chat:receive', chatView.onReceived);
     }
-    fnUtils.replaceMethod(ChatView.prototype, 'onReceived', addCustomChatType);
+    var chatTypeAdvice = meld.around(ChatView.prototype, 'onReceived', addCustomChatType);
     this.on('deinit', function () {
-      fnUtils.unreplaceMethod(ChatView.prototype, 'onReceived', addCustomChatType);
+      chatTypeAdvice.remove();
     });
     if (chatView) {
       Events.on('chat:receive', chatView.onReceived, chatView);
@@ -2898,7 +3624,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
 
     this._loadEnabledModules();
 
-    this.notify('icon-plug-dj', 'ExtPlug loaded');
+    Events.trigger('notify', 'icon-plug-dj', 'ExtPlug loaded');
 
     return this;
   };
@@ -2913,20 +3639,6 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
       this.disable(name);
     }, this);
     this.trigger('deinit');
-  };
-
-  /**
-   * Sets plug.dj settings on the ExtPlug settings model.
-   */
-  ExtPlug.prototype.syncPlugSettings = function () {
-    var newSettings = _.extend({}, settings.settings);
-    // when you mute a song using the volume button, plug.dj does not change the associated setting.
-    // here we fake a volume of 0% anyway if the volume is muted, so ExtPlug modules can just
-    // use volume throughout and have it work.
-    if (newSettings.volume !== 0 && $('#volume .icon').hasClass('icon-volume-off')) {
-      newSettings.volume = 0;
-    }
-    this.settings.set(newSettings);
   };
 
   /**
@@ -2964,10 +3676,6 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     }
   };
 
-  ExtPlug.prototype.showSettings = function () {
-    Events.trigger('show:user', 'settings', 'ext-plug');
-  };
-
   /**
    * Full-page onclick handler.
    *
@@ -2978,7 +3686,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
   ExtPlug.prototype.onClick = function (e) {
     var target = $(e.target);
     if (target.parents('#user-settings').length === 1) {
-      this.syncPlugSettings();
+      settings.update();
     }
   };
 
@@ -2989,8 +3697,8 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
    */
   ExtPlug.prototype.onVolume = function () {
     var newVolume = API.getVolume();
-    if (this.settings.get('volume') !== newVolume) {
-      this.settings.set('volume', newVolume);
+    if (settings.get('volume') !== newVolume) {
+      settings.set('volume', newVolume);
     }
   };
 
@@ -3022,84 +3730,69 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     }
   };
 
-  /**
-   * Displays a notification in the top right of the screen.
-   *
-   * @param {string} icon Notification icon class name.
-   * @param {string} text Message.
-   */
-  ExtPlug.prototype.notify = function (icon, text) {
-    Events.trigger('notify', icon, text);
-  };
-
-  /**
-   * Shows a Dialog.
-   *
-   * @param {Dialog} dialog A dialog view instance. (Should extend "plug/views/dialogs/Dialog".)
-   */
-  ExtPlug.prototype.showDialog = function (dialog) {
-    Events.dispatch(new ShowDialogEvent(ShowDialogEvent.SHOW, dialog));
-  };
-
   module.exports = ExtPlug;
 });
+
+'use strict';
+
 define('extplug/modules/autowoot/main', function (require, exports, module) {
 
   var Module = require('extplug/Module'),
-    fnUtils = require('extplug/util/function');
+      fnUtils = require('extplug/util/function');
 
   module.exports = Module.extend({
     name: 'Autowoot',
 
-    init: function (id, ext) {
+    init: function init(id, ext) {
       this._super(id, ext);
       fnUtils.bound(this, 'onAdvance');
       fnUtils.bound(this, 'woot');
     },
 
-    enable: function () {
+    enable: function enable() {
       this._super();
       this.wootElement = this.$('#woot');
       this.woot();
       API.on(API.ADVANCE, this.onAdvance);
     },
 
-    disable: function () {
+    disable: function disable() {
       this._super();
       API.off(API.ADVANCE, this.onAdvance);
     },
 
-    woot: function () {
+    woot: function woot() {
       this.wootElement.click();
     },
 
-    onAdvance: function () {
+    onAdvance: function onAdvance() {
       setTimeout(this.woot, 3000 + Math.floor(Math.random() * 5000));
     }
 
   });
-
 });
 
 (extp = window.extp || []).push('extplug/modules/autowoot/main');
+'use strict';
+
 define('extplug/modules/chat-notifications/main', function (require, exports, module) {
 
   var Module = require('extplug/Module'),
-    Events = require('plug/core/Events');
+      Events = require('plug/core/Events');
 
   module.exports = Module.extend({
     name: 'Chat Notifications',
 
     settings: {
-      inline: { type: 'boolean', label: 'Small Notifications', default: true },
-      userJoin: { type: 'boolean', label: 'User Join', default: true },
-      userLeave: { type: 'boolean', label: 'User Leave', default: true },
-      advance: { type: 'boolean', label: 'DJ Advance', default: true },
-      grab: { type: 'boolean', label: 'Media Grab', default: true },
-      meh: { type: 'boolean', label: 'Meh Vote', default: true }
+      inline: { type: 'boolean', label: 'Small Notifications', 'default': true },
+      userJoin: { type: 'boolean', label: 'User Join', 'default': true },
+      userLeave: { type: 'boolean', label: 'User Leave', 'default': true },
+      advance: { type: 'boolean', label: 'DJ Advance', 'default': true },
+      grab: { type: 'boolean', label: 'Media Grab', 'default': true },
+      meh: { type: 'boolean', label: 'Meh Vote', 'default': true }
     },
 
-    init: function (id, ext) {
+    init: function init(id, ext) {
       this._super(id, ext);
       this.onJoin = this.onJoin.bind(this);
       this.onLeave = this.onLeave.bind(this);
@@ -3109,7 +3802,7 @@ define('extplug/modules/chat-notifications/main', function (require, exports, mo
       this.onInline = this.onInline.bind(this);
     },
 
-    enable: function () {
+    enable: function enable() {
       this._super();
       API.on(API.USER_JOIN, this.onJoin);
       API.on(API.BEFORE_USER_LEAVE, this.onLeave);
@@ -3119,7 +3812,7 @@ define('extplug/modules/chat-notifications/main', function (require, exports, mo
       this.settings.on('change:inline', this.onInline);
     },
 
-    disable: function () {
+    disable: function disable() {
       this._super();
       API.off(API.USER_JOIN, this.onJoin);
       API.off(API.BEFORE_USER_LEAVE, this.onLeave);
@@ -3128,21 +3821,20 @@ define('extplug/modules/chat-notifications/main', function (require, exports, mo
       API.off(API.VOTE_UPDATE, this.onVote);
     },
 
-    _class: function () {
+    _class: function _class() {
       return 'custom extplug-notification ' + (this.settings.get('inline') ? 'inline ' : '');
     },
 
-    onInline: function () {
+    onInline: function onInline() {
       var nots = this.$('#chat-messages .extplug-notification');
       if (this.settings.get('inline')) {
         nots.filter(':not(.extplug-advance)').addClass('inline');
-      }
-      else {
+      } else {
         nots.removeClass('inline');
       }
     },
 
-    onJoin: function (e) {
+    onJoin: function onJoin(e) {
       if (this.settings.get('userJoin')) {
         Events.trigger('chat:receive', {
           type: this._class() + 'extplug-user-join',
@@ -3155,7 +3847,7 @@ define('extplug/modules/chat-notifications/main', function (require, exports, mo
       }
     },
 
-    onLeave: function (user) {
+    onLeave: function onLeave(user) {
       if (this.settings.get('userLeave')) {
         Events.trigger('chat:receive', {
           type: this._class() + 'extplug-user-leave',
@@ -3168,7 +3860,7 @@ define('extplug/modules/chat-notifications/main', function (require, exports, mo
       }
     },
 
-    onAdvance: function (e) {
+    onAdvance: function onAdvance(e) {
       if (this.settings.get('advance')) {
         Events.trigger('chat:receive', {
           type: 'custom extplug-advance',
@@ -3181,7 +3873,7 @@ define('extplug/modules/chat-notifications/main', function (require, exports, mo
       }
     },
 
-    onGrab: function (e) {
+    onGrab: function onGrab(e) {
       if (this.settings.get('grab')) {
         var media = API.getMedia();
         Events.trigger('chat:receive', {
@@ -3195,7 +3887,7 @@ define('extplug/modules/chat-notifications/main', function (require, exports, mo
       }
     },
 
-    onVote: function (e) {
+    onVote: function onVote(e) {
       if (this.settings.get('meh') && e.vote === -1) {
         Events.trigger('chat:receive', {
           type: this._class() + 'extplug-meh',
@@ -3208,94 +3900,94 @@ define('extplug/modules/chat-notifications/main', function (require, exports, mo
       }
     }
   });
-
 });
 
 (extp = window.extp || []).push('extplug/modules/chat-notifications/main');
+'use strict';
 
 define('extplug/modules/compact-history/main', function (require, exports, module) {
 
   var Module = require('extplug/Module'),
-    fnUtils = require('extplug/util/function'),
-    _ = require('underscore'),
-    $ = require('jquery');
+      fnUtils = require('extplug/util/function'),
+      _ = require('underscore'),
+      $ = require('jquery');
 
   module.exports = Module.extend({
     name: 'Compact History',
     description: 'Lays out the room history in a much more compact view.',
 
     // We'll just use CSS
-    enable: function () {
+    enable: function enable() {
       this._super();
       var ITEM_HEIGHT = 20;
       var heightPx = ITEM_HEIGHT + 'px';
       this.Style({
         '#history-panel .media-list.history .playlist-media-item:not(.selected)': {
-          'height': heightPx
+          height: heightPx
         },
         '#history-panel .media-list.history .playlist-media-item:not(.selected) img': {
-          'height': heightPx,
-          'width': (ITEM_HEIGHT * 1.5) + 'px',
+          height: heightPx,
+          width: ITEM_HEIGHT * 1.5 + 'px',
           'margin-top': '0px'
         },
         '#history-panel .media-list.history .playlist-media-item:not(.selected) .score': {
-          'height': 'auto',
-          'width': 'auto',
-          'top': '0px',
-          'left': '65px'
+          height: 'auto',
+          width: 'auto',
+          top: '0px',
+          left: '65px'
         },
         '#history-panel .media-list.history .playlist-media-item:not(.selected) .score .item': {
           'margin-right': '10px'
         },
         '#history-panel .media-list.history .playlist-media-item:not(.selected) .meta': {
-          'height': 'auto'
+          height: 'auto'
         },
         '#history-panel .media-list.history .playlist-media-item:not(.selected) .meta span': {
-          'height': heightPx,
-          'top': '0px'
+          height: heightPx,
+          top: '0px'
         },
         '#history-panel .media-list.history .playlist-media-item:not(.selected) .actions': {
-          'height': heightPx,
-          'top': '0px'
+          height: heightPx,
+          top: '0px'
         },
         '#history-panel .media-list.history .playlist-media-item:not(.selected) .author': {
-          'left': '120px',
-          'right': '300px',
-          'width': 'auto'
+          left: '120px',
+          right: '300px',
+          width: 'auto'
         },
         '#history-panel .media-list.history .playlist-media-item:not(.selected) .name': {
-          'right': '125px'
+          right: '125px'
         },
         '#history-panel .media-list.history .playlist-media-item:not(.selected) .actions div': {
-          'height': heightPx
+          height: heightPx
         },
         '#history-panel .media-list.history .playlist-media-item:not(.selected) .actions div i': {
-          'top': '-4px'
+          top: '-4px'
         }
       });
     }
 
   });
-
 });
 
 (extp = window.extp || []).push('extplug/modules/compact-history/main');
+'use strict';
 
 define('extplug/modules/full-size-video/main', function (require, exports, module) {
   var Module = require('extplug/Module'),
-    fnUtils = require('extplug/util/function'),
-    win = require('plug/util/window');
+      fnUtils = require('extplug/util/function'),
+      win = require('plug/util/window');
 
   module.exports = Module.extend({
     name: 'Full-Size Video',
 
-    init: function (id, ext) {
+    init: function init(id, ext) {
       this._super(id, ext);
       fnUtils.bound(this, 'enter');
       fnUtils.bound(this, 'leave');
     },
 
-    enable: function () {
+    enable: function enable() {
       this._super();
       this.Style({
         '#playback': {
@@ -3329,10 +4021,10 @@ define('extplug/modules/full-size-video/main', function (require, exports, modul
       this.leave();
     },
 
-    enter: function () {
+    enter: function enter() {
       this.$('#dj-button, #vote').show();
     },
-    leave: function (e) {
+    leave: function leave(e) {
       // don't hide if the new target is one of the buttons
       if (e && e.relatedTarget && $(e.relatedTarget).closest('#dj-button, #vote').length > 0) {
         return;
@@ -3340,7 +4032,7 @@ define('extplug/modules/full-size-video/main', function (require, exports, modul
       this.$('#dj-button, #vote').hide();
     },
 
-    disable: function () {
+    disable: function disable() {
       this._super();
       this.enter();
       this.$('#playback').off('mouseenter', this.enter).off('mouseleave', this.leave);
@@ -3350,43 +4042,39 @@ define('extplug/modules/full-size-video/main', function (require, exports, modul
     }
 
   });
-
 });
 
 (extp = window.extp || []).push('extplug/modules/full-size-video/main');
+'use strict';
 
 define('extplug/modules/meh-icon/main', function (require, exports, module) {
 
   var Module = require('extplug/Module'),
-    UserRowView = require('plug/views/rooms/users/RoomUserRowView'),
-    $ = require('jquery');
+      UserRowView = require('plug/views/rooms/users/RoomUserRowView'),
+      $ = require('jquery'),
+      meld = require('meld');
 
   var MehIcon = Module.extend({
     name: 'Meh Icons',
 
-    enable: function () {
+    enable: function enable() {
       this._super();
-      var mehIcon = this;
-      this._vote = UserRowView.prototype.vote;
-      UserRowView.prototype.vote = function () {
-        mehIcon._vote.call(this);
-        mehIcon.showMeh.call(this);
-      };
+      this.advice = meld.after(UserRowView.prototype, 'vote', this.showMeh);
       this.Style({
         '#user-lists .list.room .user .icon-meh': {
-          'top': '-1px',
-          'right': '9px',
-          'left': 'auto'
+          top: '-1px',
+          right: '9px',
+          left: 'auto'
         }
       });
     },
 
-    disable: function () {
+    disable: function disable() {
+      this.advice.remove();
       this._super();
-      UserRowView.prototype.vote = this._vote;
     },
 
-    showMeh: function () {
+    showMeh: function showMeh() {
       if (this.model.get('vote') === -1 && !this.model.get('grab')) {
         if (!this.$icon) {
           this.$icon = $('<i />');
@@ -3398,27 +4086,26 @@ define('extplug/modules/meh-icon/main', function (require, exports, module) {
   });
 
   module.exports = MehIcon;
-
 });
 
 (extp = window.extp || []).push('extplug/modules/meh-icon/main');
+'use strict';
 
 define('extplug/modules/rollover-blurbs/main', function (require, exports, module) {
 
   var Module = require('extplug/Module'),
-    fnUtils = require('extplug/util/function'),
-    rolloverView = require('plug/views/users/userRolloverView'),
-    UserFindAction = require('plug/actions/users/UserFindAction'),
-    $ = require('jquery');
+      fnUtils = require('extplug/util/function'),
+      rolloverView = require('plug/views/users/userRolloverView'),
+      UserFindAction = require('plug/actions/users/UserFindAction'),
+      $ = require('jquery');
 
-  var emoji = $('<span />').addClass('emoji-glow')
-    .append($('<span />').addClass('emoji emoji-1f4dd'));
+  var emoji = $('<span />').addClass('emoji-glow').append($('<span />').addClass('emoji emoji-1f4dd'));
 
   module.exports = Module.extend({
     name: 'Rollover Blurb (Experimental)',
     description: 'Show user "Blurb" / bio in rollover popups.',
 
-    enable: function () {
+    enable: function enable() {
       this._super();
       this.Style({
         '.extplug-blurb': {
@@ -3439,21 +4126,20 @@ define('extplug/modules/rollover-blurbs/main', function (require, exports, modul
       fnUtils.replaceMethod(rolloverView, 'hide', this.removeBlurb);
     },
 
-    disable: function () {
+    disable: function disable() {
       this._super();
       fnUtils.unreplaceMethod(rolloverView, 'showModal', this.addBlurb);
       fnUtils.unreplaceMethod(rolloverView, 'hide', this.removeBlurb);
     },
 
-    addBlurb: function (showModal, _arg) {
+    addBlurb: function addBlurb(showModal, _arg) {
       var self = this;
       this.$('.extplug-blurb-wrap').remove();
       var span = $('<span />').addClass('extplug-blurb');
       var div = $('<div />').addClass('info extplug-blurb-wrap').append(span);
       if (this.user.get('blurb')) {
         show(this.user.get('blurb'));
-      }
-      else {
+      } else {
         new UserFindAction(this.user.get('id')).on('success', function (user) {
           self.user.set('blurb', user.blurb);
           show(user.blurb);
@@ -3466,33 +4152,33 @@ define('extplug/modules/rollover-blurbs/main', function (require, exports, modul
           self.$('.actions').before(div);
           span.append(emoji, ' ' + blurb);
           div.height(span[0].offsetHeight + 6);
-          self.$el.css('top', (parseInt(self.$el.css('top'), 10) - div.height()) + 'px');
+          self.$el.css('top', parseInt(self.$el.css('top'), 10) - div.height() + 'px');
         }
       }
     },
-    removeBlurb: function (hide, _arg) {
+    removeBlurb: function removeBlurb(hide, _arg) {
       this.$('.extplug-blurb-wrap').remove();
       hide(_arg);
     }
 
   });
-
 });
 
 (extp = window.extp || []).push('extplug/modules/rollover-blurbs/main');
+'use strict';
 
 define('extplug/modules/room-styles/main', function (require, exports, module) {
 
   var Module = require('extplug/Module'),
-    request = require('extplug/util/request'),
-    fnUtils = require('extplug/util/function'),
-    _ = require('underscore'),
-    $ = require('jquery');
+      request = require('extplug/util/request'),
+      fnUtils = require('extplug/util/function'),
+      _ = require('underscore'),
+      $ = require('jquery');
 
   module.exports = Module.extend({
     name: 'Room Styles',
 
-    init: function (id, ext) {
+    init: function init(id, ext) {
       this._super(id, ext);
       fnUtils.bound(this, 'colors');
       fnUtils.bound(this, 'css');
@@ -3501,7 +4187,7 @@ define('extplug/modules/room-styles/main', function (require, exports, module) {
       fnUtils.bound(this, 'reload');
     },
 
-    enable: function () {
+    enable: function enable() {
       this._super();
       this.all();
 
@@ -3510,57 +4196,50 @@ define('extplug/modules/room-styles/main', function (require, exports, module) {
       this.ext.on('room:left', this.unload);
     },
 
-    disable: function () {
+    disable: function disable() {
       this._super();
       this.ext.roomSettings.off('change', this.reload);
 
       this.ext.off('room:left', this.unload);
     },
 
-    reload: function () {
+    reload: function reload() {
       this.unload();
       this.all();
     },
 
-    colors: function () {
+    colors: function colors() {
       var colors = this.ext.roomSettings.get('colors');
       if (_.isObject(colors)) {
         var colorStyles = this.Style();
 
         if (_.isObject(colors.chat)) {
-          [ 'admin', 'ambassador', 'host', 'cohost', 'manager', 'bouncer', 'dj' ]
-            .forEach(function (level) {
-              if (colors.chat[level]) {
-                var value = { color: '#' + colors.chat[level] + ' !important' };
-                colorStyles
-                  .set('#chat-messages .icon-chat-' + level + ' ~ .from', value)
-                  .set('#user-rollover .icon-chat-' + level + ' + span', value)
-                  .set('#user-lists    .icon-chat-' + level + ' + span', value)
-                  .set('#waitlist      .icon-chat-' + level + ' + span', value);
-              }
-            });
+          ['admin', 'ambassador', 'host', 'cohost', 'manager', 'bouncer', 'dj'].forEach(function (level) {
+            if (colors.chat[level]) {
+              var value = { color: '#' + colors.chat[level] + ' !important' };
+              colorStyles.set('#chat-messages .icon-chat-' + level + ' ~ .un', value).set('#user-rollover .icon-chat-' + level + ' + span', value).set('#user-lists    .icon-chat-' + level + ' + span', value).set('#waitlist      .icon-chat-' + level + ' + span', value);
+            }
+          });
         }
       }
     },
 
-    css: function () {
+    css: function css() {
       var css = this.ext.roomSettings.get('css');
       if (_.isObject(css)) {
         if (_.isObject(css.rule)) {
           this.Style(css.rule);
         }
 
-        if (_.isArray(css.import)) {
-          this._imports = $('<style>').text(
-            css.import.map(function (url) {
-              return '@import url(' + request.url(url) + ');';
-            }).join('\n')
-          );
+        if (_.isArray(css['import'])) {
+          this._imports = $('<style>').text(css['import'].map(function (url) {
+            return '@import url(' + request.url(url) + ');';
+          }).join('\n'));
         }
       }
     },
 
-    images: function () {
+    images: function images() {
       var images = this.ext.roomSettings.get('images');
       if (_.isObject(images)) {
         if (images.background) {
@@ -3577,25 +4256,25 @@ define('extplug/modules/room-styles/main', function (require, exports, module) {
         }
         if (images.booth) {
           this.$booth = $('<div />').css({
-            'background': 'url(' + images.booth + ') no-repeat center center',
-            'position': 'absolute',
-            'width': '300px',
-            'height': '100px',
-            'left': '15px',
-            'top': '70px',
+            background: 'url(' + images.booth + ') no-repeat center center',
+            position: 'absolute',
+            width: '300px',
+            height: '100px',
+            left: '15px',
+            top: '70px',
             'z-index': -1
           }).appendTo(this.$('#dj-booth'));
         }
       }
     },
 
-    all: function () {
+    all: function all() {
       this.colors();
       this.css();
       this.images();
     },
 
-    unload: function () {
+    unload: function unload() {
       if (this.$booth) {
         this.$booth.remove();
       }
@@ -3611,47 +4290,16 @@ define('extplug/modules/room-styles/main', function (require, exports, module) {
     }
 
   });
-
 });
 
 (extp = window.extp || []).push('extplug/modules/room-styles/main');
+'use strict';
 
 ;(function _initExtPlug() {
 
   if (window.API) {
-    plugModules.register();
-    require([ 'extplug/ExtPlug' ], function _loaded(ExtPlug) {
-      if (!appViewExists()) {
-        return setTimeout(function () {
-          _loaded(ExtPlug)
-        }, 20);
-      }
-
-      var cbs = window.extp || [];
-      var ext = new ExtPlug();
-      window.extp = ext;
-
-      ext.init();
-      cbs.forEach(function (cb) {
-        ext.push(cb);
-      });
-
-    });
-  }
-  else {
+    require(['extplug/boot']);
+  } else {
     setTimeout(_initExtPlug, 20);
   }
-
-  function appViewExists() {
-    try {
-      // the ApplicationView attaches an event handler on instantiation.
-      var AppView = plugModules.require('plug/views/app/ApplicationView'),
-        evts = plugModules.require('plug/core/Events')._events['show:room'];
-      return evts.some(function (event) { return event.ctx instanceof AppView; });
-    }
-    catch (e) {
-      return false;
-    }
-  }
-
-}());
+})();
