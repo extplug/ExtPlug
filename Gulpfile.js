@@ -1,7 +1,8 @@
 var gulp   = require('gulp')
 var babel  = require('gulp-babel')
 var concat = require('gulp-concat')
-var rjs    = require('gulp-requirejs')
+var rjs    = require('requirejs')
+var fs     = require('fs')
 var packg  = require('./package.json')
 
 gulp.task('babel', function () {
@@ -10,12 +11,16 @@ gulp.task('babel', function () {
     .pipe(gulp.dest('build/babel/'))
 })
 
-gulp.task('rjs', [ 'babel' ], function () {
+gulp.task('rjs', [ 'babel' ], function (done) {
   var bower = '../../bower_components/'
-  packg.builtAt = Date.now();
-  rjs({
+  var npm = '../../node_modules/'
+  packg.builtAt = Date.now()
+  var packgString = JSON.stringify(packg, null, 2)
+  delete packg.builtAt
+  rjs.optimize({
     baseUrl: 'build/babel/',
-    name: 'extplug/ExtPlug',
+    name: 'extplug/boot',
+    include: 'extplug/ExtPlug',
     paths: {
       // plug-modules defines, these are defined at runtime
       // so the r.js optimizer can't find them
@@ -23,21 +28,23 @@ gulp.task('rjs', [ 'babel' ], function () {
       backbone: 'empty:',
       jquery: 'empty:',
       underscore: 'empty:',
-      meld: bower + 'meld/meld'
+      meld: bower + 'meld/meld',
+      'plug-modules': npm + 'plug-modules/plug-modules'
     },
     rawText: {
-      'extplug/package': 'define(' + JSON.stringify(packg) + ')'
+      'extplug/package': 'define(' + packgString + ')'
     },
-    out: 'build.rjs.js'
-  }).pipe(gulp.dest('build/'))
-  delete packg.builtAt;
+    optimize: 'none',
+    out: function (text) {
+      fs.writeFile('build/build.rjs.js', text, done)
+    }
+  })
 })
 
 gulp.task('build', [ 'rjs' ], function () {
-  return gulp.src([ 'node_modules/plug-modules/plug-modules.js'
-                  , 'build/build.rjs.js'
-                  , 'src/modules/*'
-                  , 'src/extplug/plugdj.user.js' ])
+  return gulp.src([ 'build/build.rjs.js'
+                  , 'build/babel/modules/*'
+                  , 'build/babel/extplug/plugdj.user.js' ])
     .pipe(concat('build.full.js'))
     .pipe(gulp.dest('build/'))
 })
