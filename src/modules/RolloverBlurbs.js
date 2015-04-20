@@ -4,7 +4,8 @@ define('extplug/modules/rollover-blurbs/main', function (require, exports, modul
     fnUtils = require('extplug/util/function'),
     rolloverView = require('plug/views/users/userRolloverView'),
     UserFindAction = require('plug/actions/users/UserFindAction'),
-    $ = require('jquery');
+    $ = require('jquery'),
+    meld = require('meld');
 
   var emoji = $('<span />').addClass('emoji-glow')
     .append($('<span />').addClass('emoji emoji-1f4dd'));
@@ -30,44 +31,46 @@ define('extplug/modules/rollover-blurbs/main', function (require, exports, modul
         }
       });
 
-      fnUtils.replaceMethod(rolloverView, 'showModal', this.addBlurb);
-      fnUtils.replaceMethod(rolloverView, 'hide', this.removeBlurb);
+      this.showAdvice = meld.around(rolloverView, 'showModal', this.addBlurb);
+      this.hideAdivce = meld.before(rolloverView, 'hide', this.removeBlurb);
     },
 
     disable: function () {
       this._super();
-      fnUtils.unreplaceMethod(rolloverView, 'showModal', this.addBlurb);
-      fnUtils.unreplaceMethod(rolloverView, 'hide', this.removeBlurb);
+      this.showAdvice.remove();
+      this.hideAdvice.remove();
     },
 
-    addBlurb: function (showModal, _arg) {
-      var self = this;
+    addBlurb(joinpoint) {
       this.$('.extplug-blurb-wrap').remove();
+      var self = this;
       var span = $('<span />').addClass('extplug-blurb');
       var div = $('<div />').addClass('info extplug-blurb-wrap').append(span);
       if (this.user.get('blurb')) {
         show(this.user.get('blurb'));
       }
       else {
-        new UserFindAction(this.user.get('id')).on('success', function (user) {
-          self.user.set('blurb', user.blurb);
-          show(user.blurb);
-        });
+        new UserFindAction(this.user.get('id'))
+          .on('success', user => {
+            if (user.blurb) {
+              self.user.set('blurb', user.blurb);
+              show(user.blurb);
+            }
+          });
       }
-      showModal(_arg);
+      return joinpoint.proceed();
 
       function show(blurb) {
         if (blurb) {
           self.$('.actions').before(div);
-          span.append(emoji, ' ' + blurb);
+          span.append(emoji, ` ${blurb}`);
           div.height(span[0].offsetHeight + 6);
           self.$el.css('top', (parseInt(self.$el.css('top'), 10) - div.height()) + 'px');
         }
       }
     },
-    removeBlurb: function (hide, _arg) {
+    removeBlurb() {
       this.$('.extplug-blurb-wrap').remove();
-      hide(_arg);
     }
 
   });
