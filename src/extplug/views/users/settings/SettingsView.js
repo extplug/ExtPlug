@@ -5,6 +5,7 @@ define(function (require, exports, module) {
     CheckboxView = require('extplug/views/users/settings/CheckboxView'),
     DropdownView = require('extplug/views/users/settings/DropdownView'),
     SliderView = require('extplug/views/users/settings/SliderView'),
+    ModuleMeta = require('extplug/models/Module'),
     _ = require('underscore'),
     $ = require('jquery');
 
@@ -105,15 +106,10 @@ define(function (require, exports, module) {
       return modulesGroup;
     },
     createExtPlugGroup: function () {
-      // global ExtPlug settings
-      var extGroup = new ControlGroupView({ name: 'ExtPlug' });
-      var useCorsProxy = new CheckboxView({
-        label: 'Use CORS proxy',
-        enabled: this.ext.settings.get('corsProxy')
-      });
-      extGroup.add(useCorsProxy);
-      wireSettingToModel(useCorsProxy, this.ext.settings, 'corsProxy');
-      return extGroup;
+      return this.createSettingsGroup(new ModuleMeta({
+        module: this.ext,
+        name: 'ExtPlug'
+      }));
     },
 
     createSettingsGroup: function (mod) {

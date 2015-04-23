@@ -12,7 +12,7 @@ define(function () {
       var ext = new ExtPlug();
       window.extp = ext;
 
-      ext.init();
+      ext.enable();
       cbs.forEach(ext.push, ext);
       if (timer) {
         clearInterval(timer);
