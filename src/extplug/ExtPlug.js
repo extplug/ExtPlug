@@ -5,8 +5,6 @@ define(function (require, exports, module) {
     settings = require('extplug/store/settings'),
     Events = require('plug/core/Events'),
     ApplicationView = require('plug/views/app/ApplicationView'),
-    SettingsTabMenuView = require('plug/views/users/settings/TabMenuView'),
-    AppSettingsSectionView = require('plug/views/users/settings/SettingsApplicationView'),
     UserView = require('plug/views/users/UserView'),
     UserSettingsView = require('plug/views/users/settings/SettingsView'),
     ChatView = require('plug/views/rooms/chat/ChatView'),
