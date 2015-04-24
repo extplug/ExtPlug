@@ -157,7 +157,7 @@ define(function (require, exports, module) {
 
       this.document = $(document);
 
-      this.logo = new Style({
+      this.Style({
         '#app-menu .button i:after': {
           content: '"EXT"',
           color: '#fff',
@@ -172,10 +172,6 @@ define(function (require, exports, module) {
         }
       });
 
-      this.document.on('click.extplug', this.onClick);
-
-      currentMedia.on('change:volume', this.onVolume);
-
       const pad = x => x < 10 ? `0${x}` : x
       let ba = new Date(_package.builtAt)
       let builtAt = ba.getUTCFullYear() + '-'
@@ -188,31 +184,30 @@ define(function (require, exports, module) {
         API.chatLog(`${_package.name} v${_package.version} (${builtAt})`);
       });
 
-      // add an ExtPlug settings tab to User Settings
-      fnUtils.replaceClass(SettingsTabMenuView, ExtSettingsTabMenuView);
-      fnUtils.replaceClass(UserView, ExtUserView);
       // replace rendered UserView
-      var userView = new UserView();
+      var userView = new ExtUserView();
       userView.render();
       this.appView.user.$el.replaceWith(userView.$el);
       this.appView.user = userView;
 
-      // add the ExtPlug settings pane
-      function addExtPlugSettingsPane(joinpoint) {
+      // Add ExtPlug tab to user settings
+      this._settingsTabAdvice = meld.around(UserSettingsView.prototype, 'getMenu', () => {
+        return new ExtSettingsTabMenuView();
+      });
+      this._settingsPaneAdvice = meld.around(UserSettingsView.prototype, 'getView', joinpoint => {
         if (joinpoint.args[0] === 'ext-plug') {
-          return new ExtSettingsSectionView({ modules: ext._modules, ext: ext });
+          return new ExtSettingsSectionView({
+            modules: ext._modules,
+            ext: ext
+          });
         }
         return joinpoint.proceed();
-      }
-
-      var settingsPaneAdvice = meld.around(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
-      this.on('deinit', function () { settingsPaneAdvice.remove() });
+      });
 
       // install extra events
-      hooks.forEach(function (hook) {
+      hooks.forEach(hook => {
         hook.install();
-        this.on('deinit', hook.uninstall);
-      }, this);
+      });
 
       // add custom chat message type
       function addCustomChatType(joinpoint) {
@@ -252,7 +247,7 @@ define(function (require, exports, module) {
         }
       }
 
-      new Style({
+      this.Style({
         '#chat-messages .cm.inline': {
           '.badge-box': {
             'margin': '5px 8px 6px',
@@ -284,19 +279,16 @@ define(function (require, exports, module) {
       if (chatView) {
         Events.off('chat:receive', chatView.onReceived);
       }
-      var chatTypeAdvice = meld.around(ChatView.prototype, 'onReceived', addCustomChatType);
-      this.on('deinit', function () { chatTypeAdvice.remove(); });
+      this._chatTypeAdvice = meld.around(ChatView.prototype, 'onReceived', addCustomChatType);
       if (chatView) {
         Events.on('chat:receive', chatView.onReceived, chatView);
       }
 
       // room settings
-      var roomSettings = new RoomSettings(this);
-      this.roomSettings = roomSettings;
-      this.on('deinit', function () {
-        roomSettings.dispose();
-      });
+      this.roomSettings = new RoomSettings(this);
 
+      this.document.on('click.extplug', this.onClick);
+      currentMedia.on('change:volume', this.onVolume);
       currentRoom.on('change:joined', this.onJoinedChange);
 
       this._loadEnabledModules();
@@ -309,12 +301,35 @@ define(function (require, exports, module) {
     /**
      * Deinitializes and cleans up ExtPlug.
      *
-     * Everything should be unloaded here, so the Plug.DJ page is like nothing ever happened.
+     * Everything should be unloaded here, so the Plug.DJ page looks like nothing ever happened.
      */
     disable() {
       this._modules.forEach(mod => {
         mod.disable();
       });
+      hooks.forEach(hook => {
+        hook.uninstall();
+      });
+      // remove settings pane
+      this._settingsTabAdvice.remove();
+      this._settingsPaneAdvice.remove();
+      var userView = new UserView();
+      userView.render();
+      this.appView.user.$el.replaceWith(userView.$el);
+      this.appView.user = userView;
+      // remove custom chat type advice, and restore
+      // the original event listener
+      let chatView = this.appView.room.chat;
+      if (chatView) Events.off('chat:receive', chatView.onReceived);
+      this._chatTypeAdvice.remove();
+      if (chatView) Events.on('chat:receive', chatView.onReceived, chatView);
+
+      // remove room settings handling
+      this.roomSettings.dispose();
+      // remove events
+      this.document.off('.extplug');
+      currentMedia.off('change:volume', this.onVolume);
+      currentRoom.off('change:joined', this.onJoinedChange);
       this.trigger('deinit');
       this._super();
     },
