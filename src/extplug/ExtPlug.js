@@ -57,6 +57,20 @@ define(function (require, exports, module) {
     return appView && appView.ctx;
   }
 
+  // Used for loading modules with relative dependencies
+  // from remote URLs.
+  // Require.js normally does some transformations to turn
+  // a module name into a URL, but only if the module name does
+  // not start with a protocol or end in a .js file extension.
+  // Usually users will enter full URLs, and we want to be able
+  // to resolve relative dependencies inside modules properly.
+  // To make this happen, we replace https:// by extpremote/ in
+  // user-entered URLs, and then suddenly require.js's usual rules
+  // will apply.
+  requirejs.config({
+    paths: { extpremote: 'https://' }
+  });
+
   /**
    * Main ExtPlug extension class.
    *
@@ -131,10 +145,21 @@ define(function (require, exports, module) {
      * This can be anything that is accepted by require.js, including
      * modules using require.js plugins or modules on remote URLs.
      */
-    registerModule(id) {
-      require([ id ], function (Mod) {
-        this.register(id, Mod);
-      }.bind(this));
+    registerModule(id, cb) {
+      require(
+        [ id ],
+        (Mod) => {
+          var mod = new Mod(id, this);
+          this._modules.add(new ModuleMeta({
+            module: mod,
+            name: mod.name
+          }));
+          if (cb) cb(null);
+        },
+        (err) => {
+          if (cb) cb(err);
+        }
+      );
       return this;
     },
 
@@ -291,7 +316,7 @@ define(function (require, exports, module) {
 
       this._loadEnabledModules();
 
-      Events.trigger('notify', 'icon-plug-dj', 'ExtPlug loaded');
+      Events.trigger('notify', 'icon-plug-dj', `ExtPlug v${_package.version} loaded`);
 
       return this;
     },

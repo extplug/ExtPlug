@@ -6,6 +6,7 @@ define(function (require, exports, module) {
     DropdownView = require('extplug/views/users/settings/DropdownView'),
     SliderView = require('extplug/views/users/settings/SliderView'),
     ModuleMeta = require('extplug/models/Module'),
+    InstallModuleButton = require('./InstallModuleButton'),
     _ = require('underscore'),
     $ = require('jquery');
 
@@ -109,7 +110,7 @@ define(function (require, exports, module) {
       return this.createSettingsGroup(new ModuleMeta({
         module: this.ext,
         name: 'ExtPlug'
-      }));
+      })).add(new InstallModuleButton());
     },
 
     createSettingsGroup: function (mod) {
