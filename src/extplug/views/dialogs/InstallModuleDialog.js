@@ -62,7 +62,7 @@ define(function (require, exports, module) {
         let modulePath = dirname(url);
         let moduleDir = modulePath.replace(/^https:\/\//, 'extpremote/');
         let moduleName = basename(url).replace(/\.js$/, '');
-        extp.registerModule(moduleDir + '/' + moduleName, (err) => {
+        extp.install(moduleDir + '/' + moduleName, (err) => {
           this.close();
           if (err) {
             Events.dispatch(new AlertEvent(

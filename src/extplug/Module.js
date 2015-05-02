@@ -24,30 +24,15 @@ define(function (require, exports, module) {
         this._settings = this.settings;
       }
       this.settings = settings;
-      this.loadSettings();
 
       fnUtils.bound(this, 'refresh');
       fnUtils.bound(this, 'enable');
       fnUtils.bound(this, 'disable');
       fnUtils.bound(this, '$');
-      fnUtils.bound(this, 'saveSettings');
-
-      this.settings.on('change', this.saveSettings);
     },
 
     $: function (sel) {
       return sel ? jQuery(sel, this.ext.document) : this.ext.document;
-    },
-
-    loadSettings: function () {
-      var settings = localStorage.getItem('extPlugModule_' + this.id);
-      if (settings) {
-        this.settings.set(JSON.parse(settings));
-      }
-    },
-
-    saveSettings: function () {
-      localStorage.setItem('extPlugModule_' + this.id, JSON.stringify(this.settings));
     },
 
     disable: function () {

@@ -149,11 +149,19 @@ define(function (require, exports, module) {
       require(
         [ id ],
         (Mod) => {
-          var mod = new Mod(id, this);
-          this._modules.add(new ModuleMeta({
+          let mod = new Mod(id, this);
+          let meta = new ModuleMeta({
             module: mod,
             name: mod.name
-          }));
+          });
+          this._modules.add(meta);
+          let settings = this._getModuleSettings(mod.id);
+          mod.settings.set(settings.settings);
+          if (settings.enabled) {
+            _.defer(() => {
+              meta.enable();
+            });
+          }
           if (cb) cb(null);
         },
         (err) => {
@@ -161,6 +169,53 @@ define(function (require, exports, module) {
         }
       );
       return this;
+    },
+
+    /**
+     * Installs a plugin. This is basically registerModule(), but it also
+     * remembers the plugin name so it can be loaded again automatically
+     * on following ExtPlug runs.
+     */
+    install(id, cb) {
+      this.registerModule(id, (e) => {
+        if (e) return cb(e);
+        let json = JSON.parse(localStorage.extPlugModules);
+        json._installed = (json._installed || []).concat([ id ])
+        localStorage.extPlugModules = JSON.stringify(json);
+        cb(null)
+      });
+    },
+
+    /**
+     * Loads installed modules.
+     */
+    _loadInstalled() {
+      let { _installed } = JSON.parse(localStorage.extPlugModules)
+      if (_.isArray(_installed)) {
+        let l = _installed.length;
+        let i = 0;
+        let errors = [];
+        const done = () => {
+          if (errors.length) {
+            errors.forEach(e => {
+              Events.trigger('notify', 'icon-chat-system',
+                             `Plugin error: ${e.message}`);
+            });
+          }
+          else if (i > 0) {
+            Events.trigger('notify', 'icon-plug-dj',
+                           `ExtPlug: loaded ${i} plugins.`);
+          }
+        };
+        _installed.forEach(name => {
+          this.registerModule(name, e => {
+            if (e) errors.push(e);
+            if (++i >= l) {
+              done();
+            }
+          });
+        });
+      }
     },
 
     /**
@@ -314,8 +369,7 @@ define(function (require, exports, module) {
       currentMedia.on('change:volume', this.onVolume);
       currentRoom.on('change:joined', this.onJoinedChange);
 
-      this._loadEnabledModules();
-
+      this._loadInstalled();
       Events.trigger('notify', 'icon-plug-dj', `ExtPlug v${_package.version} loaded`);
 
       return this;
@@ -358,39 +412,26 @@ define(function (require, exports, module) {
     },
 
     /**
-     * Persists enabled modules to localStorage.
+     * Persists plugin settings to localStorage.
      * @private
      */
-    _updateEnabledModules() {
-      var modules = {};
-      this._modules.forEach(function (m) {
-        modules[m.get('name')] = {
-          enabled: m.get('enabled'),
-          settings: m.get('module').settings
-        };
-      }, this);
-      localStorage.setItem('extPlugModules', JSON.stringify(modules));
+    _saveModuleSettings(id) {
+      let json = JSON.parse(localStorage.extPlugModules);
+      let mod = this._modules.findWhere({ id: id });
+      let settings = mod.get('module').settings;
+      json[id] = { enabled: mod.get('enabled'), settings: settings };
+      localStorage.extPlugModules = JSON.stringify(json);
     },
 
     /**
-     * Enables modules and loads their settings from localStorage.
-     * @private
+     * Retrieves plugin settings from localStorage.
      */
-    _loadEnabledModules() {
-      var enabled = localStorage.getItem('extPlugModules');
-      if (enabled) {
-        var modules = JSON.parse(enabled);
-        _.each(modules, (m, name) => {
-          var mod = this._modules.findWhere({ name: name });
-          if (mod) {
-            if (m.enabled) {
-              mod.enable();
-              this._updateEnabledModules();
-            }
-            mod.get('module').settings.set(m.settings);
-          }
-        });
+    _getModuleSettings(id) {
+      let settings = JSON.parse(localStorage.extPlugModules);
+      if (settings && id in settings) {
+        return settings[id];
       }
+      return { enabled: false, settings: {} };
     },
 
     /**
