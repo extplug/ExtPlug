@@ -1491,7 +1491,7 @@ define('extplug/boot',['plug-modules'],function () {
       var ext = new ExtPlug();
       window.extp = ext;
 
-      ext.init();
+      ext.enable();
       cbs.forEach(ext.push, ext);
       if (timer) {
         clearInterval(timer);
@@ -1935,6 +1935,203 @@ define('extplug/views/users/settings/ControlGroupView',['require','exports','mod
 });
 
 
+define('extplug/views/dialogs/InstallModuleDialog',['require','exports','module','jquery','plug/views/dialogs/Dialog','plug/core/Events','plug/events/AlertEvent','plug/views/spinner/SpinnerView','extplug/util/Style'],function (require, exports, module) {
+
+  var $ = require('jquery');
+  var Dialog = require('plug/views/dialogs/Dialog');
+  var Events = require('plug/core/Events');
+  var AlertEvent = require('plug/events/AlertEvent');
+  var SpinnerView = require('plug/views/spinner/SpinnerView');
+  var Style = require('extplug/util/Style');
+
+  function dirname(str) {
+    str = str.split('/');
+    str.pop();
+    return str.join('/');
+  }
+  function basename(str) {
+    return str.split('/').pop();
+  }
+
+  var InstallModuleDialog = Dialog.extend({
+    id: 'dialog-install-module',
+    className: 'dialog',
+    render: function render() {
+      this.$input = $('<input />').attr({
+        type: 'text',
+        placeholder: 'https://'
+      });
+      this.$wrap = $('<div />').addClass('dialog-input-background').append(this.$input);
+      this.$el.append(this.getHeader('Install Module')).append(this.getBody().append(this.getMessage('Enter the URL of the module you wish to install:')).append(this.$wrap)).append(this.getButtons('Install', true));
+      _.defer(this.deferFocus.bind(this));
+      return this._super();
+    },
+    deferFocus: function deferFocus() {
+      this.$input.focus();
+    },
+    submit: function submit() {
+      var _this = this;
+
+      var inp = this.$input;
+      if (inp.val().length > 0 && inp.val().length > 0) {
+        var spinner = new SpinnerView({ size: SpinnerView.LARGE });
+        this.$el.find('.dialog-body').empty().append(spinner.$el);
+        spinner.render();
+        var url = inp.val();
+        extp.install(url, function (err) {
+          _this.close();
+          if (err) {
+            Events.dispatch(new AlertEvent(AlertEvent.ALERT, 'Install Module Error', 'Error: ' + err.message, function () {}));
+          } else {
+            Events.dispatch(new AlertEvent(AlertEvent.ALERT, 'Install Module', 'Module installed successfully.', function () {}));
+          }
+        });
+      }
+    },
+    close: function close() {
+      this.$input.off();
+      this._super();
+    }
+  });
+
+  InstallModuleDialog._style = new Style({
+    '#dialog-install-module': {
+      '.dialog-body': { height: '137px' },
+      '.message': { top: '21px' },
+      '.spinner': { top: '50%', left: '50%' },
+      '.dialog-input-background': {
+        top: '67px',
+        width: '460px',
+        height: '43px',
+        left: '25px',
+        input: {
+          width: '440px'
+        }
+      }
+    }
+  });
+
+  module.exports = InstallModuleDialog;
+});
+
+
+define('extplug/views/users/settings/GroupFooterView',['require','exports','module','backbone','extplug/util/Style'],function (require, exports, module) {
+  var _require = require('backbone');
+
+  var View = _require.View;
+
+  var Style = require('extplug/util/Style');
+
+  var GroupFooterView = View.extend({
+    className: 'extplug-group-footer',
+
+    render: function render() {
+      this.$left = $('<div />').addClass('left');
+      this.$right = $('<div />').addClass('right');
+      this.$el.append(this.$left, this.$right);
+
+      return this._super();
+    }
+  });
+
+  GroupFooterView._style = new Style({
+    // disgusting specificity hack
+    '#user-view #user-settings .extplug-group-footer': {
+      clear: 'both',
+      button: {
+        top: 'auto',
+        position: 'relative'
+      }
+    }
+  });
+
+  module.exports = GroupFooterView;
+});
+
+
+define('extplug/views/users/settings/ModulesGroupView',['require','exports','module','plug/core/Events','plug/events/ShowDialogEvent','extplug/util/Style','extplug/views/dialogs/InstallModuleDialog','./GroupFooterView','./ControlGroupView'],function (require, exports, module) {
+
+  var Events = require('plug/core/Events');
+  var ShowDialogEvent = require('plug/events/ShowDialogEvent');
+  var Style = require('extplug/util/Style');
+  var InstallModuleDialog = require('extplug/views/dialogs/InstallModuleDialog');
+  var FooterView = require('./GroupFooterView');
+  var ControlGroupView = require('./ControlGroupView');
+
+  var ModulesFooterView = FooterView.extend({
+    render: function render() {
+      this._super();
+      this.$install = $('<button />').text('Install Module');
+      this.$manage = $('<button />').text('Manage');
+
+      this.$install.on('click', function () {
+        Events.dispatch(new ShowDialogEvent(ShowDialogEvent.SHOW, new InstallModuleDialog()));
+      });
+      this.$manage.on('click', function () {
+        Events.trigger('extplug:modules:manage');
+      });
+
+      this.$left.append(this.$install);
+      this.$right.append(this.$manage);
+      return this;
+    },
+
+    remove: function remove() {
+      this.$install.off();
+      this.$manage.off();
+    }
+  });
+
+  var ModulesListView = ControlGroupView.extend({
+    render: function render() {
+      this._super();
+      this.footer = new ModulesFooterView();
+      this.footer.render();
+      this.$el.append(this.footer.$el);
+      return this;
+    }
+  });
+
+  module.exports = ModulesListView;
+});
+
+
+define('extplug/views/users/settings/ManagingGroupView',['require','exports','module','plug/core/Events','./GroupFooterView','./ControlGroupView'],function (require, exports, module) {
+
+  var Events = require('plug/core/Events');
+  var FooterView = require('./GroupFooterView');
+  var ControlGroupView = require('./ControlGroupView');
+
+  var ManagingFooterView = FooterView.extend({
+    render: function render() {
+      this._super();
+      this.$done = $('<button />').text('Done');
+      this.$done.on('click', function () {
+        Events.trigger('extplug:modules:unmanage');
+      });
+      this.$right.append(this.$done);
+      return this;
+    },
+
+    remove: function remove() {
+      this.$done.off();
+    }
+  });
+
+  var ManagingListView = ControlGroupView.extend({
+    render: function render() {
+      this._super();
+      this.footer = new ManagingFooterView();
+      this.footer.render();
+      this.$el.append(this.footer.$el);
+      return this;
+    }
+  });
+
+  module.exports = ManagingListView;
+});
+
+
 define('extplug/views/users/settings/ErrorCheckboxView',['require','exports','module','backbone','jquery'],function (require, exports, module) {
 
   var Backbone = require('backbone'),
@@ -2183,13 +2380,63 @@ define('extplug/views/users/settings/SliderView',['require','exports','module','
 });
 
 
-define('extplug/views/users/settings/SettingsView',['require','exports','module','extplug/views/BaseView','extplug/views/users/settings/ControlGroupView','extplug/views/users/settings/ErrorCheckboxView','extplug/views/users/settings/CheckboxView','extplug/views/users/settings/DropdownView','extplug/views/users/settings/SliderView','underscore','jquery'],function (require, exports, module) {
+define('extplug/views/users/settings/RemoveBoxView',['require','exports','module','backbone','jquery','plug/core/Events','plug/views/dialogs/ConfirmDialog','plug/events/ShowDialogEvent'],function (require, exports, module) {
+  var _require = require('backbone');
+
+  var View = _require.View;
+
+  var $ = require('jquery');
+  var Events = require('plug/core/Events');
+  var ConfirmDialog = require('plug/views/dialogs/ConfirmDialog');
+  var ShowDialogEvent = require('plug/events/ShowDialogEvent');
+
+  /**
+   * A checkbox setting item.
+   */
+  var RemoveBoxView = View.extend({
+    className: 'item selected',
+    initialize: function initialize() {
+      this.onRemove = this.onRemove.bind(this);
+    },
+    render: function render() {
+      this.$icon = $('<i />').addClass('icon icon-delete');
+      this.$el.append(this.$icon).append($('<span />').text(this.model.get('name')));
+
+      this.$el.css('cursor', 'default');
+      this.$icon.css('cursor', 'pointer').css({ top: '-6px', left: '-4px' });
+
+      this.$icon.on('click', this.onRemove);
+      return this;
+    },
+    onRemove: function onRemove() {
+      var _this = this;
+
+      Events.dispatch(new ShowDialogEvent(ShowDialogEvent.SHOW, new ConfirmDialog({
+        title: 'Remove Module',
+        message: 'Are you sure you want to uninstall this module?',
+        action: function action() {
+          extp.uninstall(_this.model.get('id'));
+        }
+      })));
+    }
+  });
+
+  module.exports = RemoveBoxView;
+});
+
+
+define('extplug/views/users/settings/SettingsView',['require','exports','module','extplug/views/BaseView','extplug/views/users/settings/ControlGroupView','./ModulesGroupView','./ManagingGroupView','extplug/views/users/settings/ErrorCheckboxView','extplug/views/users/settings/CheckboxView','extplug/views/users/settings/DropdownView','extplug/views/users/settings/SliderView','./RemoveBoxView','extplug/models/Module','plug/core/Events','underscore','jquery'],function (require, exports, module) {
   var BaseView = require('extplug/views/BaseView'),
       ControlGroupView = require('extplug/views/users/settings/ControlGroupView'),
+      ModulesGroupView = require('./ModulesGroupView'),
+      ManagingGroupView = require('./ManagingGroupView'),
       ErrorCheckboxView = require('extplug/views/users/settings/ErrorCheckboxView'),
       CheckboxView = require('extplug/views/users/settings/CheckboxView'),
       DropdownView = require('extplug/views/users/settings/DropdownView'),
       SliderView = require('extplug/views/users/settings/SliderView'),
+      RemoveBoxView = require('./RemoveBoxView'),
+      ModuleMeta = require('extplug/models/Module'),
+      Events = require('plug/core/Events'),
       _ = require('underscore'),
       $ = require('jquery');
 
@@ -2210,19 +2457,31 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
     className: 'ext-plug section',
 
     initialize: function initialize(o) {
+      var _this = this;
+
       this.modules = o.modules;
-      this.modules.on('reset add remove', (function () {
-        this.refresh();
-        this.render();
-      }).bind(this));
+      this.modules.on('reset add remove', function () {
+        _this.refresh();
+        _this.render();
+      });
       this.ext = o.ext;
+      this.mode = 'normal';
 
       this.refresh();
+      this.manage = this.manage.bind(this);
+      this.unmanage = this.unmanage.bind(this);
+
+      Events.on('extplug:modules:manage', this.manage);
+      Events.on('extplug:modules:unmanage', this.unmanage);
     },
 
     refresh: function refresh() {
       this.groups = [];
-      this.addGroup(this.createModulesGroup(), 1000);
+      if (this.mode === 'manage') {
+        this.addGroup(this.createModulesManageGroup(), 1000);
+      } else {
+        this.addGroup(this.createModulesGroup(), 1000);
+      }
       this.addGroup(this.createExtPlugGroup(), 999);
       this.modules.forEach(function (mod) {
         // add module settings group for stuff that was already enabled
@@ -2233,6 +2492,17 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
           }
         }
       }, this);
+    },
+
+    manage: function manage() {
+      this.mode = 'manage';
+      this.refresh();
+      this.render();
+    },
+    unmanage: function unmanage() {
+      this.mode = 'normal';
+      this.refresh();
+      this.render();
     },
 
     render: function render() {
@@ -2248,8 +2518,9 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
     },
 
     createModulesGroup: function createModulesGroup() {
-      var view = this;
-      var modulesGroup = new ControlGroupView({ name: 'Modules' });
+      var _this2 = this;
+
+      var modulesGroup = new ModulesGroupView({ name: 'Modules' });
       // generate module list
       this.modules.forEach(function (mod) {
         var module = mod.get('module'),
@@ -2268,16 +2539,16 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
             // add / remove module settings group
             if (value) {
               mod.enable();
-              var moduleSettings = view.createSettingsGroup(mod);
+              var moduleSettings = _this2.createSettingsGroup(mod);
               if (moduleSettings) {
-                view.addGroup(moduleSettings);
-                view.$container.append(moduleSettings.render().$el);
+                _this2.addGroup(moduleSettings);
+                _this2.$container.append(moduleSettings.render().$el);
               }
             } else {
               mod.disable();
-              var moduleSettings = view.getGroup(name);
+              var moduleSettings = _this2.getGroup(name);
               if (moduleSettings) {
-                view.removeGroup(name);
+                _this2.removeGroup(name);
                 moduleSettings.remove();
               }
             }
@@ -2287,16 +2558,20 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
 
       return modulesGroup;
     },
-    createExtPlugGroup: function createExtPlugGroup() {
-      // global ExtPlug settings
-      var extGroup = new ControlGroupView({ name: 'ExtPlug' });
-      var useCorsProxy = new CheckboxView({
-        label: 'Use CORS proxy',
-        enabled: this.ext.settings.get('corsProxy')
+    createModulesManageGroup: function createModulesManageGroup() {
+      var modulesGroup = new ManagingGroupView({ name: 'Manage Modules' });
+      // generate module list
+      this.modules.forEach(function (mod) {
+        modulesGroup.add(new RemoveBoxView({ model: mod }));
       });
-      extGroup.add(useCorsProxy);
-      wireSettingToModel(useCorsProxy, this.ext.settings, 'corsProxy');
-      return extGroup;
+
+      return modulesGroup;
+    },
+    createExtPlugGroup: function createExtPlugGroup() {
+      return this.createSettingsGroup(new ModuleMeta({
+        module: this.ext,
+        name: 'ExtPlug'
+      }));
     },
 
     createSettingsGroup: function createSettingsGroup(mod) {
@@ -2451,30 +2726,15 @@ define('extplug/Module',['require','exports','module','jquery','underscore','bac
         this._settings = this.settings;
       }
       this.settings = settings;
-      this.loadSettings();
 
       fnUtils.bound(this, 'refresh');
       fnUtils.bound(this, 'enable');
       fnUtils.bound(this, 'disable');
       fnUtils.bound(this, '$');
-      fnUtils.bound(this, 'saveSettings');
-
-      this.settings.on('change', this.saveSettings);
     },
 
     $: function $(sel) {
       return sel ? jQuery(sel, this.ext.document) : this.ext.document;
-    },
-
-    loadSettings: function loadSettings() {
-      var settings = localStorage.getItem('extPlugModule_' + this.id);
-      if (settings) {
-        this.settings.set(JSON.parse(settings));
-      }
-    },
-
-    saveSettings: function saveSettings() {
-      localStorage.setItem('extPlugModule_' + this.id, JSON.stringify(this.settings));
     },
 
     disable: function disable() {
@@ -2544,9 +2804,46 @@ define('extplug/facades/chatFacade',['require','exports','module','plug/facades/
 
   return chatFacade;
 });
+
+
+var _defineProperty = function (obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: key == null || typeof Symbol == 'undefined' || key.constructor !== Symbol, configurable: true, writable: true }); };
+
+define('extplug/load-module',['require','exports','module','extplug/util/request'],function (require, exports, module) {
+
+  var request = require('extplug/util/request');
+
+  function parse(name) {
+    var parts = name.split(';');
+    var o = {};
+    o.url = parts[0];
+    if (parts[1]) {
+      o.name = parts[1];
+    }
+
+    // force https
+    o.url = o.url.replace(/^http:/, 'https:');
+
+    return o;
+  }
+
+  exports.load = function (name, req, cb, config) {
+    var o = parse(name);
+    if (o.name) {
+      // add module name alias to the module URL
+      // this way, when we require([ module name ]), the module URL
+      // will be loaded instead.
+      // then, the module URL will define() the module name anyway,
+      // and requirejs will figure everything out.
+      // Chopping off the .js extension because require.js adds it
+      // since we're actually requiring a module name and not a path.
+      requirejs({ paths: _defineProperty({}, o.name, o.url.replace(/\.js$/, '')) });
+    }
+    requirejs([o.name || o.url], cb);
+  };
+});
 define('extplug/package',{
   "name": "ExtPlug",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "plug-modules": "^4.0.0"
@@ -2561,7 +2858,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jshint src"
   },
-  "builtAt": 1429482994412
+  "builtAt": 1430591382105
 });
 /** @license MIT License (c) copyright 2011-2013 original author or authors */
 
@@ -3306,31 +3603,29 @@ define('extplug/hooks/playback',['require','exports','module','plug/core/Events'
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia','plug/models/currentRoom','extplug/store/settings','plug/core/Events','plug/views/app/ApplicationView','plug/views/users/settings/TabMenuView','plug/views/users/settings/SettingsApplicationView','plug/views/users/UserView','plug/views/users/settings/SettingsView','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','extplug/models/Settings','extplug/models/RoomSettings','extplug/models/Module','extplug/collections/ModulesCollection','extplug/views/users/ExtUserView','extplug/views/users/settings/SettingsView','extplug/views/users/settings/TabMenuView','extplug/util/Style','extplug/util/function','extplug/Module','extplug/facades/chatFacade','extplug/package','jquery','underscore','backbone','meld','extplug/hooks/api-early','extplug/hooks/chat','extplug/hooks/playback'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia','plug/models/currentRoom','extplug/store/settings','plug/core/Events','plug/views/app/ApplicationView','plug/views/users/UserView','plug/views/users/settings/SettingsView','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','extplug/models/RoomSettings','extplug/models/Module','extplug/collections/ModulesCollection','extplug/views/users/ExtUserView','extplug/views/users/settings/SettingsView','extplug/views/users/settings/TabMenuView','extplug/util/Style','extplug/util/function','extplug/Module','extplug/facades/chatFacade','extplug/load-module','extplug/package','jquery','underscore','backbone','meld','extplug/hooks/api-early','extplug/hooks/chat','extplug/hooks/playback'],function (require, exports, module) {
 
   var currentMedia = require('plug/models/currentMedia'),
       currentRoom = require('plug/models/currentRoom'),
       settings = require('extplug/store/settings'),
       Events = require('plug/core/Events'),
       ApplicationView = require('plug/views/app/ApplicationView'),
-      SettingsTabMenuView = require('plug/views/users/settings/TabMenuView'),
-      AppSettingsSectionView = require('plug/views/users/settings/SettingsApplicationView'),
       UserView = require('plug/views/users/UserView'),
       UserSettingsView = require('plug/views/users/settings/SettingsView'),
       ChatView = require('plug/views/rooms/chat/ChatView'),
       plugUtil = require('plug/util/util'),
       emoji = require('plug/util/emoji'),
-      Settings = require('extplug/models/Settings'),
       RoomSettings = require('extplug/models/RoomSettings'),
-      Module = require('extplug/models/Module'),
+      ModuleMeta = require('extplug/models/Module'),
       ModulesCollection = require('extplug/collections/ModulesCollection'),
       ExtUserView = require('extplug/views/users/ExtUserView'),
       ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView'),
       ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
       Style = require('extplug/util/Style'),
       fnUtils = require('extplug/util/function'),
-      _Module = require('extplug/Module'),
+      Module = require('extplug/Module'),
       chatFacade = require('extplug/facades/chatFacade'),
+      loadModule = require('extplug/load-module'),
       _package = require('extplug/package'),
       $ = require('jquery'),
       _ = require('underscore'),
@@ -3338,6 +3633,17 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
       meld = require('meld');
 
   var hooks = [require('extplug/hooks/api-early'), require('extplug/hooks/chat'), require('extplug/hooks/playback')];
+
+  // LocalStorage key name for extplug
+  var LS_NAME = 'extPlugModules';
+
+  // Try to parse as JSON, defaulting to an empty object.
+  function jsonParse(str) {
+    try {
+      return JSON.parse(str) || {};
+    } catch (e) {}
+    return {};
+  }
 
   /**
    * Gets a reference to the main Plug.DJ ApplicationView instance.
@@ -3363,6 +3669,20 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     return appView && appView.ctx;
   }
 
+  // Used for loading modules with relative dependencies
+  // from remote URLs.
+  // Require.js normally does some transformations to turn
+  // a module name into a URL, but only if the module name does
+  // not start with a protocol or end in a .js file extension.
+  // Usually users will enter full URLs, and we want to be able
+  // to resolve relative dependencies inside modules properly.
+  // To make this happen, we replace https:// by extpremote/ in
+  // user-entered URLs, and then suddenly require.js's usual rules
+  // will apply.
+  requirejs.config({
+    paths: { extpremote: 'https://' }
+  });
+
   /**
    * Main ExtPlug extension class.
    *
@@ -3371,364 +3691,422 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
    *
    * @constructor
    */
-  function ExtPlug() {
-    _.extend(this, Backbone.Events);
+  var ExtPlug = Module.extend({
+    name: 'ExtPlug',
+    settings: {
+      corsProxy: { type: 'boolean', 'default': true, label: 'Use CORS proxy' }
+    },
+    init: function init() {
+      var _this = this;
+
+      this._super('extplug', this);
+
+      /**
+       * Internal map of registered modules.
+       * @type {Object.<string, Module>}
+       */
+      this._modules = new ModulesCollection();
+      this._modules.on('change:enabled', function (mod, enabled) {
+        _this._saveModuleSettings(mod.get('id'));
+      });
+
+      /**
+       * jQuery Document object.
+       * @type {jQuery|null}
+       */
+      this.document = null;
+
+      // bound methods
+      this.onClick = this.onClick.bind(this);
+      this.onVolume = this.onVolume.bind(this);
+      this.onJoinedChange = this.onJoinedChange.bind(this);
+    },
 
     /**
-     * Internal map of registered modules.
-     * @type {Object.<string, Module>}
-     */
-    this._modules = new ModulesCollection();
-
-    /**
-     * ExtPlug settings.
+     * Checks if a module is enabled.
      *
-     * @type {Settings}
+     * @param {string} name Module name.
+     *
+     * @return {boolean} True if the Module is enabled, false otherwise.
      */
-    this.settings = new Settings({ corsProxy: true });
+    enabled: function enabled(name) {
+      var mod = this._modules.findWhere({ name: name });
+      return mod ? mod.get('enabled') : false;
+    },
+
     /**
-     * jQuery Document object.
-     * @type {jQuery|null}
+     * Register an ExtPlug module by require.js module name.
+     * This can be anything that is accepted by require.js, including
+     * modules using require.js plugins or modules on remote URLs.
      */
-    this.document = null;
+    registerModule: function registerModule(id, cb) {
+      var _this2 = this;
 
-    // bound methods
-    this.onClick = this.onClick.bind(this);
-    this.onVolume = this.onVolume.bind(this);
-    this.onJoinedChange = this.onJoinedChange.bind(this);
-  }
-
-  /**
-   * Enables a module.
-   *
-   * @param {string} name Module name.
-   */
-  ExtPlug.prototype.enable = function (name) {
-    var mod = this._modules.findWhere({ name: name });
-    if (mod && !mod.get('enabled')) {
-      mod.get('module').enable();
-      mod.set('enabled', true);
-      this._updateEnabledModules();
-    }
-  };
-
-  /**
-   * Disables a module.
-   *
-   * @param {string} name Module name.
-   */
-  ExtPlug.prototype.disable = function (name) {
-    var mod = this._modules.findWhere({ name: name });
-    if (mod && mod.get('enabled')) {
-      mod.get('module').disable();
-      mod.set('enabled', false);
-      this._updateEnabledModules();
-    }
-  };
-
-  /**
-   * Checks if a module is enabled.
-   *
-   * @param {string} name Module name.
-   *
-   * @return {boolean} True if the Module is enabled, false otherwise.
-   */
-  ExtPlug.prototype.enabled = function (name) {
-    var mod = this._modules.findWhere({ name: name });
-    return mod ? mod.get('enabled') : false;
-  };
-
-  /**
-   * Registers a new module.
-   *
-   * @param {function()} Mod A module constructor created with {@link Module}.
-   *
-   * @return {ExtPlug} `this`.
-   * @deprecated Use registerModule() instead. It integrates better with plug.dj's
-   *             require.js-based app, and properly takes care of dependencies.
-   */
-  ExtPlug.prototype.register = function (id, Mod) {
-    if (Mod) {
-      try {
-        var mod = new Mod(id, this);
-        this._modules.add(new Module({ module: mod, name: mod.name }));
-      } catch (e) {
-        this._modules.add(new Module({ module: e, name: mod && mod.name || mod.prototype.name }));
-      }
-    }
-    return this;
-  };
-
-  /**
-   * Register an ExtPlug module by require.js module name.
-   * This can be anything that is accepted by require.js, including
-   * modules using require.js plugins or modules on remote URLs.
-   */
-  ExtPlug.prototype.registerModule = function (id) {
-    require([id], (function (Mod) {
-      this.register(id, Mod);
-    }).bind(this));
-    return this;
-  };
-
-  /**
-   * Initializes ExtPlug.
-   *
-   * This attaches events and finds some common DOM elements. Also, adds
-   * the ExtPlug tab to the user settings area.
-   *
-   * @return {ExtPlug} `this`.
-   */
-  ExtPlug.prototype.init = function () {
-    var ext = this;
-
-    settings.update();
-    this.appView = getApplicationView();
-
-    this.document = $(document);
-
-    this.logo = new Style({
-      '#app-menu .button i:after': {
-        content: '"EXT"',
-        color: '#fff',
-        background: '#f00',
-        'z-index': 10,
-        'font-size': '70%',
-        'border-radius': '10px',
-        padding: '1px 4px',
-        'margin-top': '5px',
-        position: 'relative',
-        float: 'right'
-      }
-    });
-
-    this.document.on('click.extplug', this.onClick);
-
-    currentMedia.on('change:volume', this.onVolume);
-
-    var pad = function pad(x) {
-      return x < 10 ? '0' + x : x;
-    };
-    var ba = new Date(_package.builtAt);
-    var builtAt = ba.getUTCFullYear() + '-' + pad(ba.getUTCMonth() + 1) + '-' + pad(ba.getUTCDate() + 1) + ' ' + pad(ba.getUTCHours() + 1) + ':' + pad(ba.getUTCMinutes() + 1) + ':' + pad(ba.getUTCSeconds() + 1) + ' UTC';
-    chatFacade.registerCommand('version', function () {
-      API.chatLog('' + _package.name + ' v' + _package.version + ' (' + builtAt + ')');
-    });
-
-    // add an ExtPlug settings tab to User Settings
-    fnUtils.replaceClass(SettingsTabMenuView, ExtSettingsTabMenuView);
-    fnUtils.replaceClass(UserView, ExtUserView);
-    // replace rendered UserView
-    var userView = new UserView();
-    userView.render();
-    this.appView.user.$el.replaceWith(userView.$el);
-    this.appView.user = userView;
-
-    // add the ExtPlug settings pane
-    function addExtPlugSettingsPane(joinpoint) {
-      if (joinpoint.args[0] === 'ext-plug') {
-        return new ExtSettingsSectionView({ modules: ext._modules, ext: ext });
-      }
-      return joinpoint.proceed();
-    }
-
-    var settingsPaneAdvice = meld.around(UserSettingsView.prototype, 'getView', addExtPlugSettingsPane);
-    this.on('deinit', function () {
-      settingsPaneAdvice.remove();
-    });
-
-    // install extra events
-    hooks.forEach(function (hook) {
-      hook.install();
-      this.on('deinit', hook.uninstall);
-    }, this);
-
-    // add custom chat message type
-    function addCustomChatType(joinpoint) {
-      var message = joinpoint.args[0];
-      if (message.type.split(' ').indexOf('custom') !== -1) {
-        message.type += ' update';
-        if (!message.timestamp) {
-          message.timestamp = plugUtil.getChatTimestamp();
+      require(['extplug/load-module!' + id], function (Mod) {
+        var mod = new Mod(id, _this2);
+        var meta = new ModuleMeta({
+          id: id,
+          module: mod,
+          name: mod.name
+        });
+        _this2._modules.add(meta);
+        var settings = _this2._getModuleSettings(mod.id);
+        mod.settings.set(settings.settings);
+        mod.settings.on('change', function () {
+          _this2._saveModuleSettings(id);
+        });
+        if (settings.enabled) {
+          _.defer(function () {
+            meta.enable();
+          });
         }
-        joinpoint.proceed();
-        if (message.badge) {
-          if (/^:(.*?):$/.test(message.badge)) {
-            var badgeBox = this.$chatMessages.children().last().find('.badge-box'),
-                emojiName = message.badge.slice(1, -1);
-            if (emoji.map[emojiName]) {
-              badgeBox.find('i').remove();
-              badgeBox.append($('<span />').addClass('emoji-glow extplug-badji').append($('<span />').addClass('emoji emoji-' + emoji.map[emojiName])));
+        if (cb) cb(null);
+      }, function (err) {
+        if (cb) cb(err);
+      });
+      return this;
+    },
+
+    /**
+     * Disables and removes an ExtPlug module.
+     */
+    unregisterModule: function unregisterModule(id) {
+      var mod = this._modules.findWhere({ id: id });
+      if (mod) {
+        mod.disable();
+        this._modules.remove(mod);
+      }
+    },
+
+    /**
+     * Installs a plugin. This is basically registerModule(), but it also
+     * remembers the plugin name so it can be loaded again automatically
+     * on following ExtPlug runs.
+     */
+    install: function install(id, cb) {
+      this.registerModule(id, function (e) {
+        if (e) return cb(e);
+        var json = jsonParse(localStorage.getItem(LS_NAME));
+        json._installed = (json._installed || []).concat([id]);
+        localStorage.setItem(LS_NAME, JSON.stringify(json));
+        cb(null);
+      });
+    },
+
+    /**
+     * Disables and removes a plugin forever.
+     */
+    uninstall: function uninstall(id) {
+      this.unregisterModule(id);
+      var json = jsonParse(localStorage.getItem(LS_NAME));
+      if (json._installed) {
+        var i = json._installed.indexOf(id);
+        if (i !== -1) {
+          json._installed.splice(i, 1);
+          localStorage.setItem(LS_NAME, JSON.stringify(json));
+        }
+      }
+    },
+
+    /**
+     * Loads installed modules.
+     */
+    _loadInstalled: function _loadInstalled() {
+      var _this3 = this;
+
+      var _jsonParse = jsonParse(localStorage.getItem(LS_NAME));
+
+      var _installed = _jsonParse._installed;
+
+      if (_.isArray(_installed)) {
+        (function () {
+          var l = _installed.length;
+          var i = 0;
+          var errors = [];
+          var done = function done() {
+            if (errors.length) {
+              errors.forEach(function (e) {
+                Events.trigger('notify', 'icon-chat-system', 'Plugin error: ' + e.message);
+              });
+            } else if (i > 0) {
+              Events.trigger('notify', 'icon-plug-dj', 'ExtPlug: loaded ' + i + ' plugins.');
             }
-          } else if (/^icon-(.*?)$/.test(message.badge)) {
-            var badgeBox = this.$chatMessages.children().last().find('.badge-box');
-            badgeBox.find('i').removeClass().addClass('icon').addClass(message.badge);
-          }
-        }
-        if (message.color) {
-          this.$chatMessages.children().last().find('.msg .text').css('color', message.color);
-        }
-      } else {
-        joinpoint.proceed(message);
+          };
+          _installed.forEach(function (name) {
+            _this3.registerModule(name, function (e) {
+              if (e) errors.push(e);
+              if (++i >= l) {
+                done();
+              }
+            });
+          });
+        })();
       }
-    }
+    },
 
-    new Style({
-      '#chat-messages .cm.inline': {
-        '.badge-box': {
-          margin: '5px 8px 6px',
-          height: '17px',
-          'border-radius': '0px',
-          background: 'transparent',
+    /**
+     * Initializes ExtPlug.
+     *
+     * This attaches events and finds some common DOM elements. Also, adds
+     * the ExtPlug tab to the user settings area.
+     *
+     * @return {ExtPlug} `this`.
+     */
+    enable: function enable() {
+      this._super();
+      var ext = this;
 
-          // center badge icons
-          '.icon': {
-            top: '50%',
-            'margin-top': '-15px'
-          }
-        },
-        '.from': { display: 'inline' },
-        '.text': { display: 'inline', 'margin-left': '5px' }
-      },
-      '#chat-messages .cm .no-badge .icon': {
-        width: '30px',
-        height: '30px',
-        top: '0px',
-        left: '0px',
-        border: 'none',
-        'border-radius': '0px'
-      }
-    });
-
-    // Replace the event listener too
-    var chatView = this.appView.room.chat;
-    if (chatView) {
-      Events.off('chat:receive', chatView.onReceived);
-    }
-    var chatTypeAdvice = meld.around(ChatView.prototype, 'onReceived', addCustomChatType);
-    this.on('deinit', function () {
-      chatTypeAdvice.remove();
-    });
-    if (chatView) {
-      Events.on('chat:receive', chatView.onReceived, chatView);
-    }
-
-    // room settings
-    var roomSettings = new RoomSettings(this);
-    this.roomSettings = roomSettings;
-    this.on('deinit', function () {
-      roomSettings.dispose();
-    });
-
-    currentRoom.on('change:joined', this.onJoinedChange);
-
-    this._loadEnabledModules();
-
-    Events.trigger('notify', 'icon-plug-dj', 'ExtPlug loaded');
-
-    return this;
-  };
-
-  /**
-   * Deinitializes and cleans up ExtPlug.
-   *
-   * Everything should be unloaded here, so the Plug.DJ page is like nothing ever happened.
-   */
-  ExtPlug.prototype.deinit = function () {
-    _.each(this._enabled, function (name) {
-      this.disable(name);
-    }, this);
-    this.trigger('deinit');
-  };
-
-  /**
-   * Persists enabled modules to localStorage.
-   * @private
-   */
-  ExtPlug.prototype._updateEnabledModules = function () {
-    var modules = {};
-    this._modules.forEach(function (m) {
-      modules[m.get('name')] = {
-        enabled: m.get('enabled'),
-        settings: m.get('module').settings
-      };
-    }, this);
-    localStorage.setItem('extPlugModules', JSON.stringify(modules));
-  };
-
-  /**
-   * Enables modules and loads their settings from localStorage.
-   * @private
-   */
-  ExtPlug.prototype._loadEnabledModules = function () {
-    var enabled = localStorage.getItem('extPlugModules');
-    if (enabled) {
-      var modules = JSON.parse(enabled);
-      _.each(modules, function (m, name) {
-        if (m.enabled) {
-          this.enable(name);
-        }
-        var mod = this._modules.findWhere({ name: name });
-        if (mod) {
-          mod.get('module').settings.set(m.settings);
-        }
-      }, this);
-    }
-  };
-
-  /**
-   * Full-page onclick handler.
-   *
-   * @param {MouseEvent} e Event.
-   *
-   * @private
-   */
-  ExtPlug.prototype.onClick = function (e) {
-    var target = $(e.target);
-    if (target.parents('#user-settings').length === 1) {
       settings.update();
-    }
-  };
+      this.appView = getApplicationView();
 
-  /**
-   * Volume change handler.
-   *
-   * @private
-   */
-  ExtPlug.prototype.onVolume = function () {
-    var newVolume = API.getVolume();
-    if (settings.get('volume') !== newVolume) {
-      settings.set('volume', newVolume);
-    }
-  };
+      this.document = $(document);
 
-  /**
-   * Room join/leave handler.
-   *
-   * @private
-   */
-  ExtPlug.prototype.onJoinedChange = function () {
-    if (currentRoom.get('joined')) {
-      this.trigger('room:joined', currentRoom);
-    } else {
-      this.trigger('room:left', currentRoom);
-    }
-  };
+      this.Style({
+        '#app-menu .button i:after': {
+          content: '"EXT"',
+          color: '#fff',
+          background: '#f00',
+          'z-index': 10,
+          'font-size': '70%',
+          'border-radius': '10px',
+          padding: '1px 4px',
+          'margin-top': '5px',
+          position: 'relative',
+          float: 'right'
+        }
+      });
 
-  /**
-   * 3rd party modules should use `extp.push` to register callbacks or modules
-   * for when ExtPlug is loaded.
-   * This ensures that modules that are loaded *after* ExtPlug will also register.
-   *
-   * @param {function()} cb
-   */
-  ExtPlug.prototype.push = function (cb) {
-    if (typeof cb === 'string') {
-      this.registerModule(cb);
-    } else {
-      cb(this);
+      var pad = function pad(x) {
+        return x < 10 ? '0' + x : x;
+      };
+      var ba = new Date(_package.builtAt);
+      var builtAt = ba.getUTCFullYear() + '-' + pad(ba.getUTCMonth() + 1) + '-' + pad(ba.getUTCDate() + 1) + ' ' + pad(ba.getUTCHours() + 1) + ':' + pad(ba.getUTCMinutes() + 1) + ':' + pad(ba.getUTCSeconds() + 1) + ' UTC';
+      chatFacade.registerCommand('version', function () {
+        API.chatLog('' + _package.name + ' v' + _package.version + ' (' + builtAt + ')');
+      });
+
+      // replace rendered UserView
+      var userView = new ExtUserView();
+      userView.render();
+      this.appView.user.$el.replaceWith(userView.$el);
+      this.appView.user = userView;
+
+      // Add ExtPlug tab to user settings
+      this._settingsTabAdvice = meld.around(UserSettingsView.prototype, 'getMenu', function () {
+        return new ExtSettingsTabMenuView();
+      });
+      this._settingsPaneAdvice = meld.around(UserSettingsView.prototype, 'getView', function (joinpoint) {
+        if (joinpoint.args[0] === 'ext-plug') {
+          return new ExtSettingsSectionView({
+            modules: ext._modules,
+            ext: ext
+          });
+        }
+        return joinpoint.proceed();
+      });
+
+      // install extra events
+      hooks.forEach(function (hook) {
+        hook.install();
+      });
+
+      // add custom chat message type
+      function addCustomChatType(joinpoint) {
+        var message = joinpoint.args[0];
+        if (message.type.split(' ').indexOf('custom') !== -1) {
+          message.type += ' update';
+          if (!message.timestamp) {
+            message.timestamp = plugUtil.getChatTimestamp();
+          }
+          joinpoint.proceed();
+          if (message.badge) {
+            if (/^:(.*?):$/.test(message.badge)) {
+              var badgeBox = this.$chatMessages.children().last().find('.badge-box'),
+                  emojiName = message.badge.slice(1, -1);
+              if (emoji.map[emojiName]) {
+                badgeBox.find('i').remove();
+                badgeBox.append($('<span />').addClass('emoji-glow extplug-badji').append($('<span />').addClass('emoji emoji-' + emoji.map[emojiName])));
+              }
+            } else if (/^icon-(.*?)$/.test(message.badge)) {
+              var badgeBox = this.$chatMessages.children().last().find('.badge-box');
+              badgeBox.find('i').removeClass().addClass('icon').addClass(message.badge);
+            }
+          }
+          if (message.color) {
+            this.$chatMessages.children().last().find('.msg .text').css('color', message.color);
+          }
+        } else {
+          joinpoint.proceed(message);
+        }
+      }
+
+      this.Style({
+        '#chat-messages .cm.inline': {
+          '.badge-box': {
+            margin: '5px 8px 6px',
+            height: '17px',
+            'border-radius': '0px',
+            background: 'transparent',
+
+            // center badge icons
+            '.icon': {
+              top: '50%',
+              'margin-top': '-15px'
+            }
+          },
+          '.from': { display: 'inline' },
+          '.text': { display: 'inline', 'margin-left': '5px' }
+        },
+        '#chat-messages .cm .no-badge .icon': {
+          width: '30px',
+          height: '30px',
+          top: '0px',
+          left: '0px',
+          border: 'none',
+          'border-radius': '0px'
+        }
+      });
+
+      // Replace the event listener too
+      var chatView = this.appView.room.chat;
+      if (chatView) {
+        Events.off('chat:receive', chatView.onReceived);
+      }
+      this._chatTypeAdvice = meld.around(ChatView.prototype, 'onReceived', addCustomChatType);
+      if (chatView) {
+        Events.on('chat:receive', chatView.onReceived, chatView);
+      }
+
+      // room settings
+      this.roomSettings = new RoomSettings(this);
+
+      this.document.on('click.extplug', this.onClick);
+      currentMedia.on('change:volume', this.onVolume);
+      currentRoom.on('change:joined', this.onJoinedChange);
+
+      this._loadInstalled();
+      Events.trigger('notify', 'icon-plug-dj', 'ExtPlug v' + _package.version + ' loaded');
+
+      return this;
+    },
+
+    /**
+     * Deinitializes and cleans up ExtPlug.
+     *
+     * Everything should be unloaded here, so the Plug.DJ page looks like nothing ever happened.
+     */
+    disable: function disable() {
+      this._modules.forEach(function (mod) {
+        mod.disable();
+      });
+      hooks.forEach(function (hook) {
+        hook.uninstall();
+      });
+      // remove settings pane
+      this._settingsTabAdvice.remove();
+      this._settingsPaneAdvice.remove();
+      var userView = new UserView();
+      userView.render();
+      this.appView.user.$el.replaceWith(userView.$el);
+      this.appView.user = userView;
+      // remove custom chat type advice, and restore
+      // the original event listener
+      var chatView = this.appView.room.chat;
+      if (chatView) Events.off('chat:receive', chatView.onReceived);
+      this._chatTypeAdvice.remove();
+      if (chatView) Events.on('chat:receive', chatView.onReceived, chatView);
+
+      // remove room settings handling
+      this.roomSettings.dispose();
+      // remove events
+      this.document.off('.extplug');
+      currentMedia.off('change:volume', this.onVolume);
+      currentRoom.off('change:joined', this.onJoinedChange);
+      this.trigger('deinit');
+      this._super();
+    },
+
+    /**
+     * Persists plugin settings to localStorage.
+     * @private
+     */
+    _saveModuleSettings: function _saveModuleSettings(id) {
+      var json = jsonParse(localStorage.getItem(LS_NAME));
+      var mod = this._modules.findWhere({ id: id });
+      var settings = mod.get('module').settings;
+      json[id] = { enabled: mod.get('enabled'), settings: settings };
+      localStorage.setItem(LS_NAME, JSON.stringify(json));
+    },
+
+    /**
+     * Retrieves plugin settings from localStorage.
+     */
+    _getModuleSettings: function _getModuleSettings(id) {
+      var settings = jsonParse(localStorage.getItem(LS_NAME));
+      if (settings && id in settings) {
+        return settings[id];
+      }
+      return { enabled: false, settings: {} };
+    },
+
+    /**
+     * Full-page onclick handler.
+     *
+     * @param {MouseEvent} e Event.
+     *
+     * @private
+     */
+    onClick: function onClick(e) {
+      var target = $(e.target);
+      if (target.parents('#user-settings').length === 1) {
+        settings.update();
+      }
+    },
+
+    /**
+     * Volume change handler.
+     *
+     * @private
+     */
+    onVolume: function onVolume() {
+      var newVolume = API.getVolume();
+      if (settings.get('volume') !== newVolume) {
+        settings.set('volume', newVolume);
+      }
+    },
+
+    /**
+     * Room join/leave handler.
+     *
+     * @private
+     */
+    onJoinedChange: function onJoinedChange() {
+      if (currentRoom.get('joined')) {
+        this.trigger('room:joined', currentRoom);
+      } else {
+        this.trigger('room:left', currentRoom);
+      }
+    },
+
+    /**
+     * 3rd party modules should use `extp.push` to register callbacks or modules
+     * for when ExtPlug is loaded.
+     * This ensures that modules that are loaded *after* ExtPlug will also register.
+     *
+     * @param {function()} cb
+     */
+    push: function push(cb) {
+      var _this4 = this;
+
+      if (typeof cb === 'string') {
+        this.registerModule(cb);
+      } else {
+        _.defer(function () {
+          cb(_this4);
+        });
+      }
     }
-  };
+  });
 
   module.exports = ExtPlug;
 });
@@ -4097,7 +4475,8 @@ define('extplug/modules/rollover-blurbs/main', function (require, exports, modul
       fnUtils = require('extplug/util/function'),
       rolloverView = require('plug/views/users/userRolloverView'),
       UserFindAction = require('plug/actions/users/UserFindAction'),
-      $ = require('jquery');
+      $ = require('jquery'),
+      meld = require('meld');
 
   var emoji = $('<span />').addClass('emoji-glow').append($('<span />').addClass('emoji emoji-1f4dd'));
 
@@ -4122,30 +4501,32 @@ define('extplug/modules/rollover-blurbs/main', function (require, exports, modul
         }
       });
 
-      fnUtils.replaceMethod(rolloverView, 'showModal', this.addBlurb);
-      fnUtils.replaceMethod(rolloverView, 'hide', this.removeBlurb);
+      this.showAdvice = meld.around(rolloverView, 'showModal', this.addBlurb);
+      this.hideAdivce = meld.before(rolloverView, 'hide', this.removeBlurb);
     },
 
     disable: function disable() {
       this._super();
-      fnUtils.unreplaceMethod(rolloverView, 'showModal', this.addBlurb);
-      fnUtils.unreplaceMethod(rolloverView, 'hide', this.removeBlurb);
+      this.showAdvice.remove();
+      this.hideAdvice.remove();
     },
 
-    addBlurb: function addBlurb(showModal, _arg) {
-      var self = this;
+    addBlurb: function addBlurb(joinpoint) {
       this.$('.extplug-blurb-wrap').remove();
+      var self = this;
       var span = $('<span />').addClass('extplug-blurb');
       var div = $('<div />').addClass('info extplug-blurb-wrap').append(span);
       if (this.user.get('blurb')) {
         show(this.user.get('blurb'));
       } else {
         new UserFindAction(this.user.get('id')).on('success', function (user) {
-          self.user.set('blurb', user.blurb);
-          show(user.blurb);
+          if (user.blurb) {
+            self.user.set('blurb', user.blurb);
+            show(user.blurb);
+          }
         });
       }
-      showModal(_arg);
+      return joinpoint.proceed();
 
       function show(blurb) {
         if (blurb) {
@@ -4156,9 +4537,8 @@ define('extplug/modules/rollover-blurbs/main', function (require, exports, modul
         }
       }
     },
-    removeBlurb: function removeBlurb(hide, _arg) {
+    removeBlurb: function removeBlurb() {
       this.$('.extplug-blurb-wrap').remove();
-      hide(_arg);
     }
 
   });
