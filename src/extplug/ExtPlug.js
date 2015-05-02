@@ -87,7 +87,6 @@ define(function (require, exports, module) {
     },
     init() {
       this._super('extplug', this);
-      _.extend(this, Backbone.Events);
 
       /**
        * Internal map of registered modules.
@@ -466,7 +465,9 @@ define(function (require, exports, module) {
         this.registerModule(cb);
       }
       else {
-        cb(this);
+        _.defer(() => {
+          cb(this);
+        });
       }
     }
   });
