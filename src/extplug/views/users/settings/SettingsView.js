@@ -112,8 +112,8 @@ define(function (require, exports, module) {
               mod.enable();
               let moduleSettings = this.createSettingsGroup(mod);
               if (moduleSettings) {
-                view.addGroup(moduleSettings);
-                view.$container.append(moduleSettings.render().$el);
+                this.addGroup(moduleSettings);
+                this.$container.append(moduleSettings.render().$el);
               }
             }
             else {
