@@ -120,28 +120,6 @@ define(function (require, exports, module) {
     },
 
     /**
-     * Registers a new module.
-     *
-     * @param {function()} Mod A module constructor created with {@link Module}.
-     *
-     * @return {ExtPlug} `this`.
-     * @deprecated Use registerModule() instead. It integrates better with plug.dj's
-     *             require.js-based app, and properly takes care of dependencies.
-     */
-    register(id, Mod) {
-      if (Mod) {
-        try {
-          var mod = new Mod(id, this);
-          this._modules.add(new ModuleMeta({ module: mod, name: mod.name }));
-        }
-        catch (e) {
-          this._modules.add(new ModuleMeta({ module: e, name: mod && mod.name || mod.prototype.name }));
-        }
-      }
-      return this;
-    },
-
-    /**
      * Register an ExtPlug module by require.js module name.
      * This can be anything that is accepted by require.js, including
      * modules using require.js plugins or modules on remote URLs.
