@@ -36,6 +36,16 @@ define(function (require, exports, module) {
     require('extplug/hooks/playback')
   ];
 
+  // LocalStorage key name for extplug
+  const LS_NAME = 'extPlugModules';
+
+  // Try to parse as JSON, defaulting to an empty object.
+  function jsonParse(str) {
+    try { return JSON.parse(str) || {}; }
+    catch (e) {}
+    return {};
+  }
+
   /**
    * Gets a reference to the main Plug.DJ ApplicationView instance.
    *
@@ -93,6 +103,9 @@ define(function (require, exports, module) {
        * @type {Object.<string, Module>}
        */
       this._modules = new ModulesCollection();
+      this._modules.on('change:enabled', (mod, enabled) => {
+        this._saveModuleSettings(mod.get('id'));
+      });
 
       /**
        * jQuery Document object.
@@ -136,6 +149,9 @@ define(function (require, exports, module) {
           this._modules.add(meta);
           let settings = this._getModuleSettings(mod.id);
           mod.settings.set(settings.settings);
+          mod.settings.on('change', () => {
+            this._saveModuleSettings(id);
+          });
           if (settings.enabled) {
             _.defer(() => {
               meta.enable();
@@ -169,9 +185,9 @@ define(function (require, exports, module) {
     install(id, cb) {
       this.registerModule(id, (e) => {
         if (e) return cb(e);
-        let json = JSON.parse(localStorage.extPlugModules);
+        let json = jsonParse(localStorage.getItem(LS_NAME));
         json._installed = (json._installed || []).concat([ id ])
-        localStorage.extPlugModules = JSON.stringify(json);
+        localStorage.setItem(LS_NAME, JSON.stringify(json));
         cb(null)
       });
     },
@@ -181,12 +197,12 @@ define(function (require, exports, module) {
      */
     uninstall(id) {
       this.unregisterModule(id);
-      let json = JSON.parse(localStorage.extPlugModules);
+      let json = jsonParse(localStorage.getItem(LS_NAME));
       if (json._installed) {
         let i = json._installed.indexOf(id);
         if (i !== -1) {
           json._installed.splice(i, 1);
-          localStorage.extPlugModules = JSON.stringify(json);
+          localStorage.setItem(LS_NAME, JSON.stringify(json));
         }
       }
     },
@@ -195,7 +211,7 @@ define(function (require, exports, module) {
      * Loads installed modules.
      */
     _loadInstalled() {
-      let { _installed } = JSON.parse(localStorage.extPlugModules)
+      let { _installed } = jsonParse(localStorage.getItem(LS_NAME));
       if (_.isArray(_installed)) {
         let l = _installed.length;
         let i = 0;
@@ -421,18 +437,18 @@ define(function (require, exports, module) {
      * @private
      */
     _saveModuleSettings(id) {
-      let json = JSON.parse(localStorage.extPlugModules);
+      let json = jsonParse(localStorage.getItem(LS_NAME));
       let mod = this._modules.findWhere({ id: id });
       let settings = mod.get('module').settings;
       json[id] = { enabled: mod.get('enabled'), settings: settings };
-      localStorage.extPlugModules = JSON.stringify(json);
+      localStorage.setItem(LS_NAME, JSON.stringify(json));
     },
 
     /**
      * Retrieves plugin settings from localStorage.
      */
     _getModuleSettings(id) {
-      let settings = JSON.parse(localStorage.extPlugModules);
+      let settings = jsonParse(localStorage.getItem(LS_NAME));
       if (settings && id in settings) {
         return settings[id];
       }
