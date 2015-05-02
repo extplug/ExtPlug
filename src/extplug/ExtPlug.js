@@ -152,6 +152,7 @@ define(function (require, exports, module) {
         (Mod) => {
           let mod = new Mod(id, this);
           let meta = new ModuleMeta({
+            id: id,
             module: mod,
             name: mod.name
           });
