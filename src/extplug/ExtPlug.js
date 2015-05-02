@@ -21,6 +21,7 @@ define(function (require, exports, module) {
     fnUtils = require('extplug/util/function'),
     Module = require('extplug/Module'),
     chatFacade = require('extplug/facades/chatFacade'),
+    loadModule = require('extplug/load-module'),
 
     _package = require('extplug/package'),
 
@@ -147,7 +148,7 @@ define(function (require, exports, module) {
      */
     registerModule(id, cb) {
       require(
-        [ id ],
+        [ `extplug/load-module!${id}` ],
         (Mod) => {
           let mod = new Mod(id, this);
           let meta = new ModuleMeta({

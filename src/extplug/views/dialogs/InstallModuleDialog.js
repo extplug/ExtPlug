@@ -47,22 +47,8 @@ define(function (require, exports, module) {
           .empty()
           .append(spinner.$el);
         spinner.render();
-        let url = inp.val().replace(/^http:/, 'https:');
-        // By default, requirejs switches to a kind of
-        // "normal path" mode when a module name starts with https://
-        // or ends in .js. This means that relative paths inside
-        // that module definition will also be in that "path" mode,
-        // since they will resolve to eg. "https://mysite.com/UserView".
-        // Then, because the path starts with https://, requirejs will not
-        // append the .js extension.
-        // We can get around that by adding a module path alias to
-        // https://, turning the module name into something like
-        // "extpremote/my-site.com/my-extension" instead, which will
-        // make requirejs treat it how we need.
-        let modulePath = dirname(url);
-        let moduleDir = modulePath.replace(/^https:\/\//, 'extpremote/');
-        let moduleName = basename(url).replace(/\.js$/, '');
-        extp.install(moduleDir + '/' + moduleName, (err) => {
+        let url = inp.val();
+        extp.install(url, (err) => {
           this.close();
           if (err) {
             Events.dispatch(new AlertEvent(
