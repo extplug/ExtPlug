@@ -151,6 +151,17 @@ define(function (require, exports, module) {
     },
 
     /**
+     * Disables and removes an ExtPlug module.
+     */
+    unregisterModule(id) {
+      let mod = this._modules.findWhere({ id: id });
+      if (mod) {
+        mod.disable();
+        this._modules.remove(mod);
+      }
+    },
+
+    /**
      * Installs a plugin. This is basically registerModule(), but it also
      * remembers the plugin name so it can be loaded again automatically
      * on following ExtPlug runs.
@@ -163,6 +174,21 @@ define(function (require, exports, module) {
         localStorage.extPlugModules = JSON.stringify(json);
         cb(null)
       });
+    },
+
+    /**
+     * Disables and removes a plugin forever.
+     */
+    uninstall(id) {
+      this.unregisterModule(id);
+      let json = JSON.parse(localStorage.extPlugModules);
+      if (json._installed) {
+        let i = json._installed.indexOf(id);
+        if (i !== -1) {
+          json._installed.splice(i, 1);
+          localStorage.extPlugModules = JSON.stringify(json);
+        }
+      }
     },
 
     /**

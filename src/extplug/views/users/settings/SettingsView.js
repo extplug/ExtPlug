@@ -1,12 +1,15 @@
 define(function (require, exports, module) {
   var BaseView = require('extplug/views/BaseView'),
     ControlGroupView = require('extplug/views/users/settings/ControlGroupView'),
+    ModulesGroupView = require('./ModulesGroupView'),
+    ManagingGroupView = require('./ManagingGroupView'),
     ErrorCheckboxView = require('extplug/views/users/settings/ErrorCheckboxView'),
     CheckboxView = require('extplug/views/users/settings/CheckboxView'),
     DropdownView = require('extplug/views/users/settings/DropdownView'),
     SliderView = require('extplug/views/users/settings/SliderView'),
+    RemoveBoxView = require('./RemoveBoxView'),
     ModuleMeta = require('extplug/models/Module'),
-    InstallModuleButton = require('./InstallModuleButton'),
+    Events = require('plug/core/Events'),
     _ = require('underscore'),
     $ = require('jquery');
 
@@ -28,18 +31,29 @@ define(function (require, exports, module) {
 
     initialize: function (o) {
       this.modules = o.modules;
-      this.modules.on('reset add remove', function () {
+      this.modules.on('reset add remove', () => {
         this.refresh()
         this.render();
-      }.bind(this));
+      });
       this.ext = o.ext;
+      this.mode = 'normal';
 
       this.refresh();
+      this.manage = this.manage.bind(this);
+      this.unmanage = this.unmanage.bind(this);
+
+      Events.on('extplug:modules:manage', this.manage);
+      Events.on('extplug:modules:unmanage', this.unmanage);
     },
 
     refresh: function () {
       this.groups = [];
-      this.addGroup(this.createModulesGroup(), 1000);
+      if (this.mode === 'manage') {
+        this.addGroup(this.createModulesManageGroup(), 1000);
+      }
+      else {
+        this.addGroup(this.createModulesGroup(), 1000);
+      }
       this.addGroup(this.createExtPlugGroup(), 999);
       this.modules.forEach(function (mod) {
         // add module settings group for stuff that was already enabled
@@ -50,6 +64,17 @@ define(function (require, exports, module) {
           }
         }
       }, this)
+    },
+
+    manage() {
+      this.mode = 'manage';
+      this.refresh();
+      this.render();
+    },
+    unmanage() {
+      this.mode = 'normal';
+      this.refresh();
+      this.render();
     },
 
     render: function () {
@@ -65,10 +90,9 @@ define(function (require, exports, module) {
     },
 
     createModulesGroup: function () {
-      var view = this;
-      var modulesGroup = new ControlGroupView({ name: 'Modules' });
+      var modulesGroup = new ModulesGroupView({ name: 'Modules' });
       // generate module list
-      this.modules.forEach(function (mod) {
+      this.modules.forEach(mod => {
         var module = mod.get('module'),
           name = mod.get('name');
         if (module instanceof Error) {
@@ -76,17 +100,17 @@ define(function (require, exports, module) {
           modulesGroup.add(new ErrorCheckboxView({ label: name }));
         }
         else {
-          var box = new CheckboxView({
+          let box = new CheckboxView({
             label: name,
             description: module.description || false,
             enabled: mod.get('enabled')
           });
           modulesGroup.add(box);
-          box.on('change', function (value) {
+          box.on('change', value => {
             // add / remove module settings group
             if (value) {
               mod.enable();
-              var moduleSettings = view.createSettingsGroup(mod);
+              let moduleSettings = this.createSettingsGroup(mod);
               if (moduleSettings) {
                 view.addGroup(moduleSettings);
                 view.$container.append(moduleSettings.render().$el);
@@ -94,9 +118,9 @@ define(function (require, exports, module) {
             }
             else {
               mod.disable();
-              var moduleSettings = view.getGroup(name);
+              let moduleSettings = this.getGroup(name);
               if (moduleSettings) {
-                view.removeGroup(name);
+                this.removeGroup(name);
                 moduleSettings.remove();
               }
             }
@@ -106,11 +130,20 @@ define(function (require, exports, module) {
 
       return modulesGroup;
     },
+    createModulesManageGroup() {
+      var modulesGroup = new ManagingGroupView({ name: 'Manage Modules' });
+      // generate module list
+      this.modules.forEach(mod => {
+        modulesGroup.add(new RemoveBoxView({ model: mod }));
+      });
+
+      return modulesGroup;
+    },
     createExtPlugGroup: function () {
       return this.createSettingsGroup(new ModuleMeta({
         module: this.ext,
         name: 'ExtPlug'
-      })).add(new InstallModuleButton());
+      }));
     },
 
     createSettingsGroup: function (mod) {
