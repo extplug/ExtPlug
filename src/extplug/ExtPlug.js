@@ -12,16 +12,16 @@ define(function (require, exports, module) {
     emoji = require('plug/util/emoji'),
 
     RoomSettings = require('extplug/models/RoomSettings'),
-    ModuleMeta = require('extplug/models/Module'),
-    ModulesCollection = require('extplug/collections/ModulesCollection'),
+    PluginMeta = require('extplug/models/PluginMeta'),
+    PluginsCollection = require('extplug/collections/PluginsCollection'),
     ExtUserView = require('extplug/views/users/ExtUserView'),
     ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView'),
     ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
     Style = require('extplug/util/Style'),
     fnUtils = require('extplug/util/function'),
-    Module = require('extplug/Module'),
+    Plugin = require('extplug/Plugin'),
     chatFacade = require('extplug/facades/chatFacade'),
-    loadModule = require('extplug/load-module'),
+    loadPlugin = require('extplug/load-plugin'),
 
     _package = require('extplug/package'),
 
@@ -37,7 +37,7 @@ define(function (require, exports, module) {
   ];
 
   // LocalStorage key name for extplug
-  const LS_NAME = 'extPlugModules';
+  const LS_NAME = 'extPlugins';
 
   // Try to parse as JSON, defaulting to an empty object.
   function jsonParse(str) {
@@ -90,7 +90,7 @@ define(function (require, exports, module) {
    *
    * @constructor
    */
-  const ExtPlug = Module.extend({
+  const ExtPlug = Plugin.extend({
     name: 'ExtPlug',
     settings: {
       corsProxy: { type: 'boolean', default: true, label: 'Use CORS proxy' }
@@ -99,12 +99,11 @@ define(function (require, exports, module) {
       this._super('extplug', this);
 
       /**
-       * Internal map of registered modules.
-       * @type {Object.<string, Module>}
+       * Internal map of registered plugins.
        */
-      this._modules = new ModulesCollection();
-      this._modules.on('change:enabled', (mod, enabled) => {
-        this._saveModuleSettings(mod.get('id'));
+      this._plugins = new PluginsCollection();
+      this._plugins.on('change:enabled', (plugin, enabled) => {
+        this._savePluginSettings(plugin.get('id'));
       });
 
       /**
@@ -120,37 +119,43 @@ define(function (require, exports, module) {
     },
 
     /**
-     * Checks if a module is enabled.
+     * Checks if a plugin is enabled.
      *
-     * @param {string} name Module name.
+     * @param {string} name Plugin name.
      *
-     * @return {boolean} True if the Module is enabled, false otherwise.
+     * @return {boolean} True if the Plugin is enabled, false otherwise.
+     * @deprecated
      */
     enabled(name) {
-      var mod = this._modules.findWhere({ name: name });
-      return mod ? mod.get('enabled') : false;
+      var plugin = this._plugins.findWhere({ name: name });
+      return plugin ? plugin.get('enabled') : false;
+    },
+
+    registerModule(id, cb) {
+      console.warn('ExtPlug#registerModule is deprecated. Use #registerPlugin instead.');
+      return this.registerPlugin(id, cb);
     },
 
     /**
-     * Register an ExtPlug module by require.js module name.
+     * Register an ExtPlug plugin by require.js module name.
      * This can be anything that is accepted by require.js, including
      * modules using require.js plugins or modules on remote URLs.
      */
-    registerModule(id, cb) {
+    registerPlugin(id, cb) {
       require(
-        [ `extplug/load-module!${id}` ],
-        (Mod) => {
-          let mod = new Mod(id, this);
-          let meta = new ModuleMeta({
+        [ `extplug/load-plugin!${id}` ],
+        (Plugin) => {
+          let plugin = new Plugin(id, this);
+          let meta = new PluginMeta({
             id: id,
-            module: mod,
-            name: mod.name
+            name: plugin.name,
+            instance: plugin
           });
-          this._modules.add(meta);
-          let settings = this._getModuleSettings(mod.id);
-          mod.settings.set(settings.settings);
-          mod.settings.on('change', () => {
-            this._saveModuleSettings(id);
+          this._plugins.add(meta);
+          let settings = this._getPluginSettings(plugin.id);
+          plugin.settings.set(settings.settings);
+          plugin.settings.on('change', () => {
+            this._savePluginSettings(id);
           });
           if (settings.enabled) {
             _.defer(() => {
@@ -166,24 +171,29 @@ define(function (require, exports, module) {
       return this;
     },
 
-    /**
-     * Disables and removes an ExtPlug module.
-     */
     unregisterModule(id) {
-      let mod = this._modules.findWhere({ id: id });
-      if (mod) {
-        mod.disable();
-        this._modules.remove(mod);
+      console.warn('ExtPlug#unregisterModule is deprecated. Use #unregisterPlugin instead.');
+      return this.unregisterPlugin(id);
+    },
+
+    /**
+     * Disables and removes an ExtPlug plugin.
+     */
+    unregisterPlugin(id) {
+      let plugin = this._plugins.findWhere({ id: id });
+      if (plugin) {
+        plugin.disable();
+        this._plugins.remove(plugin);
       }
     },
 
     /**
-     * Installs a plugin. This is basically registerModule(), but it also
+     * Installs a plugin. This is basically registerPlugin(), but it also
      * remembers the plugin name so it can be loaded again automatically
      * on following ExtPlug runs.
      */
     install(id, cb) {
-      this.registerModule(id, (e) => {
+      this.registerPlugin(id, (e) => {
         if (e) return cb(e);
         let json = jsonParse(localStorage.getItem(LS_NAME));
         json._installed = (json._installed || []).concat([ id ])
@@ -196,7 +206,7 @@ define(function (require, exports, module) {
      * Disables and removes a plugin forever.
      */
     uninstall(id) {
-      this.unregisterModule(id);
+      this.unregisterPlugin(id);
       let json = jsonParse(localStorage.getItem(LS_NAME));
       if (json._installed) {
         let i = json._installed.indexOf(id);
@@ -208,7 +218,7 @@ define(function (require, exports, module) {
     },
 
     /**
-     * Loads installed modules.
+     * Loads installed plugins.
      */
     _loadInstalled() {
       let { _installed } = jsonParse(localStorage.getItem(LS_NAME));
@@ -229,7 +239,7 @@ define(function (require, exports, module) {
           }
         };
         _installed.forEach(name => {
-          this.registerModule(name, e => {
+          this.registerPlugin(name, e => {
             if (e) errors.push(e);
             if (++i >= l) {
               done();
@@ -296,7 +306,7 @@ define(function (require, exports, module) {
       this._settingsPaneAdvice = meld.around(UserSettingsView.prototype, 'getView', joinpoint => {
         if (joinpoint.args[0] === 'ext-plug') {
           return new ExtSettingsSectionView({
-            modules: ext._modules,
+            plugins: ext._plugins,
             ext: ext
           });
         }
@@ -402,7 +412,7 @@ define(function (require, exports, module) {
      * Everything should be unloaded here, so the Plug.DJ page looks like nothing ever happened.
      */
     disable() {
-      this._modules.forEach(mod => {
+      this._plugins.forEach(mod => {
         mod.disable();
       });
       hooks.forEach(hook => {
@@ -436,18 +446,18 @@ define(function (require, exports, module) {
      * Persists plugin settings to localStorage.
      * @private
      */
-    _saveModuleSettings(id) {
+    _savePluginSettings(id) {
       let json = jsonParse(localStorage.getItem(LS_NAME));
-      let mod = this._modules.findWhere({ id: id });
-      let settings = mod.get('module').settings;
-      json[id] = { enabled: mod.get('enabled'), settings: settings };
+      let plugin = this._plugins.findWhere({ id: id });
+      let settings = plugin.get('instance').settings;
+      json[id] = { enabled: plugin.get('enabled'), settings: settings };
       localStorage.setItem(LS_NAME, JSON.stringify(json));
     },
 
     /**
      * Retrieves plugin settings from localStorage.
      */
-    _getModuleSettings(id) {
+    _getPluginSettings(id) {
       let settings = jsonParse(localStorage.getItem(LS_NAME));
       if (settings && id in settings) {
         return settings[id];
@@ -496,15 +506,15 @@ define(function (require, exports, module) {
     },
 
     /**
-     * 3rd party modules should use `extp.push` to register callbacks or modules
+     * 3rd party plugins should use `extp.push` to register callbacks or modules
      * for when ExtPlug is loaded.
-     * This ensures that modules that are loaded *after* ExtPlug will also register.
+     * This ensures that plugins that are loaded *after* ExtPlug will also register.
      *
      * @param {function()} cb
      */
     push(cb) {
       if (typeof cb === 'string') {
-        this.registerModule(cb);
+        this.registerPlugin(cb);
       }
       else {
         _.defer(() => {

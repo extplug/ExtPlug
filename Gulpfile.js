@@ -20,7 +20,10 @@ gulp.task('rjs', [ 'babel' ], function (done) {
   rjs.optimize({
     baseUrl: 'build/babel/',
     name: 'extplug/boot',
-    include: 'extplug/ExtPlug',
+    include: [
+      'extplug/ExtPlug',
+      'extplug/Module'
+    ],
     paths: {
       // plug-modules defines, these are defined at runtime
       // so the r.js optimizer can't find them
@@ -43,7 +46,7 @@ gulp.task('rjs', [ 'babel' ], function (done) {
 
 gulp.task('build', [ 'rjs' ], function () {
   return gulp.src([ 'build/build.rjs.js'
-                  , 'build/babel/modules/*'
+                  , 'build/babel/plugins/*'
                   , 'build/babel/extplug/plugdj.user.js' ])
     .pipe(concat('build.full.js'))
     .pipe(gulp.dest('build/'))

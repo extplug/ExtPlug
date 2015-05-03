@@ -1,6 +1,6 @@
-define('extplug/modules/rollover-blurbs/main', function (require, exports, module) {
+define('extplug/plugins/rollover-blurbs/main', function (require, exports, module) {
 
-  var Module = require('extplug/Module'),
+  var Plugin = require('extplug/Plugin'),
     fnUtils = require('extplug/util/function'),
     rolloverView = require('plug/views/users/userRolloverView'),
     UserFindAction = require('plug/actions/users/UserFindAction'),
@@ -10,7 +10,7 @@ define('extplug/modules/rollover-blurbs/main', function (require, exports, modul
   var emoji = $('<span />').addClass('emoji-glow')
     .append($('<span />').addClass('emoji emoji-1f4dd'));
 
-  module.exports = Module.extend({
+  module.exports = Plugin.extend({
     name: 'Rollover Blurb (Experimental)',
     description: 'Show user "Blurb" / bio in rollover popups.',
 
@@ -77,4 +77,4 @@ define('extplug/modules/rollover-blurbs/main', function (require, exports, modul
 
 });
 
-(extp = window.extp || []).push('extplug/modules/rollover-blurbs/main');
+(extp = window.extp || []).push('extplug/plugins/rollover-blurbs/main');

@@ -1,29 +1,31 @@
 define(function (require, exports, module) {
 
-  var Backbone = require('backbone');
+  const { Model } = require('backbone');
 
-  return Backbone.Model.extend({
+  const PluginMeta = Model.extend({
 
     defaults: {
       enabled: false,
       name: '',
-      module: null
+      instance: null
     },
 
-    enable: function () {
+    enable() {
       if (!this.get('enabled')) {
         this.set('enabled', true);
-        this.get('module').enable();
+        this.get('instance').enable();
       }
     },
 
-    disable: function () {
+    disable() {
       if (this.get('enabled')) {
         this.set('enabled', false);
-        this.get('module').disable();
+        this.get('instance').disable();
       }
     }
 
   });
+
+  module.exports = PluginMeta;
 
 });

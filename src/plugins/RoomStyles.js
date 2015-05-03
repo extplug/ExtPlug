@@ -1,12 +1,12 @@
-define('extplug/modules/room-styles/main', function (require, exports, module) {
+define('extplug/plugins/room-styles/main', function (require, exports, module) {
 
-  var Module = require('extplug/Module'),
+  var Plugin = require('extplug/Plugin'),
     request = require('extplug/util/request'),
     fnUtils = require('extplug/util/function'),
     _ = require('underscore'),
     $ = require('jquery');
 
-  module.exports = Module.extend({
+  module.exports = Plugin.extend({
     name: 'Room Styles',
 
     init: function (id, ext) {
@@ -131,4 +131,4 @@ define('extplug/modules/room-styles/main', function (require, exports, module) {
 
 });
 
-(extp = window.extp || []).push('extplug/modules/room-styles/main');
+(extp = window.extp || []).push('extplug/plugins/room-styles/main');

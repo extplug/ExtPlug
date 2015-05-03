@@ -3,24 +3,24 @@ define(function (require, exports, module) {
   const Events = require('plug/core/Events');
   const ShowDialogEvent = require('plug/events/ShowDialogEvent');
   const Style = require('extplug/util/Style');
-  const InstallModuleDialog = require('extplug/views/dialogs/InstallModuleDialog');
+  const InstallPluginDialog = require('extplug/views/dialogs/InstallPluginDialog');
   const FooterView = require('./GroupFooterView');
   const ControlGroupView = require('./ControlGroupView');
 
-  const ModulesFooterView = FooterView.extend({
+  const PluginsFooterView = FooterView.extend({
     render() {
       this._super();
-      this.$install = $('<button />').text('Install Module');
+      this.$install = $('<button />').text('Install Plugin');
       this.$manage = $('<button />').text('Manage');
 
       this.$install.on('click', () => {
         Events.dispatch(new ShowDialogEvent(
           ShowDialogEvent.SHOW,
-          new InstallModuleDialog()
+          new InstallPluginDialog()
         ));
       });
       this.$manage.on('click', () => {
-        Events.trigger('extplug:modules:manage');
+        Events.trigger('extplug:plugins:manage');
       });
 
       this.$left.append(this.$install);
@@ -34,16 +34,16 @@ define(function (require, exports, module) {
     }
   });
 
-  const ModulesListView = ControlGroupView.extend({
+  const PluginsGroupView = ControlGroupView.extend({
     render() {
       this._super();
-      this.footer = new ModulesFooterView();
+      this.footer = new PluginsFooterView();
       this.footer.render();
       this.$el.append(this.footer.$el);
       return this;
     }
   });
 
-  module.exports = ModulesListView;
+  module.exports = PluginsGroupView;
 
 });

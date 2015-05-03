@@ -1,9 +1,9 @@
-define('extplug/modules/full-size-video/main', function (require, exports, module) {
-  var Module = require('extplug/Module'),
+define('extplug/plugins/full-size-video/main', function (require, exports, module) {
+  var Plugin = require('extplug/Plugin'),
     fnUtils = require('extplug/util/function'),
     win = require('plug/util/window');
 
-  module.exports = Module.extend({
+  module.exports = Plugin.extend({
     name: 'Full-Size Video',
 
     init: function (id, ext) {
@@ -70,4 +70,4 @@ define('extplug/modules/full-size-video/main', function (require, exports, modul
 
 });
 
-(extp = window.extp || []).push('extplug/modules/full-size-video/main');
+(extp = window.extp || []).push('extplug/plugins/full-size-video/main');

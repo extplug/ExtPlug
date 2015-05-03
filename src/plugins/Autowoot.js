@@ -1,9 +1,9 @@
-define('extplug/modules/autowoot/main', function (require, exports, module) {
+define('extplug/plugins/autowoot/main', function (require, exports, module) {
 
-  var Module = require('extplug/Module'),
+  var Plugin = require('extplug/Plugin'),
     fnUtils = require('extplug/util/function');
 
-  module.exports = Module.extend({
+  module.exports = Plugin.extend({
     name: 'Autowoot',
 
     init: function (id, ext) {
@@ -36,4 +36,4 @@ define('extplug/modules/autowoot/main', function (require, exports, module) {
 
 });
 
-(extp = window.extp || []).push('extplug/modules/autowoot/main');
+(extp = window.extp || []).push('extplug/plugins/autowoot/main');

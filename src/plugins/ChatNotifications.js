@@ -1,9 +1,9 @@
-define('extplug/modules/chat-notifications/main', function (require, exports, module) {
+define('extplug/plugins/chat-notifications/main', function (require, exports, module) {
 
-  var Module = require('extplug/Module'),
+  var Plugin = require('extplug/Plugin'),
     Events = require('plug/core/Events');
 
-  module.exports = Module.extend({
+  module.exports = Plugin.extend({
     name: 'Chat Notifications',
 
     settings: {
@@ -127,4 +127,4 @@ define('extplug/modules/chat-notifications/main', function (require, exports, mo
 
 });
 
-(extp = window.extp || []).push('extplug/modules/chat-notifications/main');
+(extp = window.extp || []).push('extplug/plugins/chat-notifications/main');

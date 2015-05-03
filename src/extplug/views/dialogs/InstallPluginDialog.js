@@ -16,8 +16,8 @@ define(function (require, exports, module) {
     return str.split('/').pop();
   }
 
-  const InstallModuleDialog = Dialog.extend({
-    id: 'dialog-install-module',
+  const InstallPluginDialog = Dialog.extend({
+    id: 'dialog-install-plugin',
     className: 'dialog',
     render() {
       this.$input = $('<input />').attr({
@@ -28,9 +28,9 @@ define(function (require, exports, module) {
         .addClass('dialog-input-background')
         .append(this.$input);
       this.$el
-        .append(this.getHeader('Install Module'))
+        .append(this.getHeader('Install Plugin'))
         .append(this.getBody()
-          .append(this.getMessage('Enter the URL of the module you wish to install:'))
+          .append(this.getMessage('Enter the URL of the plugin you wish to install:'))
           .append(this.$wrap))
         .append(this.getButtons('Install', true));
       _.defer(this.deferFocus.bind(this));
@@ -53,7 +53,7 @@ define(function (require, exports, module) {
           if (err) {
             Events.dispatch(new AlertEvent(
               AlertEvent.ALERT,
-              'Install Module Error',
+              'Install Plugin Error',
               `Error: ${err.message}`,
               () => {}
             ));
@@ -61,8 +61,8 @@ define(function (require, exports, module) {
           else {
             Events.dispatch(new AlertEvent(
               AlertEvent.ALERT,
-              'Install Module',
-              'Module installed successfully.',
+              'Install Plugin',
+              'Plugin installed successfully.',
               () => {}
             ));
           }
@@ -75,8 +75,8 @@ define(function (require, exports, module) {
     }
   });
 
-  InstallModuleDialog._style = new Style({
-    '#dialog-install-module': {
+  InstallPluginDialog._style = new Style({
+    '#dialog-install-plugin': {
       '.dialog-body': { 'height': '137px' },
       '.message': { 'top': '21px' },
       '.spinner': { 'top': '50%', 'left': '50%' },
@@ -92,6 +92,6 @@ define(function (require, exports, module) {
     }
   });
 
-  module.exports = InstallModuleDialog;
+  module.exports = InstallPluginDialog;
 
 });

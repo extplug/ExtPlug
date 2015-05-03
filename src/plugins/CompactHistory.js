@@ -1,11 +1,11 @@
-define('extplug/modules/compact-history/main', function (require, exports, module) {
+define('extplug/plugins/compact-history/main', function (require, exports, module) {
 
-  var Module = require('extplug/Module'),
+  var Plugin = require('extplug/Plugin'),
     fnUtils = require('extplug/util/function'),
     _ = require('underscore'),
     $ = require('jquery');
 
-  module.exports = Module.extend({
+  module.exports = Plugin.extend({
     name: 'Compact History',
     description: 'Lays out the room history in a much more compact view.',
 
@@ -64,4 +64,4 @@ define('extplug/modules/compact-history/main', function (require, exports, modul
 
 });
 
-(extp = window.extp || []).push('extplug/modules/compact-history/main');
+(extp = window.extp || []).push('extplug/plugins/compact-history/main');

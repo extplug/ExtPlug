@@ -9,7 +9,7 @@ define(function (require, exports, module) {
       this._super();
       this.$done = $('<button />').text('Done');
       this.$done.on('click', () => {
-        Events.trigger('extplug:modules:unmanage');
+        Events.trigger('extplug:plugins:unmanage');
       });
       this.$right.append(this.$done);
       return this;
@@ -20,7 +20,7 @@ define(function (require, exports, module) {
     }
   });
 
-  const ManagingListView = ControlGroupView.extend({
+  const ManagingGroupView = ControlGroupView.extend({
     render() {
       this._super();
       this.footer = new ManagingFooterView();
@@ -30,6 +30,6 @@ define(function (require, exports, module) {
     }
   });
 
-  module.exports = ManagingListView;
+  module.exports = ManagingGroupView;
 
 });

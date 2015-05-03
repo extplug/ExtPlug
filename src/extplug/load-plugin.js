@@ -19,10 +19,10 @@ define(function (require, exports, module) {
   exports.load = function (name, req, cb, config) {
     let o = parse(name);
     if (o.name) {
-      // add module name alias to the module URL
-      // this way, when we require([ module name ]), the module URL
+      // add module name alias to the plugin URL
+      // this way, when we require([ module name ]), the plugin URL
       // will be loaded instead.
-      // then, the module URL will define() the module name anyway,
+      // then, the plugin URL will define() the module name anyway,
       // and requirejs will figure everything out.
       // Chopping off the .js extension because require.js adds it
       // since we're actually requiring a module name and not a path.

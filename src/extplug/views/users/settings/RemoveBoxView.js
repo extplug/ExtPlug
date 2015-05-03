@@ -31,8 +31,8 @@ define(function (require, exports, module) {
       Events.dispatch(new ShowDialogEvent(
         ShowDialogEvent.SHOW,
         new ConfirmDialog({
-          title: 'Remove Module',
-          message: 'Are you sure you want to uninstall this module?',
+          title: 'Remove Plugin',
+          message: 'Are you sure you want to uninstall this plugin?',
           action: () => {
             extp.uninstall(this.model.get('id'));
           }

@@ -1,11 +1,11 @@
-define('extplug/modules/meh-icon/main', function (require, exports, module) {
+define('extplug/plugins/meh-icon/main', function (require, exports, module) {
 
-  var Module = require('extplug/Module'),
+  var Plugin = require('extplug/Plugin'),
     UserRowView = require('plug/views/rooms/users/RoomUserRowView'),
     $ = require('jquery'),
     meld = require('meld');
 
-  var MehIcon = Module.extend({
+  var MehIcon = Plugin.extend({
     name: 'Meh Icons',
 
     enable: function () {
@@ -40,4 +40,4 @@ define('extplug/modules/meh-icon/main', function (require, exports, module) {
 
 });
 
-(extp = window.extp || []).push('extplug/modules/meh-icon/main');
+(extp = window.extp || []).push('extplug/plugins/meh-icon/main');
