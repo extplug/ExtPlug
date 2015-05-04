@@ -76,6 +76,7 @@ define(function (require, exports, module) {
     },
 
     dispose: function () {
+      this.unload();
       currentRoom.off('change:description', this.reload);
     }
 
