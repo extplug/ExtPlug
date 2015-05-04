@@ -69,20 +69,6 @@ define(function (require, exports, module) {
     return appView && appView.ctx;
   }
 
-  // Used for loading modules with relative dependencies
-  // from remote URLs.
-  // Require.js normally does some transformations to turn
-  // a module name into a URL, but only if the module name does
-  // not start with a protocol or end in a .js file extension.
-  // Usually users will enter full URLs, and we want to be able
-  // to resolve relative dependencies inside modules properly.
-  // To make this happen, we replace https:// by extpremote/ in
-  // user-entered URLs, and then suddenly require.js's usual rules
-  // will apply.
-  requirejs.config({
-    paths: { extpremote: 'https://' }
-  });
-
   /**
    * Main ExtPlug extension class.
    *
@@ -113,22 +99,6 @@ define(function (require, exports, module) {
        */
       this.document = null;
 
-      // bound methods
-      this.onVolume = this.onVolume.bind(this);
-      this.onJoinedChange = this.onJoinedChange.bind(this);
-    },
-
-    /**
-     * Checks if a plugin is enabled.
-     *
-     * @param {string} name Plugin name.
-     *
-     * @return {boolean} True if the Plugin is enabled, false otherwise.
-     * @deprecated
-     */
-    enabled(name) {
-      var plugin = this._plugins.findWhere({ name: name });
-      return plugin ? plugin.get('enabled') : false;
     },
 
     registerModule(id, cb) {
@@ -396,9 +366,6 @@ define(function (require, exports, module) {
       // room settings
       this.roomSettings = new RoomSettings(this);
 
-      currentMedia.on('change:volume', this.onVolume);
-      currentRoom.on('change:joined', this.onJoinedChange);
-
       this._loadInstalled();
       Events.trigger('notify', 'icon-plug-dj', `ExtPlug v${_package.version} loaded`);
 
@@ -433,9 +400,6 @@ define(function (require, exports, module) {
 
       // remove room settings handling
       this.roomSettings.dispose();
-      // remove events
-      currentMedia.off('change:volume', this.onVolume);
-      currentRoom.off('change:joined', this.onJoinedChange);
       this.trigger('deinit');
       this._super();
     },
@@ -461,32 +425,6 @@ define(function (require, exports, module) {
         return settings[id];
       }
       return { enabled: false, settings: {} };
-    },
-
-    /**
-     * Volume change handler.
-     *
-     * @private
-     */
-    onVolume() {
-      var newVolume = API.getVolume();
-      if (settings.get('volume') !== newVolume) {
-        settings.set('volume', newVolume);
-      }
-    },
-
-    /**
-     * Room join/leave handler.
-     *
-     * @private
-     */
-    onJoinedChange() {
-      if (currentRoom.get('joined')) {
-        this.trigger('room:joined', currentRoom);
-      }
-      else {
-        this.trigger('room:left', currentRoom);
-      }
     },
 
     /**

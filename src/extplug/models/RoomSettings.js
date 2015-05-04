@@ -18,8 +18,7 @@ define(function (require, exports, module) {
       fnUtils.bound(this, 'reload');
 
       currentRoom.on('change:description', this.reload);
-      ext.on('room:joined', this.load);
-      ext.on('room:left', this.unload);
+      Events.on('room:joined', this.load);
 
       if (currentRoom.get('joined')) {
         this.load();
