@@ -33,7 +33,8 @@ define(function (require, exports, module) {
   var hooks = [
     require('extplug/hooks/api-early'),
     require('extplug/hooks/chat'),
-    require('extplug/hooks/playback')
+    require('extplug/hooks/playback'),
+    require('extplug/hooks/settings')
   ];
 
   // LocalStorage key name for extplug
@@ -113,7 +114,6 @@ define(function (require, exports, module) {
       this.document = null;
 
       // bound methods
-      this.onClick = this.onClick.bind(this);
       this.onVolume = this.onVolume.bind(this);
       this.onJoinedChange = this.onJoinedChange.bind(this);
     },
@@ -396,7 +396,6 @@ define(function (require, exports, module) {
       // room settings
       this.roomSettings = new RoomSettings(this);
 
-      this.document.on('click.extplug', this.onClick);
       currentMedia.on('change:volume', this.onVolume);
       currentRoom.on('change:joined', this.onJoinedChange);
 
@@ -435,7 +434,6 @@ define(function (require, exports, module) {
       // remove room settings handling
       this.roomSettings.dispose();
       // remove events
-      this.document.off('.extplug');
       currentMedia.off('change:volume', this.onVolume);
       currentRoom.off('change:joined', this.onJoinedChange);
       this.trigger('deinit');
@@ -463,20 +461,6 @@ define(function (require, exports, module) {
         return settings[id];
       }
       return { enabled: false, settings: {} };
-    },
-
-    /**
-     * Full-page onclick handler.
-     *
-     * @param {MouseEvent} e Event.
-     *
-     * @private
-     */
-    onClick(e) {
-      var target = $(e.target);
-      if (target.parents('#user-settings').length === 1) {
-        settings.update();
-      }
     },
 
     /**
