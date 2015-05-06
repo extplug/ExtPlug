@@ -18,7 +18,6 @@ define(function (require, exports, module) {
       this.reload = this.reload.bind(this);
 
       currentRoom.on('change:description', this.reload);
-      Events.on('room:joined', this.load);
 
       if (currentRoom.get('joined')) {
         this.load();
@@ -68,11 +67,14 @@ define(function (require, exports, module) {
       this.trigger('unload');
     },
 
-    reload: function () {
-      if (currentRoom.get('joined')) {
-        this.unload();
-        this.load();
-      }
+    reload() {
+      this.unload();
+      // "joined" is set *after* "description"
+      _.defer(() => {
+        if (currentRoom.get('joined')) {
+          this.load();
+        }
+      });
     },
 
     dispose() {
