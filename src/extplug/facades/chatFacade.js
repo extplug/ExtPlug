@@ -1,23 +1,23 @@
 define(function (require, exports, module) {
 
-  var chatFacade = require('plug/facades/chatFacade'),
-    { clone } = require('underscore'),
-    Backbone = require('backbone');
+  const chatFacade = require('plug/facades/chatFacade');
+  const { clone } = require('underscore');
+  const Backbone = require('backbone');
 
   function onChatCommand(text) {
-    var split = text.indexOf(' ');
+    let split = text.indexOf(' ');
     if (split === -1) {
       split = text.length;
     }
-    var command = text.slice(1, split);
-    var params = text.slice(split + 1);
+    let command = text.slice(1, split);
+    let params = text.slice(split + 1);
 
     commands.trigger(command, params);
   }
 
-  var commands = clone(Backbone.Events);
+  let commands = clone(Backbone.Events);
 
-  var addedListener = false;
+  let addedListener = false;
   chatFacade.registerCommand = function (command, callback) {
     if (!addedListener) {
       API.on(API.CHAT_COMMAND, onChatCommand);

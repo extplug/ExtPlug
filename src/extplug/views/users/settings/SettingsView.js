@@ -1,17 +1,17 @@
 define(function (require, exports, module) {
-  var BaseView = require('extplug/views/BaseView'),
-    ControlGroupView = require('extplug/views/users/settings/ControlGroupView'),
-    PluginsGroupView = require('./PluginsGroupView'),
-    ManagingGroupView = require('./ManagingGroupView'),
-    ErrorCheckboxView = require('extplug/views/users/settings/ErrorCheckboxView'),
-    CheckboxView = require('extplug/views/users/settings/CheckboxView'),
-    DropdownView = require('extplug/views/users/settings/DropdownView'),
-    SliderView = require('extplug/views/users/settings/SliderView'),
-    RemoveBoxView = require('./RemoveBoxView'),
-    PluginMeta = require('extplug/models/PluginMeta'),
-    Events = require('plug/core/Events'),
-    _ = require('underscore'),
-    $ = require('jquery');
+  const BaseView = require('extplug/views/BaseView');
+  const ControlGroupView = require('extplug/views/users/settings/ControlGroupView');
+  const PluginsGroupView = require('./PluginsGroupView');
+  const ManagingGroupView = require('./ManagingGroupView');
+  const ErrorCheckboxView = require('extplug/views/users/settings/ErrorCheckboxView');
+  const CheckboxView = require('extplug/views/users/settings/CheckboxView');
+  const DropdownView = require('extplug/views/users/settings/DropdownView');
+  const SliderView = require('extplug/views/users/settings/SliderView');
+  const RemoveBoxView = require('./RemoveBoxView');
+  const PluginMeta = require('extplug/models/PluginMeta');
+  const Events = require('plug/core/Events');
+  const _ = require('underscore');
+  const $ = require('jquery');
 
   /**
    * Wires a control to a setting model, updating the model when the control changes.
@@ -26,10 +26,10 @@ define(function (require, exports, module) {
     });
   }
 
-  var SettingsView = BaseView.extend({
+  const SettingsView = BaseView.extend({
     className: 'ext-plug section',
 
-    initialize: function (o) {
+    initialize(o) {
       this.plugins = o.plugins;
       this.plugins.on('reset add remove', () => {
         this.refresh()
@@ -46,7 +46,7 @@ define(function (require, exports, module) {
       Events.on('extplug:plugins:unmanage', this.unmanage);
     },
 
-    refresh: function () {
+    refresh() {
       this.groups = [];
       if (this.mode === 'manage') {
         this.addGroup(this.createPluginsManageGroup(), 1000);
@@ -77,7 +77,7 @@ define(function (require, exports, module) {
       this.render();
     },
 
-    render: function () {
+    render() {
       this.$container = $('<div>').addClass('container');
       this.$el.empty().append(this.$container);
 
@@ -89,11 +89,11 @@ define(function (require, exports, module) {
       return this;
     },
 
-    createPluginsGroup: function () {
-      var pluginsGroup = new PluginsGroupView({ name: 'Plugins' });
+    createPluginsGroup() {
+      let pluginsGroup = new PluginsGroupView({ name: 'Plugins' });
       // generate plugin list
       this.plugins.forEach(pluginMeta => {
-        var plugin = pluginMeta.get('instance'),
+        let plugin = pluginMeta.get('instance'),
           name = pluginMeta.get('name');
         if (plugin instanceof Error) {
           // this plugin errored out during its initialization
@@ -130,8 +130,8 @@ define(function (require, exports, module) {
 
       return pluginsGroup;
     },
-    createPluginsManageGroup() {
-      var pluginsGroup = new ManagingGroupView({ name: 'Manage Plugins' });
+    createPluginsManageGroup  () {
+      let pluginsGroup = new ManagingGroupView({ name: 'Manage Plugins' });
       // generate plugin list
       this.plugins.forEach(plugin => {
         pluginsGroup.add(new RemoveBoxView({ model: plugin }));
@@ -139,24 +139,24 @@ define(function (require, exports, module) {
 
       return pluginsGroup;
     },
-    createExtPlugGroup: function () {
+    createExtPlugGroup() {
       return this.createSettingsGroup(new PluginMeta({
         instance: this.ext,
         name: 'ExtPlug'
       }));
     },
 
-    createSettingsGroup: function (pluginMeta) {
-      var plugin = pluginMeta.get('instance');
+    createSettingsGroup(pluginMeta) {
+      let plugin = pluginMeta.get('instance');
       if (!plugin._settings) {
         return;
       }
-      var group = new ControlGroupView({ name: pluginMeta.get('name') });
-      var meta = plugin._settings;
-      var settings = plugin.settings;
+      let group = new ControlGroupView({ name: pluginMeta.get('name') });
+      let meta = plugin._settings;
+      let settings = plugin.settings;
 
-      _.each(meta, function (setting, name) {
-        var control;
+      _.each(meta, (setting, name) => {
+        let control;
         switch (setting.type) {
           case 'boolean':
             control = new CheckboxView({
@@ -190,7 +190,7 @@ define(function (require, exports, module) {
       return group;
     },
 
-    sort: function () {
+    sort() {
       this.groups.sort(function (a, b) {
         var c = b.priority - a.priority;
         if (c === 0) {
@@ -202,31 +202,29 @@ define(function (require, exports, module) {
       });
     },
 
-    onResize: function () {
+    onResize() {
     },
 
-    addGroup: function (items, priority) {
+    addGroup(items, priority) {
       this.groups.push({
         items: items,
         priority: typeof priority === 'number' ? priority : 0
       });
     },
 
-    getGroup: function (name) {
-      for (var i = 0, l = this.groups.length; i < l; i++) {
+    getGroup(name) {
+      for (let i = 0, l = this.groups.length; i < l; i++) {
         if (this.groups[i].items.name === name) {
           return this.groups[i].items;
         }
       }
     },
 
-    hasGroup: function (name) {
-      return this.groups.some(function (group) {
-        return group.items.name === name;
-      });
+    hasGroup(name) {
+      return this.groups.some(group => group.items.name === name);
     },
 
-    removeGroup: function (name) {
+    removeGroup(name) {
       for (var i = 0, l = this.groups.length; i < l; i++) {
         if (this.groups[i].items.name === name) {
           return this.groups.splice(i, 1);

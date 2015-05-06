@@ -12,30 +12,24 @@ define(function (require, exports, module) {
   // "chat:send" is fired when the user sends a message. It takes a single argument: A string
   //   with the text content of the message.
 
-  var chatFacade = require('plug/facades/chatFacade'),
-    Events = require('plug/core/Events'),
-    fnUtils = require('extplug/util/function'),
-    meld = require('meld');
+  const chatFacade = require('plug/facades/chatFacade');
+  const Events = require('plug/core/Events');
+  const meld = require('meld');
 
-  var onChatReceived = function (joinpoint) {
+  const onChatReceived = function (joinpoint) {
     let [ message, isSystemMessage, isMine ] = joinpoint.args;
     Events.trigger('chat:incoming', message, isSystemMessage, isMine);
-    var result = joinpoint.proceed(message, isSystemMessage, isMine);
-    var element = $('#chat-messages .cm:last-child');
+    let result = joinpoint.proceed(message, isSystemMessage, isMine);
+    let element = $('#chat-messages .cm:last-child');
     Events.trigger('chat:afterreceive', message, element);
     return result;
   };
 
-  var fireBeforeReceive = function (param1, param2) {
+  const fireBeforeReceive = function (param1, param2) {
     Events.trigger('chat:beforereceive', param1, param2);
   };
 
-  var onChatSend = function (oldChatSend, param1) {
-    Events.trigger('chat:send', param1);
-    return oldChatSend(param1);
-  };
-
-  var ocradvice;
+  let ocradvice;
   exports.install = function () {
     Events.on('chat:receive', fireBeforeReceive);
     // ensure fireBeforeReceive is the first event handler to be called

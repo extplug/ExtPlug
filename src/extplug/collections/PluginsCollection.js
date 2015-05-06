@@ -1,11 +1,11 @@
 define(function (require, exports, module) {
 
-  var Backbone = require('backbone'),
-    PluginMeta = require('extplug/models/PluginMeta');
+  const { Collection } = require('backbone');
+  const PluginMeta = require('extplug/models/PluginMeta');
 
-  var PluginsCollection = Backbone.Collection.extend({
+  const PluginsCollection = Collection.extend({
     model: PluginMeta,
-    comparator: function (a, b) {
+    comparator(a, b) {
       return a.get('name') > b.get('name') ? 1
            : a.get('name') < b.get('name') ? -1
            : 0

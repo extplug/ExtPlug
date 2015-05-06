@@ -1,36 +1,34 @@
 define(function (require, exports, module) {
 
-  var currentMedia = require('plug/models/currentMedia'),
-    currentRoom = require('plug/models/currentRoom'),
-    settings = require('extplug/store/settings'),
-    Events = require('plug/core/Events'),
-    ApplicationView = require('plug/views/app/ApplicationView'),
-    UserView = require('plug/views/users/UserView'),
-    UserSettingsView = require('plug/views/users/settings/SettingsView'),
-    ChatView = require('plug/views/rooms/chat/ChatView'),
-    plugUtil = require('plug/util/util'),
-    emoji = require('plug/util/emoji'),
+  const currentMedia = require('plug/models/currentMedia');
+  const currentRoom = require('plug/models/currentRoom');
+  const settings = require('extplug/store/settings');
+  const Events = require('plug/core/Events');
+  const ApplicationView = require('plug/views/app/ApplicationView');
+  const UserView = require('plug/views/users/UserView');
+  const UserSettingsView = require('plug/views/users/settings/SettingsView');
+  const ChatView = require('plug/views/rooms/chat/ChatView');
+  const plugUtil = require('plug/util/util');
+  const emoji = require('plug/util/emoji');
 
-    RoomSettings = require('extplug/models/RoomSettings'),
-    PluginMeta = require('extplug/models/PluginMeta'),
-    PluginsCollection = require('extplug/collections/PluginsCollection'),
-    ExtUserView = require('extplug/views/users/ExtUserView'),
-    ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView'),
-    ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView'),
-    Style = require('extplug/util/Style'),
-    fnUtils = require('extplug/util/function'),
-    Plugin = require('extplug/Plugin'),
-    chatFacade = require('extplug/facades/chatFacade'),
-    loadPlugin = require('extplug/load-plugin'),
+  const RoomSettings = require('extplug/models/RoomSettings');
+  const PluginMeta = require('extplug/models/PluginMeta');
+  const PluginsCollection = require('extplug/collections/PluginsCollection');
+  const ExtUserView = require('extplug/views/users/ExtUserView');
+  const ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView');
+  const ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView');
+  const Plugin = require('extplug/Plugin');
+  const chatFacade = require('extplug/facades/chatFacade');
+  const loadPlugin = require('extplug/load-plugin');
 
-    _package = require('extplug/package'),
+  const _package = require('extplug/package');
 
-    $ = require('jquery'),
-    _ = require('underscore'),
-    Backbone = require('backbone'),
-    meld = require('meld');
+  const $ = require('jquery');
+  const _ = require('underscore');
+  const Backbone = require('backbone');
+  const meld = require('meld');
 
-  var hooks = [
+  let hooks = [
     require('extplug/hooks/api-early'),
     require('extplug/hooks/chat'),
     require('extplug/hooks/playback'),
@@ -59,12 +57,12 @@ define(function (require, exports, module) {
    * @return {ApplicationView} The ApplicationView instance of this page.
    */
   function getApplicationView() {
-    var evts = Events._events['show:room'];
+    let evts = Events._events['show:room'];
     // Backbone event handlers have a .ctx property, containing what they will be bound to.
     // And ApplicationView adds a handler that's bound to itself!
-    var appView
+    let appView;
     if (evts) {
-      appView = _.find(evts, function (event) { return event.ctx instanceof ApplicationView; })
+      appView = _.find(evts, event => event.ctx instanceof ApplicationView)
     }
     return appView && appView.ctx;
   }
@@ -92,12 +90,6 @@ define(function (require, exports, module) {
       this._plugins.on('change:enabled', (plugin, enabled) => {
         this._savePluginSettings(plugin.get('id'));
       });
-
-      /**
-       * jQuery Document object.
-       * @type {jQuery|null}
-       */
-      this.document = null;
 
     },
 

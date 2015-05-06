@@ -9,7 +9,7 @@ define(function (require, exports, module) {
   /**
    * A checkbox setting item.
    */
-  var RemoveBoxView = View.extend({
+  const RemoveBoxView = View.extend({
     className: 'item selected',
     initialize() {
       this.onRemove = this.onRemove.bind(this);

@@ -1,8 +1,8 @@
 define(function (require, exports, module) {
 
-  var Backbone = require('backbone');
+  const Backbone = require('backbone');
 
-  var Settings = Backbone.Model.extend({});
+  const Settings = Backbone.Model.extend({});
 
   module.exports = Settings;
 

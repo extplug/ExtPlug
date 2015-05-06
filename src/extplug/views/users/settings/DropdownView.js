@@ -1,23 +1,23 @@
 define(function (require, exports, module) {
 
-  var Backbone = require('backbone'),
-    $ = require('jquery'),
-    _ = require('underscore'),
-    fnUtils = require('extplug/util/function');
+  const Backbone = require('backbone');
+  const $ = require('jquery');
+  const _ = require('underscore');
+  const fnUtils = require('extplug/util/function');
 
-  var DropdownView = Backbone.View.extend({
+  const DropdownView = Backbone.View.extend({
     className: 'dropdown',
     tagName: 'dl',
-    initialize: function () {
+    initialize() {
       if (!this.options.selected) {
         this.options.selected = Object.keys(this.options.options)[0];
       }
 
-      fnUtils.bound(this, 'onDocumentClick');
-      fnUtils.bound(this, 'onBaseClick');
-      fnUtils.bound(this, 'onRowClick');
+      this.onDocumentClick = this.onDocumentClick.bind(this);
+      this.onBaseClick = this.onBaseClick.bind(this);
+      this.onRowClick = this.onRowClick.bind(this);
     },
-    render: function () {
+    render() {
       this.$selectedValue = $('<span />');
       this.$selected = $('<dt />')
         .append(this.$selectedValue)
@@ -47,40 +47,41 @@ define(function (require, exports, module) {
       }
       return this;
     },
-    close: function () {
+    close() {
       this.$el.removeClass('open');
       $(document).off('click', this.onDocumentClick);
     },
-    remove: function () {
+    remove() {
       this.$('dt, dd').off();
       $(document).off('click', this.onDocumentClick);
       this._super();
     },
-    onBaseClick: function (e) {
+    onBaseClick(e) {
       if (this.$el.hasClass('open')) {
         this.close();
       }
       else {
         this.$el.addClass('open');
-        var self = this;
-        _.defer(function () { $(document).on('click', self.onDocumentClick); });
+        _.defer(() => {
+          $(document).on('click', this.onDocumentClick);
+        });
       }
     },
-    onRowClick: function (e) {
-      var row = $(e.target).closest('.row');
+    onRowClick(e) {
+      let row = $(e.target).closest('.row');
       this.$('.row').removeClass('selected');
       row.addClass('selected');
       this.$el.removeClass('open');
       this.$selectedValue.text(row.text());
       this.trigger('select', row.data('value'));
     },
-    onDocumentClick: function (e) {
+    onDocumentClick(e) {
       _.defer(this.close.bind(this));
     },
-    getValue: function () {
+    getValue() {
       return this.$rows.find('.selected').data('value');
     },
-    setValue: function () {
+    setValue() {
       
     }
   });

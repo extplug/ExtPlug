@@ -1,18 +1,18 @@
 define(function (require, exports, module) {
 
-  var Backbone = require('backbone'),
-    $ = require('jquery');
+  const Backbone = require('backbone');
+  const $ = require('jquery');
 
   /**
    * A checkbox setting item.
    */
-  var ErrorCheckboxView = Backbone.View.extend({
+  const ErrorCheckboxView = Backbone.View.extend({
     className: 'item',
-    initialize: function (o) {
+    initialize(o) {
       this.name = o.name;
       this.label = o.label;
     },
-    render: function () {
+    render() {
       this.$el
         .append('<i class="icon icon-chat-system" />')
         .append($('<span />').css({ color: '#c42e3b' }).text(this.label));
@@ -23,10 +23,10 @@ define(function (require, exports, module) {
 
       return this;
     },
-    getValue: function () {
+    getValue() {
       return false;
     },
-    setValue: function (enabled) {
+    setValue(enabled) {
       // nothing
     }
   });

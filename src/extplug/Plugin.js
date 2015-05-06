@@ -1,58 +1,57 @@
 define(function (require, exports, module) {
 
-  var jQuery = require('jquery'),
-    _ = require('underscore'),
-    Backbone = require('backbone'),
-    Class = require('plug/core/Class'),
-    Settings = require('extplug/models/Settings'),
-    Style = require('extplug/util/Style'),
-    fnUtils = require('extplug/util/function');
+  const jQuery = require('jquery');
+  const _ = require('underscore');
+  const Backbone = require('backbone');
+  const Class = require('plug/core/Class');
+  const Settings = require('extplug/models/Settings');
+  const Style = require('extplug/util/Style');
 
-  var Plugin = Class.extend({
-    init: function (id, ext) {
+  const Plugin = Class.extend({
+    init(id, ext) {
       _.extend(this, Backbone.Events);
 
       this.id = id;
       this.ext = ext;
       this._styles = [];
 
-      var settings = new Settings({});
+      let settings = new Settings({});
       if (this.settings) {
-        _.each(this.settings, function (setting, name) {
+        _.each(this.settings, (setting, name) => {
           settings.set(name, setting.default);
         });
         this._settings = this.settings;
       }
       this.settings = settings;
 
-      fnUtils.bound(this, 'refresh');
-      fnUtils.bound(this, 'enable');
-      fnUtils.bound(this, 'disable');
-      fnUtils.bound(this, '$');
+      this.refresh = this.refresh.bind(this);
+      this.enable  = this.enable.bind(this);
+      this.disable = this.disable.bind(this);
+      this.$       = this.$.bind(this);
     },
 
-    $: function (sel) {
-      return sel ? jQuery(sel, this.ext.document) : this.ext.document;
+    $(sel) {
+      return jQuery(sel || document);
     },
 
-    disable: function () {
+    disable() {
       this.removeStyles();
     },
-    enable: function () {
+    enable() {
     },
 
-    refresh: function () {
+    refresh() {
       this.disable();
       this.enable();
     },
 
-    Style: function (o) {
+    Style(o) {
       var style = new Style(o);
       this._styles.push(style);
       return style;
     },
 
-    removeStyles: function () {
+    removeStyles() {
       while (this._styles.length > 0) {
         this._styles.pop().remove();
       }

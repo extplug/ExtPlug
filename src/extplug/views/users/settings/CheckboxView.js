@@ -1,21 +1,21 @@
 define(function (require, exports, module) {
 
-  var Backbone = require('backbone'),
-    $ = require('jquery'),
-    Events = require('plug/core/Events');
+  const Backbone = require('backbone');
+  const $ = require('jquery');
+  const Events = require('plug/core/Events');
 
   /**
    * A checkbox setting item.
    */
-  var CheckboxView = Backbone.View.extend({
+  const CheckboxView = Backbone.View.extend({
     className: 'item',
-    initialize: function (o) {
+    initialize(o) {
       this.label = o.label;
       this.description = o.description;
       this.enabled = o.enabled || false;
       this.onChange = this.onChange.bind(this);
     },
-    render: function () {
+    render() {
       this.$el
         .append('<i class="icon icon-check-blue" />')
         .append($('<span />').text(this.label));
@@ -35,7 +35,7 @@ define(function (require, exports, module) {
       this.$el.on('click', this.onChange);
       return this;
     },
-    onChange: function () {
+    onChange() {
       this.$el.toggleClass('selected');
       var enabled = this.enabled;
       this.enabled = this.$el.hasClass('selected');
@@ -43,10 +43,10 @@ define(function (require, exports, module) {
         this.trigger('change', this.getValue());
       }
     },
-    getValue: function () {
+    getValue() {
       return this.enabled;
     },
-    setValue: function (enabled) {
+    setValue(enabled) {
       this.enabled = enabled;
       if (enabled) {
         this.$el.addClass('selected');

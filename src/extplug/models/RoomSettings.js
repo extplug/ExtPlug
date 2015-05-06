@@ -8,14 +8,14 @@ define(function (require, exports, module) {
 
   var RoomSettings = Backbone.Model.extend({
 
-    constructor: function (ext) {
+    constructor(ext) {
       Backbone.Model.call(this, {});
 
       this._loaded = {};
 
-      fnUtils.bound(this, 'load');
-      fnUtils.bound(this, 'unload');
-      fnUtils.bound(this, 'reload');
+      this.load   = this.load.bind(this);
+      this.unload = this.unload.bind(this);
+      this.reload = this.reload.bind(this);
 
       currentRoom.on('change:description', this.reload);
       Events.on('room:joined', this.load);
@@ -25,8 +25,8 @@ define(function (require, exports, module) {
       }
     },
 
-    load: function () {
-      var description = currentRoom.get('description'),
+    load() {
+      let description = currentRoom.get('description'),
         m = description.match(/(?:^|\n)@p3=(.*?)(?:\n|$)/);
 
       if (m) {
@@ -35,12 +35,12 @@ define(function (require, exports, module) {
         }
         else {
           request.json(m[1])
-            .then(function (response) {
+            .then(response => {
               this._loaded[m[1]] = response;
               this.onLoad(response);
-            }.bind(this))
-            .fail(function (e) {
-              var message = ''
+            })
+            .fail(e => {
+              let message = ''
               if (e.status === 0) {
                 message += ' Your browser or an extension may be blocking its URL.';
               }
@@ -57,13 +57,13 @@ define(function (require, exports, module) {
       }
     },
 
-    onLoad: function (settings) {
+    onLoad(settings) {
       this.clear();
       this.trigger('load', settings);
       this.set(settings);
     },
 
-    unload: function () {
+    unload() {
       this.clear();
       this.trigger('unload');
     },
@@ -75,7 +75,7 @@ define(function (require, exports, module) {
       }
     },
 
-    dispose: function () {
+    dispose() {
       this.unload();
       currentRoom.off('change:description', this.reload);
     }

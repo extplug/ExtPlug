@@ -1,34 +1,33 @@
 define(function (require, exports, module) {
 
-  var $ = require('jquery'),
-    BaseView = require('extplug/views/BaseView'),
-    Style = require('extplug/util/Style');
+  const $ = require('jquery');
+  const BaseView = require('extplug/views/BaseView');
+  const Style = require('extplug/util/Style');
 
-  var ControlGroupView = BaseView.extend({
+  const ControlGroupView = BaseView.extend({
     className: 'extplug control-group',
 
-    initialize: function (o) {
+    initialize(o) {
       this.name = o.name;
       this.controls = [];
     },
 
-    render: function () {
+    render() {
       this.$el.append($('<div>').addClass('header').append($('<span>').text(this.name)));
 
-      var $el = this.$el,
-        switchAt = Math.ceil(this.controls.length / 2 - 1),
-        current = $('<div />').addClass('left').appendTo($el);
-      this.controls.forEach(function (item, i) {
+      let switchAt = Math.ceil(this.controls.length / 2 - 1);
+      let current = $('<div />').addClass('left').appendTo(this.$el);
+      this.controls.forEach((item, i) => {
         current.append(item.$el);
         item.render();
         if (i === switchAt) {
-          current = $('<div />').addClass('right').appendTo($el);
+          current = $('<div />').addClass('right').appendTo(this.$el);
         }
       });
       return this;
     },
 
-    add: function (control) {
+    add(control) {
       this.controls.push(control);
       return this;
     }

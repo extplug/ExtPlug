@@ -1,10 +1,10 @@
 define(function (require, exports, module) {
 
-  var UserView = require('plug/views/users/UserView');
+  const UserView = require('plug/views/users/UserView');
 
-  return UserView.extend({
+  const ExtUserView = UserView.extend({
     className: 'extplug app-left',
-    show: function (category, sub, _arg2) {
+    show(category, sub, _arg2) {
       this._super(category, sub, _arg2);
 
       if (category === 'settings' && sub === 'ext-plug') {
@@ -12,5 +12,7 @@ define(function (require, exports, module) {
       }
     }
   });
+
+  module.exports = ExtUserView;
 
 });

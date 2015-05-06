@@ -1,6 +1,6 @@
 define(function (require, exports, module) {
 
-  var Events = require('plug/core/Events');
+  const Events = require('plug/core/Events');
 
   function onRefresh() { Events.trigger('playback:refresh'); }
   function onHd() { Events.trigger('playback:hdVideo'); }
