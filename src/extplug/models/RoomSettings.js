@@ -26,7 +26,7 @@ define(function (require, exports, module) {
 
     load() {
       let description = currentRoom.get('description'),
-        m = description.match(/(?:^|\n)@p3=(.*?)(?:\n|$)/);
+        m = description.match(/(?:^|\n)@(?:p3|rcs)=(.*?)(?:\n|$)/);
 
       if (m) {
         if (this._loaded[m[1]]) {
