@@ -20,6 +20,8 @@ define(function (require, exports, module) {
     id: 'dialog-install-plugin',
     className: 'dialog',
     render() {
+      // don't overlay chat
+      $('#dialog-container').addClass('is-preview');
       this.$input = $('<input />').attr({
         type: 'text',
         placeholder: 'https://'
@@ -70,6 +72,7 @@ define(function (require, exports, module) {
       }
     },
     close() {
+      $('#dialog-container').removeClass('is-preview');
       this.$input.off();
       this._super();
     }
