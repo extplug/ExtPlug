@@ -226,9 +226,9 @@ define(function (require, exports, module) {
       settings.update();
       this.appView = getApplicationView();
 
-      this.document = $(document);
-
+      // ExtPlug styles
       this.Style({
+        // EXT logo
         '#app-menu .button i:after': {
           content: '"EXT"',
           color: '#fff',
@@ -240,6 +240,31 @@ define(function (require, exports, module) {
           'margin-top': '5px',
           position: 'relative',
           float: 'right'
+        },
+        // inline chat messages
+        '#chat-messages .cm.inline': {
+          '.badge-box': {
+            'margin': '5px 8px 6px',
+            'height': '16px',
+            'border-radius': '0px',
+            'background': 'transparent',
+
+            // center badge icons
+            '.icon': {
+              'top': '50%',
+              'margin-top': '-15px'
+            }
+          },
+          '.from': { 'display': 'inline' },
+          '.text': { 'display': 'inline', 'margin-left': '5px' }
+        },
+        '#chat-messages .cm .no-badge .icon': {
+          'width': '30px',
+          'height': '30px',
+          'top': '0px',
+          'left': '0px',
+          'border': 'none',
+          'border-radius': '0px'
         }
       });
 
@@ -317,33 +342,6 @@ define(function (require, exports, module) {
           joinpoint.proceed(message);
         }
       }
-
-      this.Style({
-        '#chat-messages .cm.inline': {
-          '.badge-box': {
-            'margin': '5px 8px 6px',
-            'height': '17px',
-            'border-radius': '0px',
-            'background': 'transparent',
-
-            // center badge icons
-            '.icon': {
-              'top': '50%',
-              'margin-top': '-15px'
-            }
-          },
-          '.from': { 'display': 'inline' },
-          '.text': { 'display': 'inline', 'margin-left': '5px' }
-        },
-        '#chat-messages .cm .no-badge .icon': {
-          'width': '30px',
-          'height': '30px',
-          'top': '0px',
-          'left': '0px',
-          'border': 'none',
-          'border-radius': '0px'
-        }
-      });
 
       // Replace the event listener too
       var chatView = this.appView.room.chat;
