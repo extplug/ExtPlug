@@ -29,37 +29,25 @@ define(function (require, exports, module) {
         m = description.match(/(?:^|\n)@(?:p3|rcs)=(.*?)(?:\n|$)/);
 
       if (m) {
-        if (this._loaded[m[1]]) {
-          this.onLoad(this._loaded[m[1]]);
-        }
-        else {
-          request.json(m[1])
-            .then(response => {
-              this._loaded[m[1]] = response;
-              this.onLoad(response);
-            })
-            .fail(e => {
-              let message = ''
-              if (e.status === 0) {
-                message += ' Your browser or an extension may be blocking its URL.';
-              }
-              else if (e.status >= 400) {
-                message += ' Its URL is not accessible.';
-              }
-              else if (e.status) {
-                message += ' Status code: ' + e.status;
-              }
-              Events.trigger('notify', 'icon-chat-system',
-                             'Room Settings could not be loaded for this room.' + message);
-            });
-        }
+        request.json(m[1]).then(settings => {
+          this.clear();
+          this.set(settings);
+          this.trigger('load', settings);
+        }).fail(e => {
+          let message = ''
+          if (e.status === 0) {
+            message += ' Your browser or an extension may be blocking its URL.';
+          }
+          else if (e.status >= 400) {
+            message += ' Its URL is not accessible.';
+          }
+          else if (e.status) {
+            message += ' Status code: ' + e.status;
+          }
+          Events.trigger('notify', 'icon-chat-system',
+                         'Room Settings could not be loaded for this room.' + message);
+        });
       }
-    },
-
-    onLoad(settings) {
-      this.clear();
-      this.trigger('load', settings);
-      this.set(settings);
     },
 
     unload() {
