@@ -8,12 +8,10 @@ define(function () {
   let timer = null;
   require([ 'extplug/ExtPlug' ], function _loaded(ExtPlug) {
     if (appViewExists()) {
-      var cbs = window.extp || [];
       var ext = new ExtPlug();
       window.extp = ext;
 
       ext.enable();
-      cbs.forEach(ext.push, ext);
       if (timer) {
         clearInterval(timer);
       }

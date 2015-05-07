@@ -39,5 +39,3 @@ define('extplug/plugins/meh-icon/main', function (require, exports, module) {
   module.exports = MehIcon;
 
 });
-
-(extp = window.extp || []).push('extplug/plugins/meh-icon/main');

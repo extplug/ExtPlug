@@ -63,5 +63,3 @@ define('extplug/plugins/compact-history/main', function (require, exports, modul
   });
 
 });
-
-(extp = window.extp || []).push('extplug/plugins/compact-history/main');

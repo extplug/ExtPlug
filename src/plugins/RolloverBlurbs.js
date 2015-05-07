@@ -76,5 +76,3 @@ define('extplug/plugins/rollover-blurbs/main', function (require, exports, modul
   });
 
 });
-
-(extp = window.extp || []).push('extplug/plugins/rollover-blurbs/main');

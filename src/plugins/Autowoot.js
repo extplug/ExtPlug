@@ -35,5 +35,3 @@ define('extplug/plugins/autowoot/main', function (require, exports, module) {
   });
 
 });
-
-(extp = window.extp || []).push('extplug/plugins/autowoot/main');

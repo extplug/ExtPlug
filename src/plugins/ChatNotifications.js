@@ -126,5 +126,3 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
   });
 
 });
-
-(extp = window.extp || []).push('extplug/plugins/chat-notifications/main');

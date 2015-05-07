@@ -156,5 +156,3 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
   module.exports = RoomStyles;
 
 });
-
-(extp = window.extp || []).push('extplug/plugins/room-styles/main');

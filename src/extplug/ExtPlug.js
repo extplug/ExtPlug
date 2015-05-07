@@ -158,7 +158,7 @@ define(function (require, exports, module) {
       this.registerPlugin(id, (e) => {
         if (e) return cb(e);
         let json = jsonParse(localStorage.getItem(LS_NAME));
-        json._installed = (json._installed || []).concat([ id ])
+        json.installed = (json.installed || []).concat([ id ])
         localStorage.setItem(LS_NAME, JSON.stringify(json));
         cb(null)
       });
@@ -170,10 +170,10 @@ define(function (require, exports, module) {
     uninstall(id) {
       this.unregisterPlugin(id);
       let json = jsonParse(localStorage.getItem(LS_NAME));
-      if (json._installed) {
-        let i = json._installed.indexOf(id);
+      if (json.installed) {
+        let i = json.installed.indexOf(id);
         if (i !== -1) {
-          json._installed.splice(i, 1);
+          json.installed.splice(i, 1);
           localStorage.setItem(LS_NAME, JSON.stringify(json));
         }
       }
@@ -183,9 +183,9 @@ define(function (require, exports, module) {
      * Loads installed plugins.
      */
     _loadInstalled() {
-      let { _installed } = jsonParse(localStorage.getItem(LS_NAME));
-      if (_.isArray(_installed)) {
-        let l = _installed.length;
+      let { installed } = jsonParse(localStorage.getItem(LS_NAME));
+      if (_.isArray(installed)) {
+        let l = installed.length;
         let i = 0;
         let errors = [];
         const done = () => {
@@ -200,7 +200,7 @@ define(function (require, exports, module) {
                            `ExtPlug: loaded ${i} plugins.`);
           }
         };
-        _installed.forEach(name => {
+        installed.forEach(name => {
           this.registerPlugin(name, e => {
             if (e) errors.push(e);
             if (++i >= l) {
@@ -209,6 +209,32 @@ define(function (require, exports, module) {
           });
         });
       }
+    },
+
+    /**
+     * Checks if ExtPlug has been initialised before.
+     */
+    isFirstRun() {
+      return localStorage.getItem(LS_NAME) == null;
+    },
+    /**
+     * Things that should only happen the first time ExtPlug
+     * is initialised.
+     */
+    onFirstRun() {
+      localStorage.setItem(LS_NAME, JSON.stringify({
+        version: _package.version,
+        installed: [
+          'extplug/plugins/autowoot/main',
+          'extplug/plugins/chat-notifications/main',
+          'extplug/plugins/compact-history/main',
+          'extplug/plugins/full-size-video/main',
+          'extplug/plugins/meh-icon/main',
+          'extplug/plugins/rollover-blurbs/main',
+          'extplug/plugins/room-styles/main',
+        ],
+        plugins: {}
+      }));
     },
 
     /**
@@ -222,6 +248,8 @@ define(function (require, exports, module) {
     enable() {
       this._super();
       var ext = this;
+
+      if (this.isFirstRun()) this.onFirstRun();
 
       settings.update();
       this.appView = getApplicationView();
@@ -402,7 +430,8 @@ define(function (require, exports, module) {
       let json = jsonParse(localStorage.getItem(LS_NAME));
       let plugin = this._plugins.findWhere({ id: id });
       let settings = plugin.get('instance').settings;
-      json[id] = { enabled: plugin.get('enabled'), settings: settings };
+      if (!json._plugins) json._plugins = {};
+      json._plugins[id] = { enabled: plugin.get('enabled'), settings: settings };
       localStorage.setItem(LS_NAME, JSON.stringify(json));
     },
 
@@ -410,29 +439,11 @@ define(function (require, exports, module) {
      * Retrieves plugin settings from localStorage.
      */
     _getPluginSettings(id) {
-      let settings = jsonParse(localStorage.getItem(LS_NAME));
+      let settings = jsonParse(localStorage.getItem(LS_NAME)).plugins;
       if (settings && id in settings) {
         return settings[id];
       }
       return { enabled: false, settings: {} };
-    },
-
-    /**
-     * 3rd party plugins should use `extp.push` to register callbacks or modules
-     * for when ExtPlug is loaded.
-     * This ensures that plugins that are loaded *after* ExtPlug will also register.
-     *
-     * @param {function()} cb
-     */
-    push(cb) {
-      if (typeof cb === 'string') {
-        this.registerPlugin(cb);
-      }
-      else {
-        _.defer(() => {
-          cb(this);
-        });
-      }
     }
   });
 

@@ -69,5 +69,3 @@ define('extplug/plugins/full-size-video/main', function (require, exports, modul
   });
 
 });
-
-(extp = window.extp || []).push('extplug/plugins/full-size-video/main');
