@@ -2530,37 +2530,32 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
       var pluginsGroup = new PluginsGroupView({ name: 'Plugins' });
       // generate plugin list
       this.plugins.forEach(function (pluginMeta) {
-        var plugin = pluginMeta.get('instance'),
-            name = pluginMeta.get('name');
-        if (plugin instanceof Error) {
-          // this plugin errored out during its initialization
-          pluginsGroup.add(new ErrorCheckboxView({ label: name }));
-        } else {
-          var box = new CheckboxView({
-            label: name,
-            description: plugin.description || false,
-            enabled: pluginMeta.get('enabled')
-          });
-          pluginsGroup.add(box);
-          box.on('change', function (value) {
-            // add / remove plugin settings group
-            if (value) {
-              pluginMeta.enable();
-              var pluginSettings = _this2.createSettingsGroup(pluginMeta);
-              if (pluginSettings) {
-                _this2.addGroup(pluginSettings);
-                _this2.$container.append(pluginSettings.render().$el);
-              }
-            } else {
-              pluginMeta.disable();
-              var pluginSettings = _this2.getGroup(name);
-              if (pluginSettings) {
-                _this2.removeGroup(name);
-                pluginSettings.remove();
-              }
+        var plugin = pluginMeta.get('instance');
+        var name = pluginMeta.get('name');
+        var box = new CheckboxView({
+          label: name,
+          description: plugin.description || false,
+          enabled: pluginMeta.get('enabled')
+        });
+        pluginsGroup.add(box);
+        box.on('change', function (value) {
+          // add / remove plugin settings group
+          if (value) {
+            pluginMeta.enable();
+            var pluginSettings = _this2.createSettingsGroup(pluginMeta);
+            if (pluginSettings) {
+              _this2.addGroup(pluginSettings);
+              _this2.$container.append(pluginSettings.render().$el);
             }
-          });
-        }
+          } else {
+            pluginMeta.disable();
+            var pluginSettings = _this2.getGroup(name);
+            if (pluginSettings) {
+              _this2.removeGroup(name);
+              pluginSettings.remove();
+            }
+          }
+        });
       });
 
       return pluginsGroup;
@@ -2854,7 +2849,7 @@ define('extplug/load-plugin',['require','exports','module','extplug/util/request
 });
 define('extplug/package',{
   "name": "ExtPlug",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "plug-modules": "^4.0.0"
@@ -2869,7 +2864,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jshint src"
   },
-  "builtAt": 1431012472506
+  "builtAt": 1431079215814
 });
 /** @license MIT License (c) copyright 2011-2013 original author or authors */
 
@@ -4045,8 +4040,8 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
       var json = jsonParse(localStorage.getItem(LS_NAME));
       var plugin = this._plugins.findWhere({ id: id });
       var settings = plugin.get('instance').settings;
-      if (!json._plugins) json._plugins = {};
-      json._plugins[id] = { enabled: plugin.get('enabled'), settings: settings };
+      if (!json.plugins) json.plugins = {};
+      json.plugins[id] = { enabled: plugin.get('enabled'), settings: settings };
       localStorage.setItem(LS_NAME, JSON.stringify(json));
     },
 
