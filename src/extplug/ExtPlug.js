@@ -430,8 +430,8 @@ define(function (require, exports, module) {
       let json = jsonParse(localStorage.getItem(LS_NAME));
       let plugin = this._plugins.findWhere({ id: id });
       let settings = plugin.get('instance').settings;
-      if (!json._plugins) json._plugins = {};
-      json._plugins[id] = { enabled: plugin.get('enabled'), settings: settings };
+      if (!json.plugins) json.plugins = {};
+      json.plugins[id] = { enabled: plugin.get('enabled'), settings: settings };
       localStorage.setItem(LS_NAME, JSON.stringify(json));
     },
 
