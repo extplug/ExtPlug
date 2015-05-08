@@ -93,39 +93,33 @@ define(function (require, exports, module) {
       let pluginsGroup = new PluginsGroupView({ name: 'Plugins' });
       // generate plugin list
       this.plugins.forEach(pluginMeta => {
-        let plugin = pluginMeta.get('instance'),
-          name = pluginMeta.get('name');
-        if (plugin instanceof Error) {
-          // this plugin errored out during its initialization
-          pluginsGroup.add(new ErrorCheckboxView({ label: name }));
-        }
-        else {
-          let box = new CheckboxView({
-            label: name,
-            description: plugin.description || false,
-            enabled: pluginMeta.get('enabled')
-          });
-          pluginsGroup.add(box);
-          box.on('change', value => {
-            // add / remove plugin settings group
-            if (value) {
-              pluginMeta.enable();
-              let pluginSettings = this.createSettingsGroup(pluginMeta);
-              if (pluginSettings) {
-                this.addGroup(pluginSettings);
-                this.$container.append(pluginSettings.render().$el);
-              }
+        let plugin = pluginMeta.get('instance');
+        let name = pluginMeta.get('name');
+        let box = new CheckboxView({
+          label: name,
+          description: plugin.description || false,
+          enabled: pluginMeta.get('enabled')
+        });
+        pluginsGroup.add(box);
+        box.on('change', value => {
+          // add / remove plugin settings group
+          if (value) {
+            pluginMeta.enable();
+            let pluginSettings = this.createSettingsGroup(pluginMeta);
+            if (pluginSettings) {
+              this.addGroup(pluginSettings);
+              this.$container.append(pluginSettings.render().$el);
             }
-            else {
-              pluginMeta.disable();
-              let pluginSettings = this.getGroup(name);
-              if (pluginSettings) {
-                this.removeGroup(name);
-                pluginSettings.remove();
-              }
+          }
+          else {
+            pluginMeta.disable();
+            let pluginSettings = this.getGroup(name);
+            if (pluginSettings) {
+              this.removeGroup(name);
+              pluginSettings.remove();
             }
-          });
-        }
+          }
+        });
       });
 
       return pluginsGroup;
