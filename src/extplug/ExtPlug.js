@@ -255,46 +255,11 @@ define(function (require, exports, module) {
       this.appView = getApplicationView();
 
       // ExtPlug styles
-      this.Style({
-        // EXT logo
-        '#app-menu .button i:after': {
-          content: '"EXT"',
-          color: '#fff',
-          background: '#f00',
-          'z-index': 10,
-          'font-size': '70%',
-          'border-radius': '10px',
-          padding: '1px 4px',
-          'margin-top': '5px',
-          position: 'relative',
-          float: 'right'
-        },
-        // inline chat messages
-        '#chat-messages .cm.inline': {
-          '.badge-box': {
-            'margin': '5px 8px 6px',
-            'height': '16px',
-            'border-radius': '0px',
-            'background': 'transparent',
-
-            // center badge icons
-            '.icon': {
-              'top': '50%',
-              'margin-top': '-15px'
-            }
-          },
-          '.from': { 'display': 'inline' },
-          '.text': { 'display': 'inline', 'margin-left': '5px' }
-        },
-        '#chat-messages .cm .no-badge .icon': {
-          'width': '30px',
-          'height': '30px',
-          'top': '0px',
-          'left': '0px',
-          'border': 'none',
-          'border-radius': '0px'
-        }
-      });
+      this.Style()
+        .set(require('./styles/badge'))
+        .set(require('./styles/inline-chat'))
+        .set(require('./styles/settings-pane'))
+        .set(require('./styles/install-plugin-dialog'));
 
       const pad = x => x < 10 ? `0${x}` : x
       let ba = new Date(_package.builtAt)

@@ -1,7 +1,6 @@
 define(function (require, exports, module) {
   const Backbone = require('backbone');
   const $ = require('jquery');
-  const Style = require('extplug/util/Style');
 
   function template(o) {
     return `
@@ -67,14 +66,6 @@ define(function (require, exports, module) {
         this.$value.text(value);
         this.trigger('change', value);
         this._value = value;
-      }
-    }
-  });
-
-  SliderView._style = new Style({
-    '.extplug-slider': {
-      '.counts .count:nth-child(2)': {
-        'float': 'right'
       }
     }
   });

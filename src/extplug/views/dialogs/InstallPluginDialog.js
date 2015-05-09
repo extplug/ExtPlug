@@ -5,7 +5,6 @@ define(function (require, exports, module) {
   const Events = require('plug/core/Events');
   const AlertEvent = require('plug/events/AlertEvent');
   const SpinnerView = require('plug/views/spinner/SpinnerView');
-  const Style = require('extplug/util/Style');
 
   function dirname(str) {
     str = str.split('/');
@@ -75,23 +74,6 @@ define(function (require, exports, module) {
       $('#dialog-container').removeClass('is-preview');
       this.$input.off();
       this._super();
-    }
-  });
-
-  InstallPluginDialog._style = new Style({
-    '#dialog-install-plugin': {
-      '.dialog-body': { 'height': '137px' },
-      '.message': { 'top': '21px' },
-      '.spinner': { 'top': '50%', 'left': '50%' },
-      '.dialog-input-background': {
-        'top': '67px',
-        'width': '460px',
-        'height': '43px',
-        'left': '25px',
-        'input': {
-          'width': '440px'
-        }
-      }
     }
   });
 
