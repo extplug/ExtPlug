@@ -21,6 +21,8 @@ define(function (require, exports, module) {
   const chatFacade = require('extplug/facades/chatFacade');
   const loadPlugin = require('extplug/load-plugin');
 
+  const VersionPlugin = require('./plugins/version');
+
   const _package = require('extplug/package');
 
   const $ = require('jquery');
@@ -90,6 +92,10 @@ define(function (require, exports, module) {
       this._plugins.on('change:enabled', (plugin, enabled) => {
         this._savePluginSettings(plugin.get('id'));
       });
+
+      this._core = [
+        new VersionPlugin('version', this)
+      ];
 
     },
 
@@ -261,18 +267,6 @@ define(function (require, exports, module) {
         .set(require('./styles/settings-pane'))
         .set(require('./styles/install-plugin-dialog'));
 
-      const pad = x => x < 10 ? `0${x}` : x
-      let ba = new Date(_package.builtAt)
-      let builtAt = ba.getUTCFullYear() + '-'
-                  + pad(ba.getUTCMonth()   + 1) + '-'
-                  + pad(ba.getUTCDate()    + 1) + ' '
-                  + pad(ba.getUTCHours()   + 1) + ':'
-                  + pad(ba.getUTCMinutes() + 1) + ':'
-                  + pad(ba.getUTCSeconds() + 1) + ' UTC'
-      chatFacade.registerCommand('version', () => {
-        API.chatLog(`${_package.name} v${_package.version} (${builtAt})`);
-      });
-
       // replace rendered UserView
       var userView = new ExtUserView();
       userView.render();
@@ -296,6 +290,10 @@ define(function (require, exports, module) {
       // install extra events
       hooks.forEach(hook => {
         hook.install();
+      });
+
+      this._core.forEach(plugin => {
+        plugin.enable();
       });
 
       // add custom chat message type
@@ -363,6 +361,9 @@ define(function (require, exports, module) {
     disable() {
       this._plugins.forEach(mod => {
         mod.disable();
+      });
+      this._core.forEach(plugin => {
+        plugin.disable();
       });
       hooks.forEach(hook => {
         hook.uninstall();
