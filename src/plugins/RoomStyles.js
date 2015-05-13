@@ -121,9 +121,10 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
             .appendTo(this.$('#dj-booth'));
         }
         ranks.forEach(rank => {
-          if (images[rank]) {
+          let url = images[rank] || images.icons && images.icons[rank];
+          if (url) {
             style.set(`.icon.icon-chat-${rank}`, {
-              background: `url(${images[rank]})`
+              background: `url(${url})`
             });
           }
         });
