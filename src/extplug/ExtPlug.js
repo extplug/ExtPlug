@@ -6,7 +6,6 @@ define(function (require, exports, module) {
   const Events = require('plug/core/Events');
   const ApplicationView = require('plug/views/app/ApplicationView');
   const UserView = require('plug/views/users/UserView');
-  const UserSettingsView = require('plug/views/users/settings/SettingsView');
   const ChatView = require('plug/views/rooms/chat/ChatView');
   const plugUtil = require('plug/util/util');
   const emoji = require('plug/util/emoji');
@@ -14,14 +13,12 @@ define(function (require, exports, module) {
   const RoomSettings = require('extplug/models/RoomSettings');
   const PluginMeta = require('extplug/models/PluginMeta');
   const PluginsCollection = require('extplug/collections/PluginsCollection');
-  const ExtUserView = require('extplug/views/users/ExtUserView');
-  const ExtSettingsSectionView = require('extplug/views/users/settings/SettingsView');
-  const ExtSettingsTabMenuView = require('extplug/views/users/settings/TabMenuView');
   const Plugin = require('extplug/Plugin');
   const chatFacade = require('extplug/facades/chatFacade');
   const loadPlugin = require('extplug/load-plugin');
 
   const VersionPlugin = require('./plugins/version');
+  const SettingsTabPlugin = require('./plugins/settings-tab');
 
   const _package = require('extplug/package');
 
@@ -94,7 +91,8 @@ define(function (require, exports, module) {
       });
 
       this._core = [
-        new VersionPlugin('version', this)
+        new VersionPlugin('version', this),
+        new SettingsTabPlugin('settings-tab', this)
       ];
 
     },
@@ -267,26 +265,6 @@ define(function (require, exports, module) {
         .set(require('./styles/settings-pane'))
         .set(require('./styles/install-plugin-dialog'));
 
-      // replace rendered UserView
-      var userView = new ExtUserView();
-      userView.render();
-      this.appView.user.$el.replaceWith(userView.$el);
-      this.appView.user = userView;
-
-      // Add ExtPlug tab to user settings
-      this._settingsTabAdvice = meld.around(UserSettingsView.prototype, 'getMenu', () => {
-        return new ExtSettingsTabMenuView();
-      });
-      this._settingsPaneAdvice = meld.around(UserSettingsView.prototype, 'getView', joinpoint => {
-        if (joinpoint.args[0] === 'ext-plug') {
-          return new ExtSettingsSectionView({
-            plugins: ext._plugins,
-            ext: ext
-          });
-        }
-        return joinpoint.proceed();
-      });
-
       // install extra events
       hooks.forEach(hook => {
         hook.install();
@@ -368,13 +346,6 @@ define(function (require, exports, module) {
       hooks.forEach(hook => {
         hook.uninstall();
       });
-      // remove settings pane
-      this._settingsTabAdvice.remove();
-      this._settingsPaneAdvice.remove();
-      var userView = new UserView();
-      userView.render();
-      this.appView.user.$el.replaceWith(userView.$el);
-      this.appView.user = userView;
       // remove custom chat type advice, and restore
       // the original event listener
       let chatView = this.appView.room.chat;
