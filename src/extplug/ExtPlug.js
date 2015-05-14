@@ -19,6 +19,7 @@ define(function (require, exports, module) {
 
   const VersionPlugin = require('./plugins/version');
   const SettingsTabPlugin = require('./plugins/settings-tab');
+  const ChatTypePlugin = require('./plugins/custom-chat-type');
 
   const _package = require('extplug/package');
 
@@ -92,7 +93,8 @@ define(function (require, exports, module) {
 
       this._core = [
         new VersionPlugin('version', this),
-        new SettingsTabPlugin('settings-tab', this)
+        new SettingsTabPlugin('settings-tab', this),
+        new ChatTypePlugin('custom-chat-type', this)
       ];
 
     },
@@ -274,54 +276,6 @@ define(function (require, exports, module) {
         plugin.enable();
       });
 
-      // add custom chat message type
-      function addCustomChatType(joinpoint) {
-        var message = joinpoint.args[0];
-        if (message.type.split(' ').indexOf('custom') !== -1) {
-          message.type += ' update';
-          if (!message.timestamp) {
-            message.timestamp = plugUtil.getChatTimestamp();
-          }
-          joinpoint.proceed();
-          if (message.badge) {
-            if (/^:(.*?):$/.test(message.badge)) {
-              var badgeBox = this.$chatMessages.children().last().find('.badge-box'),
-                emojiName = message.badge.slice(1, -1);
-              if (emoji.map[emojiName]) {
-                badgeBox.find('i').remove();
-                badgeBox.append(
-                  $('<span />').addClass('emoji-glow extplug-badji').append(
-                    $('<span />').addClass('emoji emoji-' + emoji.map[emojiName])
-                  )
-                );
-              }
-            }
-            else if (/^icon-(.*?)$/.test(message.badge)) {
-              var badgeBox = this.$chatMessages.children().last().find('.badge-box')
-              badgeBox.find('i')
-                .removeClass()
-                .addClass('icon').addClass(message.badge);
-            }
-          }
-          if (message.color) {
-            this.$chatMessages.children().last().find('.msg .text').css('color', message.color);
-          }
-        }
-        else {
-          joinpoint.proceed(message);
-        }
-      }
-
-      // Replace the event listener too
-      var chatView = this.appView.room.chat;
-      if (chatView) {
-        Events.off('chat:receive', chatView.onReceived);
-      }
-      this._chatTypeAdvice = meld.around(ChatView.prototype, 'onReceived', addCustomChatType);
-      if (chatView) {
-        Events.on('chat:receive', chatView.onReceived, chatView);
-      }
-
       // room settings
       this.roomSettings = new RoomSettings(this);
 
@@ -346,12 +300,6 @@ define(function (require, exports, module) {
       hooks.forEach(hook => {
         hook.uninstall();
       });
-      // remove custom chat type advice, and restore
-      // the original event listener
-      let chatView = this.appView.room.chat;
-      if (chatView) Events.off('chat:receive', chatView.onReceived);
-      this._chatTypeAdvice.remove();
-      if (chatView) Events.on('chat:receive', chatView.onReceived, chatView);
 
       // remove room settings handling
       this.roomSettings.dispose();
