@@ -3,7 +3,6 @@ define(function (require, exports, module) {
   const ControlGroupView = require('extplug/views/users/settings/ControlGroupView');
   const PluginsGroupView = require('./PluginsGroupView');
   const ManagingGroupView = require('./ManagingGroupView');
-  const ErrorCheckboxView = require('extplug/views/users/settings/ErrorCheckboxView');
   const CheckboxView = require('extplug/views/users/settings/CheckboxView');
   const DropdownView = require('extplug/views/users/settings/DropdownView');
   const SliderView = require('extplug/views/users/settings/SliderView');
@@ -173,12 +172,11 @@ define(function (require, exports, module) {
               value: settings.get(name)
             });
             break;
-          default:
-            control = new ErrorCheckboxView({ label: 'Unknown type for "' + name + '"' });
-            break;
         }
-        wireSettingToModel(control, settings, name);
-        group.add(control);
+        if (control) {
+          wireSettingToModel(control, settings, name);
+          group.add(control);
+        }
       });
 
       return group;
