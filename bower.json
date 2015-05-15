@@ -6,7 +6,8 @@
   "authors": [ "PlugLynn <PlugLynn@Hushmail.com>" ],
   "main": "src/ExtPlug.js",
   "dependencies": {
-    "meld": ""
+    "meld": "",
+    "sistyl": ""
   },
   "moduleType": [
     "amd"

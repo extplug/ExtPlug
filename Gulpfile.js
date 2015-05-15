@@ -32,6 +32,7 @@ gulp.task('rjs', [ 'babel' ], function (done) {
       jquery: 'empty:',
       underscore: 'empty:',
       meld: bower + 'meld/meld',
+      sistyl: bower + 'sistyl/lib/sistyl',
       'plug-modules': npm + 'plug-modules/plug-modules'
     },
     rawText: {
