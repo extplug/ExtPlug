@@ -8,17 +8,17 @@ var packg  = require('./package.json')
 gulp.task('babel', function () {
   return gulp.src('src/**/*')
     .pipe(babel({ modules: 'ignore' }))
-    .pipe(gulp.dest('build/babel/'))
+    .pipe(gulp.dest('lib/'))
 })
 
 gulp.task('rjs', [ 'babel' ], function (done) {
-  var bower = '../../bower_components/'
-  var npm = '../../node_modules/'
+  var bower = '../bower_components/'
+  var npm = '../node_modules/'
   packg.builtAt = Date.now()
   var packgString = JSON.stringify(packg, null, 2)
   delete packg.builtAt
   rjs.optimize({
-    baseUrl: 'build/babel/',
+    baseUrl: 'lib/',
     name: 'extplug/boot',
     include: [
       'extplug/ExtPlug',
@@ -47,8 +47,8 @@ gulp.task('rjs', [ 'babel' ], function (done) {
 
 gulp.task('build', [ 'rjs' ], function () {
   return gulp.src([ 'build/build.rjs.js'
-                  , 'build/babel/plugins/*'
-                  , 'build/babel/extplug/plugdj.user.js' ])
+                  , 'lib/plugins/*'
+                  , 'lib/extplug/plugdj.user.js' ])
     .pipe(concat('build.full.js'))
     .pipe(gulp.dest('build/'))
 })
