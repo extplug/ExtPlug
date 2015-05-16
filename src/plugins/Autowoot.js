@@ -1,37 +1,47 @@
 define('extplug/plugins/autowoot/main', function (require, exports, module) {
 
-  var Plugin = require('extplug/Plugin'),
-    fnUtils = require('extplug/util/function');
+  const Plugin = require('extplug/Plugin');
 
-  module.exports = Plugin.extend({
+  const Autowoot = Plugin.extend({
     name: 'Autowoot',
 
-    init: function (id, ext) {
+    init(id, ext) {
       this._super(id, ext);
-      fnUtils.bound(this, 'onAdvance');
-      fnUtils.bound(this, 'woot');
+      this.onAdvance = this.onAdvance.bind(this);
+      this.woot = this.woot.bind(this);
     },
 
-    enable: function () {
+    enable() {
       this._super();
       this.wootElement = this.$('#woot');
       this.woot();
       API.on(API.ADVANCE, this.onAdvance);
     },
 
-    disable: function () {
+    disable() {
       this._super();
       API.off(API.ADVANCE, this.onAdvance);
     },
 
-    woot: function () {
-      this.wootElement.click();
+    allowed() {
+      let rules = this.ext.roomSettings.get('rules');
+      return !rules || (rules.allowAutowoot !== false && rules.allowAutowoot != 'false');
     },
 
-    onAdvance: function () {
-      setTimeout(this.woot, 3000 + Math.floor(Math.random() * 5000));
+    woot() {
+      if (this.allowed()) {
+        this.wootElement.click();
+      }
+    },
+
+    onAdvance() {
+      if (this.allowed()) {
+        setTimeout(this.woot, 3000 + Math.floor(Math.random() * 5000));
+      }
     }
 
   });
+
+  module.exports = Autowoot;
 
 });
