@@ -1,38 +1,49 @@
 define('extplug/plugins/meh-icon/main', function (require, exports, module) {
 
-  var Plugin = require('extplug/Plugin'),
-    UserRowView = require('plug/views/rooms/users/RoomUserRowView'),
-    $ = require('jquery'),
-    meld = require('meld');
+  const Plugin = require('extplug/Plugin');
+  const UserRowView = require('plug/views/rooms/users/RoomUserRowView');
+  const $ = require('jquery');
+  const { around } = require('meld');
 
-  var MehIcon = Plugin.extend({
+  const MehIcon = Plugin.extend({
     name: 'Meh Icons',
 
-    enable: function () {
+    enable() {
       this._super();
-      this.advice = meld.after(UserRowView.prototype, 'vote', this.showMeh);
+      this.advice = around(UserRowView.prototype, 'vote', this.showVote);
       this.Style({
         '#user-lists .list.room .user .icon-meh': {
           'top': '-1px',
           'right': '9px',
           'left': 'auto'
+        },
+        // grab icon next to a vote icon
+        '#user-lists .list.room .user .icon + .icon-grab': {
+          'right': '28px'
         }
       });
     },
 
-    disable: function () {
+    disable() {
       this.advice.remove();
       this._super();
     },
 
-    showMeh: function () {
-      if (this.model.get('vote') === -1 && !this.model.get('grab')) {
-        if (!this.$icon) {
-          this.$icon = $('<i />');
-          this.$el.append(this.$icon);
-        }
-        this.$icon.removeClass().addClass('icon icon-meh extplug-meh-icon');
+    // bound to the UserRowView instance
+    // shows all relevant vote icons instead of just grab or woot.
+    showVote() {
+      if (this.$icon) this.$icon.remove();
+      this.$icon = $();
+      if (this.model.get('vote') < 0) {
+        this.$icon = this.$icon.add($('<i />').addClass('icon icon-meh extplug-meh-icon'));
       }
+      if (this.model.get('vote') > 0) {
+        this.$icon = this.$icon.add($('<i />').addClass('icon icon-woot'));
+      }
+      if (this.model.get('grab')) {
+        this.$icon = this.$icon.add($('<i />').addClass('icon icon-grab'));
+      }
+      this.$icon.appendTo(this.$el);
     }
   });
 
