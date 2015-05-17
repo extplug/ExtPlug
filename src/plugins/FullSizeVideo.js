@@ -1,6 +1,5 @@
 define('extplug/plugins/full-size-video/main', function (require, exports, module) {
   var Plugin = require('extplug/Plugin'),
-    fnUtils = require('extplug/util/function'),
     win = require('plug/util/window');
 
   module.exports = Plugin.extend({
@@ -8,8 +7,8 @@ define('extplug/plugins/full-size-video/main', function (require, exports, modul
 
     init: function (id, ext) {
       this._super(id, ext);
-      fnUtils.bound(this, 'enter');
-      fnUtils.bound(this, 'leave');
+      this.enter = this.enter.bind(this);
+      this.leave = this.leave.bind(this);
     },
 
     enable: function () {

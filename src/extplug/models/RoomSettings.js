@@ -2,7 +2,6 @@ define(function (require, exports, module) {
 
   var currentRoom = require('plug/models/currentRoom'),
     request = require('extplug/util/request'),
-    fnUtils = require('extplug/util/function'),
     Backbone = require('backbone'),
     Events = require('plug/core/Events');
 

@@ -3,7 +3,6 @@ define(function (require, exports, module) {
   const Backbone = require('backbone');
   const $ = require('jquery');
   const _ = require('underscore');
-  const fnUtils = require('extplug/util/function');
 
   const DropdownView = Backbone.View.extend({
     className: 'dropdown',

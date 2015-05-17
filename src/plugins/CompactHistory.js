@@ -1,7 +1,6 @@
 define('extplug/plugins/compact-history/main', function (require, exports, module) {
 
   var Plugin = require('extplug/Plugin'),
-    fnUtils = require('extplug/util/function'),
     _ = require('underscore'),
     $ = require('jquery');
 

@@ -47,11 +47,14 @@ define(function (require, exports, module) {
 
   /**
    * Concisely binds a method to an object.
+   * @deprecated
    *
    * @param {Object} obj Base object.
    * @param {string} key Method name.
    */
   exports.bound = function (obj, key) {
+    console.warn('extplug/util/function.bound is deprecated, ' +
+                 'use Function.prototype.bind instead');
     obj[key] = obj[key].bind(obj);
   };
 
