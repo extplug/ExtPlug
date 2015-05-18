@@ -1,5 +1,5 @@
 define(function (require, exports, module) {
-  const BaseView = require('extplug/views/BaseView');
+  const { View } = require('backbone');
   const ControlGroupView = require('extplug/views/users/settings/ControlGroupView');
   const PluginsGroupView = require('./PluginsGroupView');
   const ManagingGroupView = require('./ManagingGroupView');
@@ -25,7 +25,7 @@ define(function (require, exports, module) {
     });
   }
 
-  const SettingsView = BaseView.extend({
+  const SettingsView = View.extend({
     className: 'ext-plug section',
 
     initialize(o) {

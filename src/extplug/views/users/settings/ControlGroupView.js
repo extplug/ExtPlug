@@ -1,9 +1,9 @@
 define(function (require, exports, module) {
 
   const $ = require('jquery');
-  const BaseView = require('extplug/views/BaseView');
+  const { View } = require('backbone');
 
-  const ControlGroupView = BaseView.extend({
+  const ControlGroupView = View.extend({
     className: 'extplug control-group',
 
     initialize(o) {
