@@ -27,15 +27,9 @@ define(function (require, exports, module) {
     return request(url, options);
   };
 
-  function parseUrl(url) {
-    var e = document.createElement('a');
-    e.href = url;
-    return e;
-  }
-
   function mayNeedProxy(url) {
     if (url.substr(0, corsproxy.length) !== corsproxy) {
-      var loc = parseUrl(url);
+      let loc = new URL(url);
       if (loc.hostname !== 'plug.dj' && loc.hostname !== 'cdn.plug.dj') {
         return true;
       }
