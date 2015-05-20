@@ -23,16 +23,22 @@ define(function (require, exports, module) {
       }
     },
 
-    load() {
+    load(unload = false) {
       let description = currentRoom.get('description'),
         m = description.match(/(?:^|\n)@(?:p3|rcs)=(.*?)(?:\n|$)/);
 
       if (m) {
         request.json(m[1]).then(settings => {
-          this.clear();
+          if (unload) {
+            this.unload();
+          }
+          else {
+            this.clear();
+          }
           this.set(settings);
           this.trigger('load', settings);
         }).fail(e => {
+          this.unload();
           let message = ''
           if (e.status === 0) {
             message += ' Your browser or an extension may be blocking its URL.';
@@ -55,11 +61,10 @@ define(function (require, exports, module) {
     },
 
     reload() {
-      this.unload();
       // "joined" is set *after* "description"
       _.defer(() => {
         if (currentRoom.get('joined')) {
-          this.load();
+          this.load(true);
         }
       });
     },
