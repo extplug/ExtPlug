@@ -33,6 +33,14 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
       API.on(API.GRAB_UPDATE, this.onGrab);
       API.on(API.VOTE_UPDATE, this.onVote);
       this.settings.on('change:inline', this.onInline);
+
+      this.Style({
+        '.cm.extplug-user-join .msg':  { 'color': '#2ecc40' },
+        '.cm.extplug-user-leave .msg': { 'color': '#ff851b' },
+        '.cm.extplug-advance .msg':    { 'color': '#7fdbff' },
+        '.cm.extplug-grab .msg':       { 'color': '#a670fe' },
+        '.cm.extplug-meh .msg':        { 'color': '#ff4136' }
+      });
     },
 
     disable: function () {
@@ -65,7 +73,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           message: 'joined the room',
           uid: e.id,
           un: e.username,
-          color: '#2ECC40',
           badge: 'icon-community-users'
         });
       }
@@ -78,7 +85,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           message: 'left the room',
           uid: user.id,
           un: user.username,
-          color: '#FF851B',
           badge: 'icon-community-users'
         });
       }
@@ -91,7 +97,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           message: e.media.author + ' – ' + e.media.title,
           uid: e.dj.id,
           un: e.dj.username,
-          color: '#7FDBFF',
           badge: 'icon-play-next'
         });
       }
@@ -105,7 +110,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           message: 'grabbed this track',
           uid: e.user.id,
           un: e.user.username,
-          color: '#a670fe',
           badge: 'icon-grab'
         });
       }
@@ -118,7 +122,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           message: 'meh\'d this track',
           uid: e.user.id,
           un: e.user.username,
-          color: '#FF4136',
           badge: 'icon-meh'
         });
       }
