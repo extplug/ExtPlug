@@ -53,6 +53,9 @@ define(function (require, exports, module) {
                          'Room Settings could not be loaded for this room.' + message);
         });
       }
+      else if (unload) {
+        this.unload();
+      }
     },
 
     unload() {
