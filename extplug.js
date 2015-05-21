@@ -1668,15 +1668,9 @@ define('extplug/util/request',['require','exports','module','jquery'],function (
     return request(url, options);
   };
 
-  function parseUrl(url) {
-    var e = document.createElement('a');
-    e.href = url;
-    return e;
-  }
-
   function mayNeedProxy(url) {
     if (url.substr(0, corsproxy.length) !== corsproxy) {
-      var loc = parseUrl(url);
+      var loc = new URL(url);
       if (loc.hostname !== 'plug.dj' && loc.hostname !== 'cdn.plug.dj') {
         return true;
       }
@@ -1686,70 +1680,10 @@ define('extplug/util/request',['require','exports','module','jquery'],function (
 });
 
 
-define('extplug/util/function',['require','exports','module','underscore'],function (require, exports, module) {
-
-  var _ = require('underscore');
-
-  /**
-   * Replaces a Backbone class implementation by a different class implementation.
-   * This is particularly useful for overriding plug.dj internal class behaviour. Extend
-   * the class, and then replace the original implementation by your new implementation.
-   *
-   * This should not be used by modules for now, as it only supports one override at a time!
-   *
-   * @param {function()} oldClass The class to replace.
-   * @param {function()} newClass Replacement.
-   *
-   * @return {function()} The patched class.
-   */
-  exports.replaceClass = function (oldClass, newClass, instances) {
-    Object.defineProperty(oldClass, '$replaced', {
-      writable: true,
-      enumerable: false,
-      configurable: false,
-      value: { extend: oldClass.extend, proto: oldClass.prototype }
-    });
-    oldClass.extend = newClass.extend;
-    oldClass.prototype = newClass.prototype;
-
-    if (instances) {
-      _.each(instances, function (instance) {
-        instance.__proto__ = newClass.prototype;
-      });
-    }
-
-    return oldClass;
-  };
-
-  /**
-   * Restore a class to its original implementation.
-   */
-  exports.restoreClass = function (oldClass) {
-    if (oldClass.$replaced) {
-      oldClass.extend = oldClass.$replaced.extend;
-      oldClass.prototype = oldClass.$replaced.prototype;
-      delete oldClass.$replaced;
-    }
-    return oldClass;
-  };
-
-  /**
-   * Concisely binds a method to an object.
-   *
-   * @param {Object} obj Base object.
-   * @param {string} key Method name.
-   */
-  exports.bound = function (obj, key) {
-    obj[key] = obj[key].bind(obj);
-  };
-});
-
-
-define('extplug/models/RoomSettings',['require','exports','module','plug/models/currentRoom','extplug/util/request','extplug/util/function','backbone','plug/core/Events'],function (require, exports, module) {
+define('extplug/models/RoomSettings',['require','exports','module','plug/models/currentRoom','extplug/util/request','backbone','plug/core/Events'],function (require, exports, module) {
 
   var currentRoom = require('plug/models/currentRoom'),
       request = require('extplug/util/request'),
-      fnUtils = require('extplug/util/function'),
       Backbone = require('backbone'),
       Events = require('plug/core/Events');
 
@@ -1774,15 +1708,22 @@ define('extplug/models/RoomSettings',['require','exports','module','plug/models/
     load: function load() {
       var _this = this;
 
+      var unload = arguments[0] === undefined ? false : arguments[0];
+
       var description = currentRoom.get('description'),
           m = description.match(/(?:^|\n)@(?:p3|rcs)=(.*?)(?:\n|$)/);
 
       if (m) {
         request.json(m[1]).then(function (settings) {
-          _this.clear();
+          if (unload) {
+            _this.unload();
+          } else {
+            _this.clear();
+          }
           _this.set(settings);
           _this.trigger('load', settings);
         }).fail(function (e) {
+          _this.unload();
           var message = '';
           if (e.status === 0) {
             message += ' Your browser or an extension may be blocking its URL.';
@@ -1804,11 +1745,10 @@ define('extplug/models/RoomSettings',['require','exports','module','plug/models/
     reload: function reload() {
       var _this2 = this;
 
-      this.unload();
       // "joined" is set *after* "description"
       _.defer(function () {
         if (currentRoom.get('joined')) {
-          _this2.load();
+          _this2.load(true);
         }
       });
     },
@@ -2219,7 +2159,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jshint src"
   },
-  "builtAt": 1431801807440
+  "builtAt": 1432194817563
 });
 
 
@@ -2910,20 +2850,15 @@ define('extplug/views/users/settings/TabMenuView',['require','exports','module',
 });
 
 
-define('extplug/views/BaseView',['require','exports','module','backbone'],function (require, exports, module) {
-
-  var Backbone = require('backbone');
-
-  return Backbone.View.extend({});
-});
-
-
-define('extplug/views/users/settings/ControlGroupView',['require','exports','module','jquery','extplug/views/BaseView'],function (require, exports, module) {
+define('extplug/views/users/settings/ControlGroupView',['require','exports','module','jquery','backbone'],function (require, exports, module) {
 
   var $ = require('jquery');
-  var BaseView = require('extplug/views/BaseView');
 
-  var ControlGroupView = BaseView.extend({
+  var _require = require('backbone');
+
+  var View = _require.View;
+
+  var ControlGroupView = View.extend({
     className: 'extplug control-group',
 
     initialize: function initialize(o) {
@@ -3187,12 +3122,11 @@ define('extplug/views/users/settings/CheckboxView',['require','exports','module'
 });
 
 
-define('extplug/views/users/settings/DropdownView',['require','exports','module','backbone','jquery','underscore','extplug/util/function'],function (require, exports, module) {
+define('extplug/views/users/settings/DropdownView',['require','exports','module','backbone','jquery','underscore'],function (require, exports, module) {
 
   var Backbone = require('backbone');
   var $ = require('jquery');
   var _ = require('underscore');
-  var fnUtils = require('extplug/util/function');
 
   var DropdownView = Backbone.View.extend({
     className: 'dropdown',
@@ -3377,8 +3311,11 @@ define('extplug/views/users/settings/RemoveBoxView',['require','exports','module
 });
 
 
-define('extplug/views/users/settings/SettingsView',['require','exports','module','extplug/views/BaseView','extplug/views/users/settings/ControlGroupView','./PluginsGroupView','./ManagingGroupView','extplug/views/users/settings/CheckboxView','extplug/views/users/settings/DropdownView','extplug/views/users/settings/SliderView','./RemoveBoxView','extplug/models/PluginMeta','plug/core/Events','underscore','jquery'],function (require, exports, module) {
-  var BaseView = require('extplug/views/BaseView');
+define('extplug/views/users/settings/SettingsView',['require','exports','module','backbone','extplug/views/users/settings/ControlGroupView','./PluginsGroupView','./ManagingGroupView','extplug/views/users/settings/CheckboxView','extplug/views/users/settings/DropdownView','extplug/views/users/settings/SliderView','./RemoveBoxView','extplug/models/PluginMeta','plug/core/Events','underscore','jquery'],function (require, exports, module) {
+  var _require = require('backbone');
+
+  var View = _require.View;
+
   var ControlGroupView = require('extplug/views/users/settings/ControlGroupView');
   var PluginsGroupView = require('./PluginsGroupView');
   var ManagingGroupView = require('./ManagingGroupView');
@@ -3404,7 +3341,7 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
     });
   }
 
-  var SettingsView = BaseView.extend({
+  var SettingsView = View.extend({
     className: 'ext-plug section',
 
     initialize: function initialize(o) {
@@ -4437,6 +4374,14 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
       API.on(API.GRAB_UPDATE, this.onGrab);
       API.on(API.VOTE_UPDATE, this.onVote);
       this.settings.on('change:inline', this.onInline);
+
+      this.Style({
+        '.cm.extplug-user-join .msg': { color: '#2ecc40' },
+        '.cm.extplug-user-leave .msg': { color: '#ff851b' },
+        '.cm.extplug-advance .msg': { color: '#7fdbff' },
+        '.cm.extplug-grab .msg': { color: '#a670fe' },
+        '.cm.extplug-meh .msg': { color: '#ff4136' }
+      });
     },
 
     disable: function disable() {
@@ -4468,7 +4413,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           message: 'joined the room',
           uid: e.id,
           un: e.username,
-          color: '#2ECC40',
           badge: 'icon-community-users'
         });
       }
@@ -4481,7 +4425,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           message: 'left the room',
           uid: user.id,
           un: user.username,
-          color: '#FF851B',
           badge: 'icon-community-users'
         });
       }
@@ -4494,7 +4437,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           message: e.media.author + ' – ' + e.media.title,
           uid: e.dj.id,
           un: e.dj.username,
-          color: '#7FDBFF',
           badge: 'icon-play-next'
         });
       }
@@ -4508,7 +4450,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           message: 'grabbed this track',
           uid: e.user.id,
           un: e.user.username,
-          color: '#a670fe',
           badge: 'icon-grab'
         });
       }
@@ -4521,7 +4462,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           message: 'meh\'d this track',
           uid: e.user.id,
           un: e.user.username,
-          color: '#FF4136',
           badge: 'icon-meh'
         });
       }
@@ -4532,73 +4472,77 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
 
 define('extplug/plugins/compact-history/main', function (require, exports, module) {
 
-  var Plugin = require('extplug/Plugin'),
-      fnUtils = require('extplug/util/function'),
-      _ = require('underscore'),
-      $ = require('jquery');
+  var Plugin = require('extplug/Plugin');
+  var _ = require('underscore');
+  var $ = require('jquery');
 
-  module.exports = Plugin.extend({
+  var ITEM_HEIGHT = 20;
+
+  var CompactHistory = Plugin.extend({
     name: 'Compact History',
     description: 'Lays out the room history in a much more compact view.',
 
     // We'll just use CSS
     enable: function enable() {
       this._super();
-      var ITEM_HEIGHT = 20;
-      var heightPx = ITEM_HEIGHT + 'px';
       this.Style({
         '#history-panel .media-list.history .playlist-media-item:not(.selected)': {
-          height: heightPx
-        },
-        '#history-panel .media-list.history .playlist-media-item:not(.selected) img': {
-          height: heightPx,
-          width: ITEM_HEIGHT * 1.5 + 'px',
-          'margin-top': '0px'
-        },
-        '#history-panel .media-list.history .playlist-media-item:not(.selected) .score': {
-          height: 'auto',
-          width: 'auto',
-          top: '0px',
-          left: '65px'
-        },
-        '#history-panel .media-list.history .playlist-media-item:not(.selected) .score .item': {
-          'margin-right': '10px'
-        },
-        '#history-panel .media-list.history .playlist-media-item:not(.selected) .meta': {
-          height: 'auto'
-        },
-        '#history-panel .media-list.history .playlist-media-item:not(.selected) .meta span': {
-          height: heightPx,
-          top: '0px'
-        },
-        '#history-panel .media-list.history .playlist-media-item:not(.selected) .actions': {
-          height: heightPx,
-          top: '0px'
-        },
-        '#history-panel .media-list.history .playlist-media-item:not(.selected) .author': {
-          left: '120px',
-          right: '300px',
-          width: 'auto'
-        },
-        '#history-panel .media-list.history .playlist-media-item:not(.selected) .name': {
-          right: '125px'
-        },
-        '#history-panel .media-list.history .playlist-media-item:not(.selected) .actions div': {
-          height: heightPx
-        },
-        '#history-panel .media-list.history .playlist-media-item:not(.selected) .actions div i': {
-          top: '-4px'
+          height: '' + ITEM_HEIGHT + 'px',
+
+          img: {
+            height: '' + ITEM_HEIGHT + 'px',
+            width: '' + ITEM_HEIGHT * 1.5 + 'px',
+            'margin-top': '0px'
+          },
+
+          '.score': {
+            height: 'auto',
+            width: 'auto',
+            top: '0px',
+            left: '65px',
+            '.item': {
+              'margin-right': '10px'
+            }
+          },
+
+          '.meta': {
+            height: 'auto',
+            span: {
+              height: '' + ITEM_HEIGHT + 'px',
+              top: '0px'
+            },
+            '.author': {
+              left: '120px',
+              right: '300px',
+              width: 'auto'
+            },
+            '.name': {
+              right: '125px'
+            }
+          },
+
+          '.actions': {
+            height: '' + ITEM_HEIGHT + 'px',
+            top: '0px',
+            div: {
+              height: '' + ITEM_HEIGHT + 'px',
+              i: {
+                top: '-4px'
+              }
+            }
+          }
         }
       });
     }
 
   });
+
+  module.exports = CompactHistory;
 });
 'use strict';
 
 define('extplug/plugins/full-size-video/main', function (require, exports, module) {
   var Plugin = require('extplug/Plugin'),
-      fnUtils = require('extplug/util/function'),
       win = require('plug/util/window');
 
   module.exports = Plugin.extend({
@@ -4606,8 +4550,8 @@ define('extplug/plugins/full-size-video/main', function (require, exports, modul
 
     init: function init(id, ext) {
       this._super(id, ext);
-      fnUtils.bound(this, 'enter');
-      fnUtils.bound(this, 'leave');
+      this.enter = this.enter.bind(this);
+      this.leave = this.leave.bind(this);
     },
 
     enable: function enable() {
@@ -4665,6 +4609,30 @@ define('extplug/plugins/full-size-video/main', function (require, exports, modul
     }
 
   });
+});
+'use strict';
+
+define('extplug/plugins/hide-badges/main', function (require, exports, module) {
+
+  var Plugin = require('extplug/Plugin');
+
+  var HideBadges = Plugin.extend({
+    name: 'Hide Badges',
+    description: 'Hides user chat badges.',
+
+    enable: function enable() {
+      this._super();
+      this.Style({
+        '#chat': {
+          '.msg': { padding: '5px 8px 6px 8px' },
+          '.badge-box': { display: 'none' }
+        }
+      });
+    }
+
+  });
+
+  module.exports = HideBadges;
 });
 'use strict';
 
