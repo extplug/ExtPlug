@@ -238,6 +238,7 @@ define(function (require, exports, module) {
           'extplug/plugins/meh-icon/main',
           'extplug/plugins/rollover-blurbs/main',
           'extplug/plugins/room-styles/main',
+          'extplug/plugins/hide-badges/main'
         ],
         plugins: {}
       }));
