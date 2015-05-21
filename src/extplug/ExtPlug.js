@@ -45,6 +45,17 @@ define(function (require, exports, module) {
     return {};
   }
 
+  // compare semver version numbers
+  function semvercmp(a, b) {
+    a = a.split('.').map(n => parseInt(n, 10))
+    b = b.split('.').map(n => parseInt(n, 10))
+    for (let i = 0; i < 3; i++) {
+      if (a[i] > b[i]) return 1;
+      if (a[i] < b[i]) return -1;
+    }
+    return 0;
+  }
+
   /**
    * Gets a reference to the main Plug.DJ ApplicationView instance.
    *
@@ -258,6 +269,8 @@ define(function (require, exports, module) {
 
       if (this.isFirstRun()) this.onFirstRun();
 
+      this.upgrade();
+
       settings.update();
       this.appView = getApplicationView();
 
@@ -330,6 +343,24 @@ define(function (require, exports, module) {
         return settings[id];
       }
       return { enabled: false, settings: {} };
+    },
+
+    /**
+     * Upgrades old ExtPlug version settings.
+     */
+    upgrade() {
+      let stored = jsonParse(localStorage.getItem(LS_NAME));
+
+      // "hide-badges" was added in 0.10.0
+      if (semvercmp(stored.version, '0.10.0') < 0) {
+        stored.version = '0.10.0';
+        const plugin = 'extplug/plugins/hide-badges/main';
+        if (stored.installed.indexOf(plugin) === -1) {
+          stored.installed.push(plugin);
+        }
+      }
+
+      localStorage.setItem(LS_NAME, JSON.stringify(stored));
     }
   });
 
