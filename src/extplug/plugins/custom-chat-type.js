@@ -4,6 +4,7 @@ define(function (require, exports, module) {
   const Events = require('plug/core/Events');
   const ChatView = require('plug/views/rooms/chat/ChatView');
   const util = require('plug/util/util');
+  const settings = require('plug/store/settings');
   const Plugin = require('../Plugin');
 
   /**
@@ -61,7 +62,7 @@ define(function (require, exports, module) {
         // plug.dj has some nice default styling on "update" messages
         message.type += ' update';
         if (!message.timestamp) {
-          message.timestamp = util.getChatTimestamp();
+          message.timestamp = util.getChatTimestamp(settings.settings.chatTimestamps === 24);
         }
         // insert the chat message element
         joinpoint.proceed();
