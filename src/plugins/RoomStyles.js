@@ -33,6 +33,7 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
 
     disable() {
       this._super();
+      this.unload();
       this.ext.roomSettings.off('change', this.reload);
     },
 
@@ -140,6 +141,7 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
     unload() {
       if (this.$booth) {
         this.$booth.remove();
+        this.$booth = null;
       }
       if (this._oldPlayback) {
         this.$('#playback .background img').attr('src', this._oldPlayback);
