@@ -53,8 +53,8 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
 
         ranks.forEach(level => {
           if (chatColors[level]) {
-            let color = chatColors[level]
-            if (color[0] !== '#') color = `#${color}`
+            let color = chatColors[level];
+            if (color[0] !== '#') color = `#${color}`;
             let value = { color: `${color} !important` };
             colorStyles
               .set(`#chat-messages .icon-chat-${level} ~ .un`, value)

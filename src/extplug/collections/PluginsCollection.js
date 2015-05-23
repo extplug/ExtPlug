@@ -8,7 +8,7 @@ define(function (require, exports, module) {
     comparator(a, b) {
       return a.get('name') > b.get('name') ? 1
            : a.get('name') < b.get('name') ? -1
-           : 0
+           : 0;
     }
   });
 

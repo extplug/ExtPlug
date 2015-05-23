@@ -39,7 +39,7 @@ define(function (require, exports, module) {
           this.trigger('load', settings);
         }).fail(e => {
           this.unload();
-          let message = ''
+          let message = '';
           if (e.status === 0) {
             message += ' Your browser or an extension may be blocking its URL.';
           }

@@ -31,7 +31,7 @@ define(function (require, exports, module) {
     initialize(o) {
       this.plugins = o.plugins;
       this.plugins.on('reset add remove', () => {
-        this.refresh()
+        this.refresh();
         this.render();
       });
       this.ext = o.ext;
@@ -62,7 +62,7 @@ define(function (require, exports, module) {
             this.addGroup(pluginSettings);
           }
         }
-      }, this)
+      }, this);
     },
 
     manage() {

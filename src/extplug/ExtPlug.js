@@ -47,8 +47,8 @@ define(function (require, exports, module) {
 
   // compare semver version numbers
   function semvercmp(a, b) {
-    a = a.split('.').map(n => parseInt(n, 10))
-    b = b.split('.').map(n => parseInt(n, 10))
+    a = a.split('.').map(n => parseInt(n, 10));
+    b = b.split('.').map(n => parseInt(n, 10));
     for (let i = 0; i < 3; i++) {
       if (a[i] > b[i]) return 1;
       if (a[i] < b[i]) return -1;
@@ -73,7 +73,7 @@ define(function (require, exports, module) {
     // And ApplicationView adds a handler that's bound to itself!
     let appView;
     if (evts) {
-      appView = _.find(evts, event => event.ctx instanceof ApplicationView)
+      appView = _.find(evts, event => event.ctx instanceof ApplicationView);
     }
     return appView && appView.ctx;
   }
@@ -175,9 +175,9 @@ define(function (require, exports, module) {
       this.registerPlugin(id, (e) => {
         if (e) return cb(e);
         let json = jsonParse(localStorage.getItem(LS_NAME));
-        json.installed = (json.installed || []).concat([ id ])
+        json.installed = (json.installed || []).concat([ id ]);
         localStorage.setItem(LS_NAME, JSON.stringify(json));
-        cb(null)
+        cb(null);
       });
     },
 

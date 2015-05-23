@@ -82,7 +82,7 @@ define(function (require, exports, module) {
           }
           // icon badge
           else if (/^icon-(.*?)$/.test(message.badge)) {
-            let badgeBox = this.$chatMessages.children().last().find('.badge-box')
+            let badgeBox = this.$chatMessages.children().last().find('.badge-box');
             badgeBox.find('i')
               .removeClass()
               .addClass('icon').addClass(message.badge);
