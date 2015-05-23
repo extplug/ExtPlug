@@ -22,7 +22,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
       this.onAdvance = this.onAdvance.bind(this);
       this.onGrab = this.onGrab.bind(this);
       this.onVote = this.onVote.bind(this);
-      this.onInline = this.onInline.bind(this);
     },
 
     enable: function () {
@@ -32,7 +31,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
       API.on(API.ADVANCE, this.onAdvance);
       API.on(API.GRAB_UPDATE, this.onGrab);
       API.on(API.VOTE_UPDATE, this.onVote);
-      this.settings.on('change:inline', this.onInline);
 
       this.Style({
         '.cm.extplug-user-join .msg':  { 'color': '#2ecc40' },
@@ -54,16 +52,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
 
     _class: function () {
       return 'custom extplug-notification ' + (this.settings.get('inline') ? 'inline ' : '');
-    },
-
-    onInline: function () {
-      var nots = this.$('#chat-messages .extplug-notification');
-      if (this.settings.get('inline')) {
-        nots.filter(':not(.extplug-advance)').addClass('inline');
-      }
-      else {
-        nots.removeClass('inline');
-      }
     },
 
     onJoin: function (e) {
