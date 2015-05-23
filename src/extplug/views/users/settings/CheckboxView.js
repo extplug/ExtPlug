@@ -40,19 +40,7 @@ define(function (require, exports, module) {
       var enabled = this.enabled;
       this.enabled = this.$el.hasClass('selected');
       if (enabled !== this.enabled) {
-        this.trigger('change', this.getValue());
-      }
-    },
-    getValue() {
-      return this.enabled;
-    },
-    setValue(enabled) {
-      this.enabled = enabled;
-      if (enabled) {
-        this.$el.addClass('selected');
-      }
-      else {
-        this.$el.removeClass('selected');
+        this.trigger('change', this.enabled);
       }
     }
   });

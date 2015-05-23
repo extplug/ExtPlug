@@ -76,12 +76,6 @@ define(function (require, exports, module) {
     },
     onDocumentClick(e) {
       _.defer(this.close.bind(this));
-    },
-    getValue() {
-      return this.$rows.find('.selected').data('value');
-    },
-    setValue() {
-      
     }
   });
 

@@ -56,7 +56,6 @@ define(function (require, exports, module) {
         .off('mousemove', this.onMove)
         .off('mouseup', this.onStop);
     },
-    getValue() { return this._value; },
     setValue(value, force) {
       if (value !== this._value || force) {
         let percent = (value - this.options.min) / (this.options.max - this.options.min);
