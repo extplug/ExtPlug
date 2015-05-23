@@ -1734,6 +1734,8 @@ define('extplug/models/RoomSettings',['require','exports','module','plug/models/
           }
           Events.trigger('notify', 'icon-chat-system', 'Room Settings could not be loaded for this room.' + message);
         });
+      } else if (unload) {
+        this.unload();
       }
     },
 
@@ -2144,7 +2146,7 @@ define('extplug/load-plugin',['require','exports','module','extplug/util/request
 });
 define('extplug/package',{
   "name": "ExtPlug",
-  "version": "0.9.0",
+  "version": "0.10.1",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "plug-modules": "^4.0.0"
@@ -2159,7 +2161,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jshint src"
   },
-  "builtAt": 1432194817563
+  "builtAt": 1432376021133
 });
 
 
@@ -3600,7 +3602,7 @@ define('extplug/plugins/settings-tab',['require','exports','module','meld','plug
 });
 
 
-define('extplug/plugins/custom-chat-type',['require','exports','module','meld','plug/core/Events','plug/views/rooms/chat/ChatView','plug/util/util','../Plugin'],function (require, exports, module) {
+define('extplug/plugins/custom-chat-type',['require','exports','module','meld','plug/core/Events','plug/views/rooms/chat/ChatView','plug/util/util','plug/store/settings','../Plugin'],function (require, exports, module) {
   var _require = require('meld');
 
   var around = _require.around;
@@ -3608,6 +3610,7 @@ define('extplug/plugins/custom-chat-type',['require','exports','module','meld','
   var Events = require('plug/core/Events');
   var ChatView = require('plug/views/rooms/chat/ChatView');
   var util = require('plug/util/util');
+  var settings = require('plug/store/settings');
   var Plugin = require('../Plugin');
 
   /**
@@ -3665,7 +3668,7 @@ define('extplug/plugins/custom-chat-type',['require','exports','module','meld','
         // plug.dj has some nice default styling on "update" messages
         message.type += ' update';
         if (!message.timestamp) {
-          message.timestamp = util.getChatTimestamp();
+          message.timestamp = util.getChatTimestamp(settings.settings.chatTimestamps === 24);
         }
         // insert the chat message element
         joinpoint.proceed();
@@ -4003,6 +4006,24 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     return {};
   }
 
+  // compare semver version numbers
+  function semvercmp(a, b) {
+    a = a.split('.').map(function (n) {
+      return parseInt(n, 10);
+    });
+    b = b.split('.').map(function (n) {
+      return parseInt(n, 10);
+    });
+    for (var i = 0; i < 3; i++) {
+      if (a[i] > b[i]) {
+        return 1;
+      }if (a[i] < b[i]) {
+        return -1;
+      }
+    }
+    return 0;
+  }
+
   /**
    * Gets a reference to the main Plug.DJ ApplicationView instance.
    *
@@ -4189,7 +4210,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     onFirstRun: function onFirstRun() {
       localStorage.setItem(LS_NAME, JSON.stringify({
         version: _package.version,
-        installed: ['extplug/plugins/autowoot/main', 'extplug/plugins/chat-notifications/main', 'extplug/plugins/compact-history/main', 'extplug/plugins/full-size-video/main', 'extplug/plugins/meh-icon/main', 'extplug/plugins/rollover-blurbs/main', 'extplug/plugins/room-styles/main'],
+        installed: ['extplug/plugins/autowoot/main', 'extplug/plugins/chat-notifications/main', 'extplug/plugins/compact-history/main', 'extplug/plugins/full-size-video/main', 'extplug/plugins/meh-icon/main', 'extplug/plugins/rollover-blurbs/main', 'extplug/plugins/room-styles/main', 'extplug/plugins/hide-badges/main'],
         plugins: {}
       }));
     },
@@ -4207,6 +4228,8 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
       var ext = this;
 
       if (this.isFirstRun()) this.onFirstRun();
+
+      this.upgrade();
 
       settings.update();
       this.appView = getApplicationView();
@@ -4276,6 +4299,24 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
         return settings[id];
       }
       return { enabled: false, settings: {} };
+    },
+
+    /**
+     * Upgrades old ExtPlug version settings.
+     */
+    upgrade: function upgrade() {
+      var stored = jsonParse(localStorage.getItem(LS_NAME));
+
+      // "hide-badges" was added in 0.10.0
+      if (semvercmp(stored.version, '0.10.0') < 0) {
+        stored.version = '0.10.0';
+        var plugin = 'extplug/plugins/hide-badges/main';
+        if (stored.installed.indexOf(plugin) === -1) {
+          stored.installed.push(plugin);
+        }
+      }
+
+      localStorage.setItem(LS_NAME, JSON.stringify(stored));
     }
   });
 
