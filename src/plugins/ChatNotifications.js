@@ -12,7 +12,8 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
       userLeave: { type: 'boolean', label: 'User Leave', default: true },
       advance: { type: 'boolean', label: 'DJ Advance', default: true },
       grab: { type: 'boolean', label: 'Media Grab', default: true },
-      meh: { type: 'boolean', label: 'Meh Vote', default: true }
+      meh: { type: 'boolean', label: 'Meh Vote', default: true },
+      woot: { type: 'boolean', label: 'Woot Vote', default: false }
     },
 
     init: function (id, ext) {
@@ -37,7 +38,8 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
         '.cm.extplug-user-leave .msg': { 'color': '#ff851b' },
         '.cm.extplug-advance .msg':    { 'color': '#7fdbff' },
         '.cm.extplug-grab .msg':       { 'color': '#a670fe' },
-        '.cm.extplug-meh .msg':        { 'color': '#ff4136' }
+        '.cm.extplug-meh .msg':        { 'color': '#ff4136' },
+        '.cm.extplug-woot .msg':       { 'color': '#90ad2f' }
       });
     },
 
@@ -111,6 +113,15 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           uid: e.user.id,
           un: e.user.username,
           badge: 'icon-meh'
+        });
+      }
+      if (this.settings.get('woot') && e.vote === 1) {
+        Events.trigger('chat:receive', {
+          type: this._class() + 'extplug-woot',
+          message: 'wooted this track',
+          uid: e.user.id,
+          un: e.user.username,
+          badge: 'icon-woot'
         });
       }
     }
