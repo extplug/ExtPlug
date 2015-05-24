@@ -1,6 +1,5 @@
 define(function (require, exports, module) {
 
-  const _ = require('underscore');
   const $ = require('jquery');
   const sistyl = require('sistyl');
 
