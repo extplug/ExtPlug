@@ -32,7 +32,7 @@ define('extplug/plugins/rollover-blurbs/main', function (require, exports, modul
       });
 
       this.showAdvice = meld.around(rolloverView, 'showModal', this.addBlurb);
-      this.hideAdivce = meld.before(rolloverView, 'hide', this.removeBlurb);
+      this.hideAdvice = meld.before(rolloverView, 'hide', this.removeBlurb);
     },
 
     disable: function () {
