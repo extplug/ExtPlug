@@ -1,17 +1,34 @@
 define(function (require, exports, module) {
 
   const $ = require('jquery');
+  const _ = require('underscore');
   const sistyl = require('sistyl');
+  const popoutView = require('plug/views/rooms/popout/PopoutView');
 
   function Style(defaults) {
     this._sistyl = sistyl(defaults);
     this._timeout = null;
 
     this.refresh = this.refresh.bind(this);
+    this.id = _.uniqueId('eps-');
 
-    this.el = $('<style>').attr('type', 'text/css').appendTo('head');
+    this.el = $('<style />').addClass('extplug-style')
+                            .attr('id', this.id)
+                            .attr('type', 'text/css')
+                            .appendTo('head');
+    if (popoutView._window) {
+      this.el.clone().appendTo(popoutView.$document.find('head'));
+    }
     this.refresh();
   }
+
+  Style.prototype.$ = function () {
+    let el = this.el;
+    if (popoutView._window) {
+      el = el.add(popoutView.$document.find(`#${this.id}`));
+    }
+    return el;
+  };
 
   Style.prototype.set = function (sel, props) {
     this._sistyl.set(sel, props);
@@ -23,11 +40,11 @@ define(function (require, exports, module) {
   };
 
   Style.prototype.refresh = function () {
-    this.el.text(this.toString());
+    this.$().text(this.toString());
   };
 
   Style.prototype.remove = function () {
-    this.el.remove();
+    this.$().remove();
   };
 
   Style.prototype.toString = function () {

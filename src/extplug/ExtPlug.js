@@ -32,7 +32,8 @@ define(function (require, exports, module) {
     require('extplug/hooks/api-early'),
     require('extplug/hooks/chat'),
     require('extplug/hooks/playback'),
-    require('extplug/hooks/settings')
+    require('extplug/hooks/settings'),
+    require('extplug/hooks/popout-style')
   ];
 
   // LocalStorage key name for extplug
