@@ -479,7 +479,7 @@ var plugModules = {
            // this is a bit lame, unfortunately plug.dj's "classes" don't publicly store their superclasses
            functionsSeemEqual(m.prototype.execute, function () { this.event = undefined, delete this.event });
   },
-  'plug/core/__unknown0__': function (m) {
+  'plug/core/AsyncHandler': function (m) {
     // subclass of EventHandler
     return _.isFunction(m) && m.prototype.hasOwnProperty('listenTo') && m.prototype.hasOwnProperty('finish');
   },
@@ -2179,7 +2179,7 @@ define('extplug/load-plugin',['require','exports','module','extplug/util/request
 });
 define('extplug/package',{
   "name": "ExtPlug",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "plug-modules": "^4.0.0"
@@ -2195,7 +2195,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1432644542223
+  "builtAt": 1432647373867
 });
 
 
@@ -4079,17 +4079,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
       corsProxy: { type: 'boolean', 'default': true, label: 'Use CORS proxy' }
     },
     init: function init() {
-      var _this = this;
-
       this._super('extplug', this);
-
-      /**
-       * Internal map of registered plugins.
-       */
-      this._plugins = new PluginsCollection();
-      this._plugins.on('change:enabled', function (plugin, enabled) {
-        _this._savePluginSettings(plugin.get('id'));
-      });
 
       this._core = [new VersionPlugin('version', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this)];
     },
@@ -4105,20 +4095,20 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
      * modules using require.js plugins or modules on remote URLs.
      */
     registerPlugin: function registerPlugin(id, cb) {
-      var _this2 = this;
+      var _this = this;
 
       require(['extplug/load-plugin!' + id], function (Plugin) {
-        var plugin = new Plugin(id, _this2);
+        var plugin = new Plugin(id, _this);
         var meta = new PluginMeta({
           id: id,
           name: plugin.name,
           instance: plugin
         });
-        _this2._plugins.add(meta);
-        var settings = _this2._getPluginSettings(plugin.id);
+        _this._plugins.add(meta);
+        var settings = _this._getPluginSettings(plugin.id);
         plugin.settings.set(settings.settings);
         plugin.settings.on('change', function () {
-          _this2._savePluginSettings(id);
+          _this._savePluginSettings(id);
         });
         if (settings.enabled) {
           _.defer(function () {
@@ -4182,7 +4172,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
      * Loads installed plugins.
      */
     _loadInstalled: function _loadInstalled() {
-      var _this3 = this;
+      var _this2 = this;
 
       var _jsonParse = jsonParse(localStorage.getItem(LS_NAME));
 
@@ -4203,7 +4193,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
             }
           };
           installed.forEach(function (name) {
-            _this3.registerPlugin(name, function (e) {
+            _this2.registerPlugin(name, function (e) {
               if (e) errors.push(e);
               if (++i >= l) {
                 done();
@@ -4241,8 +4231,17 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
      * @return {ExtPlug} `this`.
      */
     enable: function enable() {
+      var _this3 = this;
+
       this._super();
-      var ext = this;
+
+      /**
+       * Internal map of registered plugins.
+       */
+      this._plugins = new PluginsCollection();
+      this._plugins.on('change:enabled', function (plugin, enabled) {
+        _this3._savePluginSettings(plugin.get('id'));
+      });
 
       if (this.isFirstRun()) this.onFirstRun();
 
@@ -4278,7 +4277,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
      * Everything should be unloaded here, so the Plug.DJ page looks like nothing ever happened.
      */
     disable: function disable() {
-      this._plugins.forEach(function (mod) {
+      this._plugins.off().forEach(function (mod) {
         mod.disable();
       });
       this._core.forEach(function (plugin) {
@@ -4784,7 +4783,7 @@ define('extplug/plugins/rollover-blurbs/main', function (require, exports, modul
       });
 
       this.showAdvice = meld.around(rolloverView, 'showModal', this.addBlurb);
-      this.hideAdivce = meld.before(rolloverView, 'hide', this.removeBlurb);
+      this.hideAdvice = meld.before(rolloverView, 'hide', this.removeBlurb);
     },
 
     disable: function disable() {
