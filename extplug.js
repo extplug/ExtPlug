@@ -1239,10 +1239,14 @@ var plugModules = {
     return isView(m) && m.prototype.className === 'avatars' &&
       m.prototype.eventName === this.require('plug/events/StoreEvent').GET_USER_AVATARS;
   }).needs('plug/events/StoreEvent'),
-  'plug/views/users/inventory/AvatarsDropdownView': function (m) {
+  'plug/views/users/inventory/AvatarsDropdownView': new SimpleMatcher(function (m, name) {
     return isView(m) && m.prototype.className === 'dropdown' &&
-      functionContains(m.prototype.draw, '.userAvatars.base');
-  },
+      this.isInSameNamespace(name, 'plug/views/users/inventory/InventoryView') &&
+      // the avatars and badges dropdowns are nearly identical, their only verifiable
+      // difference is in the select() method. the avatars dropdown has an odd special
+      // case for Rave avatars.
+      functionContains(m.prototype.select, 'rhc');
+  }).needs('plug/views/users/inventory/InventoryView'),
   'plug/views/users/inventory/AvatarCellView': new SimpleMatcher(function (m, name) {
     return isView(m) && m.prototype.className === 'cell' &&
       _.isFunction(m.prototype.getBlinkFrame) &&
@@ -1256,6 +1260,12 @@ var plugModules = {
     return isView(m) && m.prototype.className === 'cell' &&
       functionContains(m.prototype.render, 'change:badge');
   },
+  'plug/views/users/inventory/BadgesDropdownView': new SimpleMatcher(function (m, name) {
+    return isView(m) && m.prototype.tagName === 'dl' &&
+      this.isInSameNamespace(name, 'plug/views/users/inventory/InventoryView') &&
+      // inverse of the avatars dropdown check
+      !functionContains(m.prototype.select, 'rhc');
+  }).needs('plug/views/users/inventory/InventoryView'),
   'plug/views/users/inventory/TransactionHistoryView': new SimpleMatcher(function (m, name) {
     return isView(m) && m.prototype.className === 'history' &&
      functionContains(m.prototype.render, 'GET_USER_TRANSACTIONS') &&
@@ -1342,8 +1352,12 @@ var plugModules = {
     return AvatarCellView;
   }).needs('plug/views/users/store/AvatarsView'),
   'plug/views/users/store/AvatarsDropdownView': new SimpleMatcher(function (m, name) {
+    // exact duplicate of ../inventory/AvatarsDropdownView
+    // ...
     return isView(m) && m.prototype.tagName === 'dl' &&
-      this.isInSameNamespace(name, 'plug/views/users/store/StoreView');
+      this.isInSameNamespace(name, 'plug/views/users/store/StoreView') &&
+      // see ../inventory/AvatarsDropdownView
+      functionContains(m.prototype.select, 'rhc');
   }).needs('plug/views/users/store/StoreView'),
   'plug/views/users/store/BadgesView': new SimpleMatcher(function (m) {
     return isView(m) && m.prototype.className === 'badges' &&
@@ -1356,6 +1370,12 @@ var plugModules = {
     cellInst.destroy();
     return BadgeCellView;
   }).needs('plug/views/users/store/BadgesView'),
+  'plug/views/users/store/BadgesDropdownView': new SimpleMatcher(function (m, name) {
+    return isView(m) && m.prototype.tagName === 'dl' &&
+      this.isInSameNamespace(name, 'plug/views/users/store/StoreView') &&
+      // inverse of the avatars dropdown check
+      !functionContains(m.prototype.select, 'rhc');
+  }).needs('plug/views/users/store/StoreView'),
   'plug/views/users/store/MiscView': new SimpleMatcher(function (m) {
     return isView(m) && m.prototype.className === 'misc' &&
       m.prototype.collection === this.require('plug/collections/storeExtras');
@@ -1960,21 +1980,34 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
 });
 
 
-define('extplug/util/Style',['require','exports','module','underscore','jquery','sistyl'],function (require, exports, module) {
+define('extplug/util/Style',['require','exports','module','jquery','underscore','sistyl','plug/views/rooms/popout/PopoutView'],function (require, exports, module) {
 
-  var _ = require('underscore');
   var $ = require('jquery');
+  var _ = require('underscore');
   var sistyl = require('sistyl');
+  var popoutView = require('plug/views/rooms/popout/PopoutView');
 
   function Style(defaults) {
     this._sistyl = sistyl(defaults);
     this._timeout = null;
 
     this.refresh = this.refresh.bind(this);
+    this.id = _.uniqueId('eps-');
 
-    this.el = $('<style>').attr('type', 'text/css').appendTo('head');
+    this.el = $('<style />').addClass('extplug-style').attr('id', this.id).attr('type', 'text/css').appendTo('head');
+    if (popoutView._window) {
+      this.el.clone().appendTo(popoutView.$document.find('head'));
+    }
     this.refresh();
   }
+
+  Style.prototype.$ = function () {
+    var el = this.el;
+    if (popoutView._window) {
+      el = el.add(popoutView.$document.find('#' + this.id));
+    }
+    return el;
+  };
 
   Style.prototype.set = function (sel, props) {
     this._sistyl.set(sel, props);
@@ -1986,11 +2019,11 @@ define('extplug/util/Style',['require','exports','module','underscore','jquery',
   };
 
   Style.prototype.refresh = function () {
-    this.el.text(this.toString());
+    this.$().text(this.toString());
   };
 
   Style.prototype.remove = function () {
-    this.el.remove();
+    this.$().remove();
   };
 
   Style.prototype.toString = function () {
@@ -2146,7 +2179,7 @@ define('extplug/load-plugin',['require','exports','module','extplug/util/request
 });
 define('extplug/package',{
   "name": "ExtPlug",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "plug-modules": "^4.0.0"
@@ -2155,13 +2188,14 @@ define('extplug/package',{
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
     "gulp-concat": "^2.5.2",
-    "requirejs": "^2.1.17"
+    "requirejs": "^2.1.17",
+    "jscs": "^1.13.1"
   },
   "scripts": {
     "build": "gulp build",
-    "test": "jshint src"
+    "test": "jscs src"
   },
-  "builtAt": 1432376021133
+  "builtAt": 1432644542223
 });
 
 
@@ -2796,25 +2830,6 @@ define('meld',[],function () {
 
 
 
-define('extplug/views/users/ExtUserView',['require','exports','module','plug/views/users/UserView'],function (require, exports, module) {
-
-  var UserView = require('plug/views/users/UserView');
-
-  var ExtUserView = UserView.extend({
-    className: 'extplug app-left',
-    show: function show(category, sub, _arg2) {
-      this._super(category, sub, _arg2);
-
-      if (category === 'settings' && sub === 'ext-plug') {
-        this.view.menu.selectExtPlug();
-      }
-    }
-  });
-
-  module.exports = ExtUserView;
-});
-
-
 define('extplug/views/users/settings/TabMenuView',['require','exports','module','plug/views/users/settings/TabMenuView','jquery'],function (require, exports, module) {
 
   var SettingsTabMenuView = require('plug/views/users/settings/TabMenuView');
@@ -2836,14 +2851,8 @@ define('extplug/views/users/settings/TabMenuView',['require','exports','module',
     onClickExt: function onClickExt(e) {
       var button = $(e.target);
       if (button.hasClass('ext-plug') && !button.hasClass('selected')) {
-        this.selectExtPlug();
+        this.select('ext-plug');
       }
-    },
-
-    selectExtPlug: function selectExtPlug() {
-      this.$('button').removeClass('selected');
-      this.$('button.ext-plug').addClass('selected');
-      this.trigger('select', 'ext-plug');
     }
 
   });
@@ -3104,18 +3113,7 @@ define('extplug/views/users/settings/CheckboxView',['require','exports','module'
       var enabled = this.enabled;
       this.enabled = this.$el.hasClass('selected');
       if (enabled !== this.enabled) {
-        this.trigger('change', this.getValue());
-      }
-    },
-    getValue: function getValue() {
-      return this.enabled;
-    },
-    setValue: function setValue(enabled) {
-      this.enabled = enabled;
-      if (enabled) {
-        this.$el.addClass('selected');
-      } else {
-        this.$el.removeClass('selected');
+        this.trigger('change', this.enabled);
       }
     }
   });
@@ -3198,11 +3196,7 @@ define('extplug/views/users/settings/DropdownView',['require','exports','module'
     },
     onDocumentClick: function onDocumentClick(e) {
       _.defer(this.close.bind(this));
-    },
-    getValue: function getValue() {
-      return this.$rows.find('.selected').data('value');
-    },
-    setValue: function setValue() {}
+    }
   });
 
   module.exports = DropdownView;
@@ -3249,9 +3243,6 @@ define('extplug/views/users/settings/SliderView',['require','exports','module','
     },
     onStop: function onStop() {
       $(document).off('mousemove', this.onMove).off('mouseup', this.onStop);
-    },
-    getValue: function getValue() {
-      return this._value;
     },
     setValue: function setValue(value, force) {
       if (value !== this._value || force) {
@@ -3549,15 +3540,16 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
 });
 
 
-define('extplug/plugins/settings-tab',['require','exports','module','meld','plug/views/users/UserView','plug/views/users/settings/SettingsView','../Plugin','../views/users/ExtUserView','../views/users/settings/TabMenuView','../views/users/settings/SettingsView'],function (require, exports, module) {
+define('extplug/plugins/settings-tab',['require','exports','module','meld','plug/core/Events','plug/views/users/UserView','plug/views/users/settings/SettingsView','../Plugin','../views/users/settings/TabMenuView','../views/users/settings/SettingsView'],function (require, exports, module) {
   var _require = require('meld');
 
   var around = _require.around;
+  var after = _require.after;
 
+  var Events = require('plug/core/Events');
   var UserView = require('plug/views/users/UserView');
   var UserSettingsView = require('plug/views/users/settings/SettingsView');
   var Plugin = require('../Plugin');
-  var ExtUserView = require('../views/users/ExtUserView');
   var TabMenuView = require('../views/users/settings/TabMenuView');
   var SettingsSectionView = require('../views/users/settings/SettingsView');
 
@@ -3566,11 +3558,14 @@ define('extplug/plugins/settings-tab',['require','exports','module','meld','plug
     enable: function enable() {
       var _this = this;
 
-      // replace rendered UserView
-      var userView = new ExtUserView();
-      userView.render();
-      this.ext.appView.user.$el.replaceWith(userView.$el);
-      this.ext.appView.user = userView;
+      var userView = this.ext.appView.user;
+      Events.off('show:user', userView.show);
+      this._userPaneAdvice = after(UserView.prototype, 'show', function (category, sub) {
+        if (category === 'settings' && sub === 'ext-plug') {
+          _this.view.menu.select(sub);
+        }
+      });
+      Events.on('show:user', userView.show, userView);
 
       // Add ExtPlug tab to user settings
       this._settingsTabAdvice = around(UserSettingsView.prototype, 'getMenu', function () {
@@ -3590,10 +3585,10 @@ define('extplug/plugins/settings-tab',['require','exports','module','meld','plug
     disable: function disable() {
       this._settingsTabAdvice.remove();
       this._settingsPaneAdvice.remove();
-      var userView = new UserView();
-      userView.render();
-      this.ext.appView.user.$el.replaceWith(userView.$el);
-      this.ext.appView.user = userView;
+      var userView = this.ext.appView.user;
+      Events.off('show:user', userView.show);
+      this._userPaneAdvice.remove();
+      Events.on('show:user', userView.show, userView);
     }
 
   });
@@ -3858,6 +3853,28 @@ define('extplug/hooks/settings',['require','exports','module','meld','plug/store
     advice.remove();
   };
 });
+
+
+define('extplug/hooks/popout-style',['require','exports','module','jquery','plug/core/Events','plug/views/rooms/popout/PopoutView'],function (require, exports, module) {
+
+  var $ = require('jquery');
+  var Events = require('plug/core/Events');
+  var popoutView = require('plug/views/rooms/popout/PopoutView');
+
+  function sync() {
+    _.defer(function () {
+      popoutView.$document.find('head').append($('.extplug-style').clone());
+    });
+  }
+
+  exports.install = function () {
+    Events.on('popout:show', sync);
+  };
+
+  exports.uninstall = function () {
+    Events.off('popout:show', sync);
+  };
+});
 // the red ExtPlug badge in the top left corner
 
 
@@ -3963,7 +3980,7 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia','plug/models/currentRoom','extplug/store/settings','plug/core/Events','plug/views/app/ApplicationView','plug/views/users/UserView','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','extplug/models/RoomSettings','extplug/models/PluginMeta','extplug/collections/PluginsCollection','extplug/Plugin','extplug/facades/chatFacade','extplug/load-plugin','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','extplug/package','jquery','underscore','backbone','meld','extplug/hooks/api-early','extplug/hooks/chat','extplug/hooks/playback','extplug/hooks/settings','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia','plug/models/currentRoom','extplug/store/settings','plug/core/Events','plug/views/app/ApplicationView','plug/views/users/UserView','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','extplug/models/RoomSettings','extplug/models/PluginMeta','extplug/collections/PluginsCollection','extplug/Plugin','extplug/facades/chatFacade','extplug/load-plugin','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','extplug/package','jquery','underscore','backbone','meld','extplug/hooks/api-early','extplug/hooks/chat','extplug/hooks/playback','extplug/hooks/settings','extplug/hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var currentMedia = require('plug/models/currentMedia');
   var currentRoom = require('plug/models/currentRoom');
@@ -3993,7 +4010,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
   var Backbone = require('backbone');
   var meld = require('meld');
 
-  var hooks = [require('extplug/hooks/api-early'), require('extplug/hooks/chat'), require('extplug/hooks/playback'), require('extplug/hooks/settings')];
+  var hooks = [require('extplug/hooks/api-early'), require('extplug/hooks/chat'), require('extplug/hooks/playback'), require('extplug/hooks/settings'), require('extplug/hooks/popout-style')];
 
   // LocalStorage key name for extplug
   var LS_NAME = 'extPlugins';
@@ -4327,6 +4344,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
 define('extplug/Module',['require','exports','module','./Plugin'],function (require, exports, module) {
 
   console.warn('extplug/Module is deprecated. Use extplug/Plugin instead');
+
   module.exports = require('./Plugin');
 });
 
@@ -4394,7 +4412,8 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
       userLeave: { type: 'boolean', label: 'User Leave', 'default': true },
       advance: { type: 'boolean', label: 'DJ Advance', 'default': true },
       grab: { type: 'boolean', label: 'Media Grab', 'default': true },
-      meh: { type: 'boolean', label: 'Meh Vote', 'default': true }
+      meh: { type: 'boolean', label: 'Meh Vote', 'default': true },
+      woot: { type: 'boolean', label: 'Woot Vote', 'default': false }
     },
 
     init: function init(id, ext) {
@@ -4404,7 +4423,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
       this.onAdvance = this.onAdvance.bind(this);
       this.onGrab = this.onGrab.bind(this);
       this.onVote = this.onVote.bind(this);
-      this.onInline = this.onInline.bind(this);
     },
 
     enable: function enable() {
@@ -4414,14 +4432,14 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
       API.on(API.ADVANCE, this.onAdvance);
       API.on(API.GRAB_UPDATE, this.onGrab);
       API.on(API.VOTE_UPDATE, this.onVote);
-      this.settings.on('change:inline', this.onInline);
 
       this.Style({
         '.cm.extplug-user-join .msg': { color: '#2ecc40' },
         '.cm.extplug-user-leave .msg': { color: '#ff851b' },
         '.cm.extplug-advance .msg': { color: '#7fdbff' },
         '.cm.extplug-grab .msg': { color: '#a670fe' },
-        '.cm.extplug-meh .msg': { color: '#ff4136' }
+        '.cm.extplug-meh .msg': { color: '#ff4136' },
+        '.cm.extplug-woot .msg': { color: '#90ad2f' }
       });
     },
 
@@ -4436,15 +4454,6 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
 
     _class: function _class() {
       return 'custom extplug-notification ' + (this.settings.get('inline') ? 'inline ' : '');
-    },
-
-    onInline: function onInline() {
-      var nots = this.$('#chat-messages .extplug-notification');
-      if (this.settings.get('inline')) {
-        nots.filter(':not(.extplug-advance)').addClass('inline');
-      } else {
-        nots.removeClass('inline');
-      }
     },
 
     onJoin: function onJoin(e) {
@@ -4504,6 +4513,15 @@ define('extplug/plugins/chat-notifications/main', function (require, exports, mo
           uid: e.user.id,
           un: e.user.username,
           badge: 'icon-meh'
+        });
+      }
+      if (this.settings.get('woot') && e.vote === 1) {
+        Events.trigger('chat:receive', {
+          type: this._class() + 'extplug-woot',
+          message: 'wooted this track',
+          uid: e.user.id,
+          un: e.user.username,
+          badge: 'icon-woot'
         });
       }
     }
@@ -4841,6 +4859,7 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
 
     disable: function disable() {
       this._super();
+      this.unload();
       this.ext.roomSettings.off('change', this.reload);
     },
 
@@ -4949,6 +4968,7 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
     unload: function unload() {
       if (this.$booth) {
         this.$booth.remove();
+        this.$booth = null;
       }
       if (this._oldPlayback) {
         this.$('#playback .background img').attr('src', this._oldPlayback);
