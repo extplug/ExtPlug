@@ -19,14 +19,8 @@ define(function (require, exports, module) {
     onClickExt(e) {
       let button = $(e.target);
       if (button.hasClass('ext-plug') && !button.hasClass('selected')) {
-        this.selectExtPlug();
+        this.select('ext-plug');
       }
-    },
-
-    selectExtPlug() {
-      this.$('button').removeClass('selected');
-      this.$('button.ext-plug').addClass('selected');
-      this.trigger('select', 'ext-plug');
     }
 
   });
