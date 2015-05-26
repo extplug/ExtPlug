@@ -95,14 +95,6 @@ define(function (require, exports, module) {
     init() {
       this._super('extplug', this);
 
-      /**
-       * Internal map of registered plugins.
-       */
-      this._plugins = new PluginsCollection();
-      this._plugins.on('change:enabled', (plugin, enabled) => {
-        this._savePluginSettings(plugin.get('id'));
-      });
-
       this._core = [
         new VersionPlugin('version', this),
         new SettingsTabPlugin('settings-tab', this),
@@ -266,7 +258,14 @@ define(function (require, exports, module) {
      */
     enable() {
       this._super();
-      var ext = this;
+
+      /**
+       * Internal map of registered plugins.
+       */
+      this._plugins = new PluginsCollection();
+      this._plugins.on('change:enabled', (plugin, enabled) => {
+        this._savePluginSettings(plugin.get('id'));
+      });
 
       if (this.isFirstRun()) this.onFirstRun();
 
@@ -306,7 +305,7 @@ define(function (require, exports, module) {
      * Everything should be unloaded here, so the Plug.DJ page looks like nothing ever happened.
      */
     disable() {
-      this._plugins.forEach(mod => {
+      this._plugins.off().forEach(mod => {
         mod.disable();
       });
       this._core.forEach(plugin => {
