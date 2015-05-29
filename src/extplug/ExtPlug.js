@@ -239,7 +239,6 @@ define(function (require, exports, module) {
           'extplug/plugins/compact-history/main',
           'extplug/plugins/full-size-video/main',
           'extplug/plugins/meh-icon/main',
-          'extplug/plugins/rollover-blurbs/main',
           'extplug/plugins/room-styles/main',
           'extplug/plugins/hide-badges/main'
         ],
@@ -356,6 +355,21 @@ define(function (require, exports, module) {
         const plugin = 'extplug/plugins/hide-badges/main';
         if (stored.installed.indexOf(plugin) === -1) {
           stored.installed.push(plugin);
+        }
+      }
+
+      // "rollover-blurbs" was removed from core in 0.12.0
+      if (semvercmp(stored.version, '0.12.0') < 0) {
+        stored.version = '0.12.0';
+        const oldPlugin = 'extplug/plugins/rollover-blurbs/main';
+        const newPlugin = 'https://extplug.github.io/rollover-blurb/build/rollover-blurb.js;' +
+                          'extplug/rollover-blurb/main';
+        let i = stored.installed.indexOf(oldPlugin);
+        if (i !== -1) {
+          stored.installed.splice(i, 1, newPlugin);
+          // move settings
+          stored.plugins[newPlugin] = stored.plugins[oldPlugin];
+          delete stored.plugins[oldPlugin];
         }
       }
 
