@@ -384,7 +384,6 @@ var plugModules = {
   'plug/actions/media/MediaInsertAction': new ActionMatcher('POST', 'playlists/"+this.id+"/media/insert'),
   'plug/actions/media/MediaMoveAction': new ActionMatcher('PUT', 'playlists/"+this.id+"/media/move'),
   'plug/actions/media/MediaUpdateAction': new ActionMatcher('PUT', 'playlists/"+this.id+"/media/update'),
-  'plug/actions/media/SearchPlaylistsAction': new ActionMatcher('GET', 'playlists/media?q='),
   'plug/actions/mutes/MuteAction': new ActionMatcher('POST', 'mutes'),
   'plug/actions/mutes/UnmuteAction': new ActionMatcher('DELETE', 'mutes/'),
   'plug/actions/mutes/MutesListAction': new ActionMatcher('GET', 'mutes'),
@@ -487,6 +486,13 @@ var plugModules = {
   'plug/store/settings': function (m) {
     return _.isObject(m.settings);
   },
+  'plug/store/media': function (m) {
+    return _.isFunction(m.deleteOrphans);
+  },
+  'plug/store/compress': function (m) {
+    return _.isFunction(m.compress);
+  },
+
   'plug/lang/Lang': function (m) {
     return 'alerts' in m && 'addedToPlaylist' in m.alerts;
   },
@@ -1980,57 +1986,61 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
 });
 
 
-define('extplug/util/Style',['require','exports','module','jquery','underscore','sistyl','plug/views/rooms/popout/PopoutView'],function (require, exports, module) {
+define('extplug/util/Style',['require','exports','module','jquery','underscore','sistyl','plug/core/Class','plug/views/rooms/popout/PopoutView'],function (require, exports, module) {
 
   var $ = require('jquery');
   var _ = require('underscore');
   var sistyl = require('sistyl');
+  var Class = require('plug/core/Class');
   var popoutView = require('plug/views/rooms/popout/PopoutView');
 
-  function Style(defaults) {
-    this._sistyl = sistyl(defaults);
-    this._timeout = null;
+  var Style = Class.extend({
+    init: function init(defaults) {
+      this._sistyl = sistyl(defaults);
+      this._timeout = null;
 
-    this.refresh = this.refresh.bind(this);
-    this.id = _.uniqueId('eps-');
+      this.refresh = this.refresh.bind(this);
+      this.id = _.uniqueId('eps-');
 
-    this.el = $('<style />').addClass('extplug-style').attr('id', this.id).attr('type', 'text/css').appendTo('head');
-    if (popoutView._window) {
-      this.el.clone().appendTo(popoutView.$document.find('head'));
+      this.el = $('<style />').addClass('extplug-style').attr('id', this.id).attr('type', 'text/css').appendTo('head');
+      if (popoutView._window) {
+        this.el.clone().appendTo(popoutView.$document.find('head'));
+      }
+      this.refresh();
+    },
+
+    $: function $() {
+      var el = this.el;
+      if (popoutView._window) {
+        el = el.add(popoutView.$document.find('#' + this.id));
+      }
+      return el;
+    },
+
+    set: function set(sel, props) {
+      this._sistyl.set(sel, props);
+
+      // throttle updates
+      clearTimeout(this._timeout);
+      this._timeout = setTimeout(this.refresh, 1);
+      return this;
+    },
+
+    refresh: function refresh() {
+      this.$().text(this.toString());
+    },
+
+    remove: function remove() {
+      this.$().remove();
+    },
+
+    toString: function toString() {
+      return this._sistyl.toString();
     }
-    this.refresh();
-  }
 
-  Style.prototype.$ = function () {
-    var el = this.el;
-    if (popoutView._window) {
-      el = el.add(popoutView.$document.find('#' + this.id));
-    }
-    return el;
-  };
+  });
 
-  Style.prototype.set = function (sel, props) {
-    this._sistyl.set(sel, props);
-
-    // throttle updates
-    clearTimeout(this._timeout);
-    this._timeout = setTimeout(this.refresh, 1);
-    return this;
-  };
-
-  Style.prototype.refresh = function () {
-    this.$().text(this.toString());
-  };
-
-  Style.prototype.remove = function () {
-    this.$().remove();
-  };
-
-  Style.prototype.toString = function () {
-    return this._sistyl.toString();
-  };
-
-  return Style;
+  module.exports = Style;
 });
 
 
@@ -2174,12 +2184,18 @@ define('extplug/load-plugin',['require','exports','module','extplug/util/request
       // since we're actually requiring a module name and not a path.
       requirejs({ paths: _defineProperty({}, o.name, o.url.replace(/\.js$/, '')) });
     }
-    requirejs([o.name || o.url], cb);
+    var pluginId = o.name || o.url;
+    var onLoad = function onLoad(Plugin) {
+      cb(new Plugin(pluginId, window.extp));
+    };
+    requirejs([pluginId], onLoad, function (err) {
+      cb.error(err);
+    });
   };
 });
 define('extplug/package',{
-  "name": "ExtPlug",
-  "version": "0.11.1",
+  "name": "extplug",
+  "version": "0.12.0",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "plug-modules": "^4.0.0"
@@ -2195,7 +2211,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1432647373867
+  "builtAt": 1432923492823
 });
 
 
@@ -4097,8 +4113,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     registerPlugin: function registerPlugin(id, cb) {
       var _this = this;
 
-      require(['extplug/load-plugin!' + id], function (Plugin) {
-        var plugin = new Plugin(id, _this);
+      require(['extplug/load-plugin!' + id], function (plugin) {
         var meta = new PluginMeta({
           id: id,
           name: plugin.name,
@@ -4217,7 +4232,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
     onFirstRun: function onFirstRun() {
       localStorage.setItem(LS_NAME, JSON.stringify({
         version: _package.version,
-        installed: ['extplug/plugins/autowoot/main', 'extplug/plugins/chat-notifications/main', 'extplug/plugins/compact-history/main', 'extplug/plugins/full-size-video/main', 'extplug/plugins/meh-icon/main', 'extplug/plugins/rollover-blurbs/main', 'extplug/plugins/room-styles/main', 'extplug/plugins/hide-badges/main'],
+        installed: ['extplug/plugins/autowoot/main', 'extplug/plugins/chat-notifications/main', 'extplug/plugins/compact-history/main', 'extplug/plugins/full-size-video/main', 'extplug/plugins/meh-icon/main', 'extplug/plugins/room-styles/main', 'extplug/plugins/hide-badges/main'],
         plugins: {}
       }));
     },
@@ -4329,6 +4344,20 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
         var plugin = 'extplug/plugins/hide-badges/main';
         if (stored.installed.indexOf(plugin) === -1) {
           stored.installed.push(plugin);
+        }
+      }
+
+      // "rollover-blurbs" was removed from core in 0.12.0
+      if (semvercmp(stored.version, '0.12.0') < 0) {
+        stored.version = '0.12.0';
+        var oldPlugin = 'extplug/plugins/rollover-blurbs/main';
+        var newPlugin = 'https://extplug.github.io/rollover-blurb/build/rollover-blurb.js;' + 'extplug/rollover-blurb/main';
+        var i = stored.installed.indexOf(oldPlugin);
+        if (i !== -1) {
+          stored.installed.splice(i, 1, newPlugin);
+          // move settings
+          stored.plugins[newPlugin] = stored.plugins[oldPlugin];
+          delete stored.plugins[oldPlugin];
         }
       }
 
@@ -4747,82 +4776,6 @@ define('extplug/plugins/meh-icon/main', function (require, exports, module) {
   });
 
   module.exports = MehIcon;
-});
-'use strict';
-
-define('extplug/plugins/rollover-blurbs/main', function (require, exports, module) {
-
-  var Plugin = require('extplug/Plugin'),
-      fnUtils = require('extplug/util/function'),
-      rolloverView = require('plug/views/users/userRolloverView'),
-      UserFindAction = require('plug/actions/users/UserFindAction'),
-      $ = require('jquery'),
-      meld = require('meld');
-
-  var emoji = $('<span />').addClass('emoji-glow').append($('<span />').addClass('emoji emoji-1f4dd'));
-
-  module.exports = Plugin.extend({
-    name: 'Rollover Blurb (Experimental)',
-    description: 'Show user "Blurb" / bio in rollover popups.',
-
-    enable: function enable() {
-      this._super();
-      this.Style({
-        '.extplug-blurb': {
-          padding: '10px',
-          position: 'absolute',
-          top: '3px',
-          background: '#282c35',
-          width: '100%',
-          'box-sizing': 'border-box',
-          display: 'none'
-        },
-        '.expand .extplug-blurb': {
-          display: 'block'
-        }
-      });
-
-      this.showAdvice = meld.around(rolloverView, 'showModal', this.addBlurb);
-      this.hideAdvice = meld.before(rolloverView, 'hide', this.removeBlurb);
-    },
-
-    disable: function disable() {
-      this._super();
-      this.showAdvice.remove();
-      this.hideAdvice.remove();
-    },
-
-    addBlurb: function addBlurb(joinpoint) {
-      this.$('.extplug-blurb-wrap').remove();
-      var self = this;
-      var span = $('<span />').addClass('extplug-blurb');
-      var div = $('<div />').addClass('info extplug-blurb-wrap').append(span);
-      if (this.user.get('blurb')) {
-        show(this.user.get('blurb'));
-      } else {
-        new UserFindAction(this.user.get('id')).on('success', function (user) {
-          if (user.blurb) {
-            self.user.set('blurb', user.blurb);
-            show(user.blurb);
-          }
-        });
-      }
-      return joinpoint.proceed();
-
-      function show(blurb) {
-        if (blurb) {
-          self.$('.actions').before(div);
-          span.append(emoji, ' ' + blurb);
-          div.height(span[0].offsetHeight + 6);
-          self.$el.css('top', parseInt(self.$el.css('top'), 10) - div.height() + 'px');
-        }
-      }
-    },
-    removeBlurb: function removeBlurb() {
-      this.$('.extplug-blurb-wrap').remove();
-    }
-
-  });
 });
 'use strict';
 
