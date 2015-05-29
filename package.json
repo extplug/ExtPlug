@@ -8,6 +8,7 @@
   "devDependencies": {
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
+    "gulp-clean": "^0.3.1",
     "gulp-concat": "^2.5.2",
     "requirejs": "^2.1.17",
     "jscs": "^1.13.1"

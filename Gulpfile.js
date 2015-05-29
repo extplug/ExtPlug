@@ -1,14 +1,20 @@
 var gulp   = require('gulp')
 var babel  = require('gulp-babel')
 var concat = require('gulp-concat')
+var clean  = require('gulp-clean')
 var rjs    = require('requirejs')
 var fs     = require('fs')
 var packg  = require('./package.json')
 
-gulp.task('babel', function () {
+gulp.task('babel', [ 'clean-lib' ], function () {
   return gulp.src('src/**/*')
     .pipe(babel({ modules: 'ignore' }))
     .pipe(gulp.dest('lib/'))
+})
+
+gulp.task('clean-lib', function () {
+  return gulp.src('lib', { read: false })
+    .pipe(clean())
 })
 
 gulp.task('rjs', [ 'babel' ], function (done) {
