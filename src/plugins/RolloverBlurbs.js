@@ -1,7 +1,6 @@
 define('extplug/plugins/rollover-blurbs/main', function (require, exports, module) {
 
   var Plugin = require('extplug/Plugin'),
-    fnUtils = require('extplug/util/function'),
     rolloverView = require('plug/views/users/userRolloverView'),
     UserFindAction = require('plug/actions/users/UserFindAction'),
     $ = require('jquery'),
