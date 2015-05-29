@@ -116,8 +116,7 @@ define(function (require, exports, module) {
     registerPlugin(id, cb) {
       require(
         [ `extplug/load-plugin!${id}` ],
-        (Plugin) => {
-          let plugin = new Plugin(id, this);
+        plugin => {
           let meta = new PluginMeta({
             id: id,
             name: plugin.name,

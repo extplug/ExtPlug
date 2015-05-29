@@ -28,7 +28,13 @@ define(function (require, exports, module) {
       // since we're actually requiring a module name and not a path.
       requirejs({ paths: { [o.name]: o.url.replace(/\.js$/, '') } });
     }
-    requirejs([ o.name || o.url ], cb);
+    let pluginId = o.name || o.url;
+    let onLoad = Plugin => {
+      cb(new Plugin(pluginId, window.extp));
+    };
+    requirejs([ pluginId ], onLoad, err => {
+      cb.error(err);
+    });
   };
 
 });
