@@ -85,6 +85,9 @@ define(function (require, exports, module) {
         this.$container.append(group.items.render().$el);
       }, this);
 
+      this.$container.jScrollPane();
+      this.scrollPane = this.$container.data('jsp');
+
       return this;
     },
 
@@ -194,7 +197,11 @@ define(function (require, exports, module) {
       });
     },
 
-    onResize() {
+    onResize(w, h) {
+      this.$container.height(h - this.$container.offset().top);
+      if (this.scrollPane) {
+        this.scrollPane.reinitialise();
+      }
     },
 
     addGroup(items, priority) {
