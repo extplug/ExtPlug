@@ -30,19 +30,28 @@ define(function (require, exports, module) {
 
     initialize(o) {
       this.plugins = o.plugins;
-      this.plugins.on('reset add remove', () => {
-        this.refresh();
-        this.render();
-      });
       this.ext = o.ext;
       this.mode = 'normal';
 
       this.refresh();
-      this.manage = this.manage.bind(this);
+      this.onUpdate = this.onUpdate.bind(this);
+      this.manage   = this.manage.bind(this);
       this.unmanage = this.unmanage.bind(this);
 
+      this.plugins.on('reset add remove', this.onUpdate);
       Events.on('extplug:plugins:manage', this.manage);
       Events.on('extplug:plugins:unmanage', this.unmanage);
+    },
+
+    remove() {
+      this.plugins.off('reset add remove', this.onUpdate);
+      Events.off('extplug:plugins:manage', this.manage);
+      Events.off('extplug:plugins:unmanage', this.unmanage);
+    },
+
+    onUpdate() {
+      this.refresh();
+      this.render();
     },
 
     refresh() {
