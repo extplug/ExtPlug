@@ -42,6 +42,18 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
       this.all();
     },
 
+    _normalizeRanks(ranks) {
+      // plug³ and RCS have different names for Resident DJ colours and icons.
+      // we simply use the plug.dj icon classname instead.
+      if (ranks.rdj && !ranks.dj) ranks.dj = ranks.rdj;
+      if (ranks.residentdj && !ranks.dj) ranks.dj = ranks.residentdj;
+      // plug³ room styles have an `icons` sub-property on their `images`
+      // properties, but RCS doesn't. so we don't particularly care if it's
+      // there or not.
+      if (ranks.icons) ranks.icons = this._normalizeRanks(ranks.icons);
+      return ranks;
+    },
+
     colors() {
       // plugCubed
       let colors = this.ext.roomSettings.get('colors');
@@ -52,6 +64,7 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
       if (_.isObject(chatColors)) {
         let colorStyles = this.Style();
 
+        chatColors = this._normalizeRanks(chatColors);
         ranks.forEach(level => {
           if (chatColors[level]) {
             let color = chatColors[level];
@@ -121,6 +134,8 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
             .css({ 'background': 'url(' + images.booth + ') no-repeat center center' })
             .appendTo(this.$('#dj-booth'));
         }
+
+        images = this._normalizeRanks(images);
         ranks.forEach(rank => {
           let url = images[rank] || images.icons && images.icons[rank];
           if (url) {
