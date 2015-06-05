@@ -118,7 +118,7 @@ define(function (require, exports, module) {
         [ `extplug/load-plugin!${id}` ],
         plugin => {
           let meta = new PluginMeta({
-            id: id,
+            id: plugin.id,
             name: plugin.name,
             instance: plugin
           });
@@ -126,7 +126,7 @@ define(function (require, exports, module) {
           let settings = this._getPluginSettings(plugin.id);
           plugin.settings.set(settings.settings);
           plugin.settings.on('change', () => {
-            this._savePluginSettings(id);
+            this._savePluginSettings(plugin.id);
           });
           if (settings.enabled) {
             _.defer(() => {
