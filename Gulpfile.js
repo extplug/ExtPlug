@@ -2,6 +2,7 @@ var gulp   = require('gulp')
 var babel  = require('gulp-babel')
 var concat = require('gulp-concat')
 var clean  = require('gulp-clean')
+var rename = require('gulp-rename')
 var templ  = require('gulp-template')
 var rjs    = require('requirejs')
 var fs     = require('fs')
@@ -68,4 +69,17 @@ gulp.task('chrome', function () {
   gulp.src([ 'build/extplug.js' ])
     .pipe(concat('extplug.js'))
     .pipe(gulp.dest('build/chrome/'))
+})
+
+gulp.task('userscript-meta', function () {
+  return gulp.src([ 'extensions/userscript/extplug.user.js' ])
+    .pipe(templ(packg))
+    .pipe(rename('extplug.meta.user.js'))
+    .pipe(gulp.dest('build/'))
+})
+
+gulp.task('userscript', function () {
+  return gulp.src([ 'build/extplug.meta.user.js', 'build/extplug.js' ])
+    .pipe(concat('extplug.user.js'))
+    .pipe(gulp.dest('build/'))
 })
