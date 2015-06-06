@@ -1,6 +1,6 @@
 {
   "name": "extplug",
-  "version": "0.12.1",
+  "version": "0.12.2",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "homepage": "https://github.com/ExtPlug/ExtPlug",
   "main": "src/extplug/ExtPlug.js",
