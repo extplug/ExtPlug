@@ -13,7 +13,8 @@
     "gulp-rename": "^1.2.2",
     "gulp-template": "^3.0.0",
     "jscs": "^1.13.1",
-    "requirejs": "^2.1.17"
+    "requirejs": "^2.1.17",
+    "run-sequence": "^1.1.0"
   },
   "scripts": {
     "build": "gulp build",

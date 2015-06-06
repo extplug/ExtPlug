@@ -4,6 +4,7 @@ var concat = require('gulp-concat')
 var clean  = require('gulp-clean')
 var rename = require('gulp-rename')
 var templ  = require('gulp-template')
+var runseq = require('run-sequence')
 var rjs    = require('requirejs')
 var fs     = require('fs')
 var packg  = require('./package.json')
@@ -48,7 +49,10 @@ gulp.task('rjs', [ 'babel' ], function (done) {
     },
     optimize: 'none',
     out: function (text) {
-      fs.writeFile('build/build.rjs.js', text, done)
+      fs.mkdir('build', function (e) {
+        if (e) done (e)
+        else   fs.writeFile('build/build.rjs.js', text, done)
+      })
     }
   })
 })
@@ -59,6 +63,11 @@ gulp.task('build', [ 'rjs' ], function () {
                   , 'lib/extplug/plugdj.user.js' ])
     .pipe(concat('extplug.js'))
     .pipe(gulp.dest('build/'))
+})
+
+gulp.task('clean-build', function () {
+  return gulp.src('build', { read: false })
+    .pipe(clean())
 })
 
 gulp.task('chrome', function () {
@@ -82,4 +91,14 @@ gulp.task('userscript', function () {
   return gulp.src([ 'build/extplug.meta.user.js', 'build/extplug.js' ])
     .pipe(concat('extplug.user.js'))
     .pipe(gulp.dest('build/'))
+})
+
+gulp.task('clean', [ 'clean-lib', 'clean-build' ])
+
+gulp.task('default', function () {
+  return runseq(
+    'clean-build',
+    'build',
+    [ 'chrome', 'userscript' ]
+  )
 })
