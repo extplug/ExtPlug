@@ -21,7 +21,7 @@ git clone https://github.com/ExtPlug/ExtPlug
 cd ExtPlug
 bower install
 npm install
-gulp build # outputs to build/build.full.js
+gulp build # outputs to build/extplug.js
 ```
 
 ### Bundled Plugins

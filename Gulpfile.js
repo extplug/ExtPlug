@@ -55,6 +55,6 @@ gulp.task('build', [ 'rjs' ], function () {
   return gulp.src([ 'build/build.rjs.js'
                   , 'lib/plugins/*'
                   , 'lib/extplug/plugdj.user.js' ])
-    .pipe(concat('build.full.js'))
+    .pipe(concat('extplug.js'))
     .pipe(gulp.dest('build/'))
 })
