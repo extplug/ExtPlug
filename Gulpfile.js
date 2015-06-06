@@ -2,6 +2,7 @@ var gulp   = require('gulp')
 var babel  = require('gulp-babel')
 var concat = require('gulp-concat')
 var clean  = require('gulp-clean')
+var templ  = require('gulp-template')
 var rjs    = require('requirejs')
 var fs     = require('fs')
 var packg  = require('./package.json')
@@ -57,4 +58,14 @@ gulp.task('build', [ 'rjs' ], function () {
                   , 'lib/extplug/plugdj.user.js' ])
     .pipe(concat('extplug.js'))
     .pipe(gulp.dest('build/'))
+})
+
+gulp.task('chrome', function () {
+  gulp.src([ 'extensions/chrome/main.js', 'extensions/chrome/manifest.json' ])
+    .pipe(templ(packg))
+    .pipe(gulp.dest('build/chrome/'))
+
+  gulp.src([ 'build/extplug.js' ])
+    .pipe(concat('extplug.js'))
+    .pipe(gulp.dest('build/chrome/'))
 })

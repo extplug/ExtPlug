@@ -1,0 +1,14 @@
+{
+  "manifest_version": 2,
+  "name": "ExtPlug",
+  "version": "<%= version %>",
+  "description": "<%= description %>",
+  "icons": { },
+  "permissions": [ "https://plug.dj/*" ],
+  "content_scripts": [ {
+    "matches": [ "https://plug.dj/*" ],
+    "js": [ "main.js" ]
+  } ],
+  "web_accessible_resources": [ "extplug.js" ],
+  "icons": {}
+}
