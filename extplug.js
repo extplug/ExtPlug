@@ -2195,7 +2195,7 @@ define('extplug/load-plugin',['require','exports','module','extplug/util/request
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "plug-modules": "^4.0.0"
@@ -2203,15 +2203,17 @@ define('extplug/package',{
   "devDependencies": {
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
+    "gulp-clean": "^0.3.1",
     "gulp-concat": "^2.5.2",
-    "requirejs": "^2.1.17",
-    "jscs": "^1.13.1"
+    "gulp-template": "^3.0.0",
+    "jscs": "^1.13.1",
+    "requirejs": "^2.1.17"
   },
   "scripts": {
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1432923492823
+  "builtAt": 1433587440230
 });
 
 
@@ -3354,22 +3356,29 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
     className: 'ext-plug section',
 
     initialize: function initialize(o) {
-      var _this = this;
-
       this.plugins = o.plugins;
-      this.plugins.on('reset add remove', function () {
-        _this.refresh();
-        _this.render();
-      });
       this.ext = o.ext;
       this.mode = 'normal';
 
       this.refresh();
+      this.onUpdate = this.onUpdate.bind(this);
       this.manage = this.manage.bind(this);
       this.unmanage = this.unmanage.bind(this);
 
+      this.plugins.on('reset add remove', this.onUpdate);
       Events.on('extplug:plugins:manage', this.manage);
       Events.on('extplug:plugins:unmanage', this.unmanage);
+    },
+
+    remove: function remove() {
+      this.plugins.off('reset add remove', this.onUpdate);
+      Events.off('extplug:plugins:manage', this.manage);
+      Events.off('extplug:plugins:unmanage', this.unmanage);
+    },
+
+    onUpdate: function onUpdate() {
+      this.refresh();
+      this.render();
     },
 
     refresh: function refresh() {
@@ -3411,11 +3420,14 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
         this.$container.append(group.items.render().$el);
       }, this);
 
+      this.$container.jScrollPane();
+      this.scrollPane = this.$container.data('jsp');
+
       return this;
     },
 
     createPluginsGroup: function createPluginsGroup() {
-      var _this2 = this;
+      var _this = this;
 
       var pluginsGroup = new PluginsGroupView({ name: 'Plugins' });
       // generate plugin list
@@ -3432,16 +3444,16 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
           // add / remove plugin settings group
           if (value) {
             pluginMeta.enable();
-            var pluginSettings = _this2.createSettingsGroup(pluginMeta);
+            var pluginSettings = _this.createSettingsGroup(pluginMeta);
             if (pluginSettings) {
-              _this2.addGroup(pluginSettings);
-              _this2.$container.append(pluginSettings.render().$el);
+              _this.addGroup(pluginSettings);
+              _this.$container.append(pluginSettings.render().$el);
             }
           } else {
             pluginMeta.disable();
-            var pluginSettings = _this2.getGroup(name);
+            var pluginSettings = _this.getGroup(name);
             if (pluginSettings) {
-              _this2.removeGroup(name);
+              _this.removeGroup(name);
               pluginSettings.remove();
             }
           }
@@ -3519,7 +3531,12 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
       });
     },
 
-    onResize: function onResize() {},
+    onResize: function onResize(w, h) {
+      this.$container.height(h - this.$container.offset().top);
+      if (this.scrollPane) {
+        this.scrollPane.reinitialise();
+      }
+    },
 
     addGroup: function addGroup(items, priority) {
       this.groups.push({
@@ -4115,7 +4132,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
 
       require(['extplug/load-plugin!' + id], function (plugin) {
         var meta = new PluginMeta({
-          id: id,
+          id: plugin.id,
           name: plugin.name,
           instance: plugin
         });
@@ -4123,7 +4140,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia
         var settings = _this._getPluginSettings(plugin.id);
         plugin.settings.set(settings.settings);
         plugin.settings.on('change', function () {
-          _this._savePluginSettings(id);
+          _this._savePluginSettings(plugin.id);
         });
         if (settings.enabled) {
           _.defer(function () {
@@ -4820,6 +4837,18 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
       this.all();
     },
 
+    _normalizeRanks: function _normalizeRanks(ranks) {
+      // plug³ and RCS have different names for Resident DJ colours and icons.
+      // we simply use the plug.dj icon classname instead.
+      if (ranks.rdj && !ranks.dj) ranks.dj = ranks.rdj;
+      if (ranks.residentdj && !ranks.dj) ranks.dj = ranks.residentdj;
+      // plug³ room styles have an `icons` sub-property on their `images`
+      // properties, but RCS doesn't. so we don't particularly care if it's
+      // there or not.
+      if (ranks.icons) ranks.icons = this._normalizeRanks(ranks.icons);
+      return ranks;
+    },
+
     colors: function colors() {
       var _this = this;
 
@@ -4833,6 +4862,7 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
         (function () {
           var colorStyles = _this.Style();
 
+          chatColors = _this._normalizeRanks(chatColors);
           ranks.forEach(function (level) {
             if (chatColors[level]) {
               var color = chatColors[level];
@@ -4899,6 +4929,8 @@ define('extplug/plugins/room-styles/main', function (require, exports, module) {
             // plug³ compatibility
             .attr('id', 'p3-dj-booth').addClass('extplug-booth').css({ background: 'url(' + images.booth + ') no-repeat center center' }).appendTo(_this2.$('#dj-booth'));
           }
+
+          images = _this2._normalizeRanks(images);
           ranks.forEach(function (rank) {
             var url = images[rank] || images.icons && images.icons[rank];
             if (url) {
