@@ -1,3 +1,14 @@
+// ==UserScript==
+// @name        ExtPlug
+// @description Highly flexible, modular userscript extension for plug.dj.
+// @version     0.12.2
+// @match       https://plug.dj/*
+// @namespace   https://extplug.github.io/
+// @downloadURL https://extplug.github.io/ExtPlug/extplug.user.js
+// @updateURL   https://extplug.github.io/ExtPlug/extplug.user.js
+// @grant       none
+// ==/UserScript==
+
 ;(function (root, factory) {
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
