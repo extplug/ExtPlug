@@ -1,10 +1,9 @@
 {
   "name": "extplug",
-  "version": "0.11.1",
+  "version": "0.12.1",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
-  "homepage": "https://github.com/PlugLynn/ExtPlug",
-  "authors": [ "PlugLynn <PlugLynn@Hushmail.com>" ],
-  "main": "src/ExtPlug.js",
+  "homepage": "https://github.com/ExtPlug/ExtPlug",
+  "main": "src/extplug/ExtPlug.js",
   "dependencies": {
     "meld": "",
     "sistyl": ""
