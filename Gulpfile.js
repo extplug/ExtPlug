@@ -87,7 +87,7 @@ gulp.task('userscript-meta', function () {
     .pipe(gulp.dest('build/'))
 })
 
-gulp.task('userscript', function () {
+gulp.task('userscript', [ 'userscript-meta' ], function () {
   return gulp.src([ 'build/extplug.meta.user.js', 'build/extplug.js' ])
     .pipe(concat('extplug.user.js'))
     .pipe(gulp.dest('build/'))
