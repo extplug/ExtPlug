@@ -6,6 +6,7 @@ var rename = require('gulp-rename')
 var templ  = require('gulp-template')
 var runseq = require('run-sequence')
 var rjs    = require('requirejs')
+var mkdirp = require('mkdirp')
 var fs     = require('fs')
 var packg  = require('./package.json')
 
@@ -49,7 +50,7 @@ gulp.task('rjs', [ 'babel' ], function (done) {
     },
     optimize: 'none',
     out: function (text) {
-      fs.mkdir('build', function (e) {
+      mkdirp('build', function (e) {
         if (e) done (e)
         else   fs.writeFile('build/build.rjs.js', text, done)
       })
