@@ -22,7 +22,6 @@ gulp.task('clean-lib', function () {
 })
 
 gulp.task('rjs', [ 'babel' ], function (done) {
-  var bower = '../bower_components/'
   var npm = '../node_modules/'
   packg.builtAt = Date.now()
   var packgString = JSON.stringify(packg, null, 2)
@@ -41,8 +40,8 @@ gulp.task('rjs', [ 'babel' ], function (done) {
       backbone: 'empty:',
       jquery: 'empty:',
       underscore: 'empty:',
-      meld: bower + 'meld/meld',
-      sistyl: bower + 'sistyl/lib/sistyl',
+      meld: npm + 'meld/meld',
+      sistyl: npm + 'sistyl/lib/sistyl',
       'plug-modules': npm + 'plug-modules/plug-modules'
     },
     rawText: {

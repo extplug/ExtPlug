@@ -3,7 +3,9 @@
   "version": "0.12.3",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
-    "plug-modules": "^4.0.0"
+    "meld": "1.x",
+    "plug-modules": "^4.0.0",
+    "sistyl": "^0.4.2"
   },
   "devDependencies": {
     "gulp": "^3.8.11",
