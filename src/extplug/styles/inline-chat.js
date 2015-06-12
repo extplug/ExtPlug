@@ -2,6 +2,8 @@
 // the username instead of below it.
 define({
   '#chat-messages .cm.inline': {
+    'min-height': '0',
+
     '.badge-box': {
       // remove badge background
       'margin': '5px 8px 6px',
@@ -13,6 +15,12 @@ define({
       '.icon': {
         'top': '50%',
         'margin-top': '-15px'
+      },
+
+      // center & resize actual user badges
+      '.bdg': {
+        'top': '-7px',
+        'transform': 'scale(0.5)'
       }
     },
     '.from': { 'display': 'inline' },
