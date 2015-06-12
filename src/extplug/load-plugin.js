@@ -1,6 +1,6 @@
 define(function (require, exports, module) {
 
-  const request = require('extplug/util/request');
+  const request = require('./util/request');
 
   function parse(name) {
     let parts = name.split(';');

@@ -1,13 +1,13 @@
 define(function (require, exports, module) {
   const { View } = require('backbone');
-  const ControlGroupView = require('extplug/views/users/settings/ControlGroupView');
+  const ControlGroupView = require('./ControlGroupView');
   const PluginsGroupView = require('./PluginsGroupView');
   const ManagingGroupView = require('./ManagingGroupView');
-  const CheckboxView = require('extplug/views/users/settings/CheckboxView');
-  const DropdownView = require('extplug/views/users/settings/DropdownView');
-  const SliderView = require('extplug/views/users/settings/SliderView');
+  const CheckboxView = require('./CheckboxView');
+  const DropdownView = require('./DropdownView');
+  const SliderView = require('./SliderView');
   const RemoveBoxView = require('./RemoveBoxView');
-  const PluginMeta = require('extplug/models/PluginMeta');
+  const PluginMeta = require('../../../models/PluginMeta');
   const Events = require('plug/core/Events');
   const _ = require('underscore');
   const $ = require('jquery');

@@ -1,27 +1,20 @@
 define(function (require, exports, module) {
 
-  const currentMedia = require('plug/models/currentMedia');
-  const currentRoom = require('plug/models/currentRoom');
-  const settings = require('extplug/store/settings');
   const Events = require('plug/core/Events');
   const ApplicationView = require('plug/views/app/ApplicationView');
-  const UserView = require('plug/views/users/UserView');
-  const ChatView = require('plug/views/rooms/chat/ChatView');
-  const plugUtil = require('plug/util/util');
-  const emoji = require('plug/util/emoji');
 
-  const RoomSettings = require('extplug/models/RoomSettings');
-  const PluginMeta = require('extplug/models/PluginMeta');
-  const PluginsCollection = require('extplug/collections/PluginsCollection');
-  const Plugin = require('extplug/Plugin');
-  const chatFacade = require('extplug/facades/chatFacade');
-  const loadPlugin = require('extplug/load-plugin');
+  const settings = require('./store/settings');
+  const RoomSettings = require('./models/RoomSettings');
+  const PluginMeta = require('./models/PluginMeta');
+  const PluginsCollection = require('./collections/PluginsCollection');
+  const Plugin = require('./Plugin');
+  const loadPlugin = require('./load-plugin');
 
   const VersionPlugin = require('./plugins/version');
   const SettingsTabPlugin = require('./plugins/settings-tab');
   const ChatTypePlugin = require('./plugins/custom-chat-type');
 
-  const _package = require('extplug/package');
+  const _package = require('./package');
 
   const $ = require('jquery');
   const _ = require('underscore');
@@ -29,11 +22,11 @@ define(function (require, exports, module) {
   const meld = require('meld');
 
   let hooks = [
-    require('extplug/hooks/api-early'),
-    require('extplug/hooks/chat'),
-    require('extplug/hooks/playback'),
-    require('extplug/hooks/settings'),
-    require('extplug/hooks/popout-style')
+    require('./hooks/api-early'),
+    require('./hooks/chat'),
+    require('./hooks/playback'),
+    require('./hooks/settings'),
+    require('./hooks/popout-style')
   ];
 
   // LocalStorage key name for extplug

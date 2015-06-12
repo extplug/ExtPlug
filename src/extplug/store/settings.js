@@ -2,7 +2,7 @@ define(function (require, exports, module) {
 
   const _ = require('underscore');
   const plugSettings = require('plug/store/settings');
-  const Settings = require('extplug/models/Settings');
+  const Settings = require('../models/Settings');
 
   const settings = new Settings();
 

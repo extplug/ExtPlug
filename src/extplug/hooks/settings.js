@@ -4,7 +4,7 @@ define(function (require, exports, module) {
 
   const { before } = require('meld');
   const plugSettings = require('plug/store/settings');
-  const extMirror = require('extplug/store/settings');
+  const extMirror = require('../store/settings');
 
   let advice;
 

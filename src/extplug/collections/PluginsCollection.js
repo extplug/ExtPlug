@@ -1,7 +1,7 @@
 define(function (require, exports, module) {
 
   const { Collection } = require('backbone');
-  const PluginMeta = require('extplug/models/PluginMeta');
+  const PluginMeta = require('../models/PluginMeta');
 
   const PluginsCollection = Collection.extend({
     model: PluginMeta,

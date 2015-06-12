@@ -4,8 +4,8 @@ define(function (require, exports, module) {
   const _ = require('underscore');
   const Backbone = require('backbone');
   const Class = require('plug/core/Class');
-  const Settings = require('extplug/models/Settings');
-  const Style = require('extplug/util/Style');
+  const Settings = require('./models/Settings');
+  const Style = require('./util/Style');
 
   const Plugin = Class.extend({
     init(id, ext) {

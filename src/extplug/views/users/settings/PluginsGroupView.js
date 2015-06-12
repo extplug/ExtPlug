@@ -2,8 +2,8 @@ define(function (require, exports, module) {
 
   const Events = require('plug/core/Events');
   const ShowDialogEvent = require('plug/events/ShowDialogEvent');
-  const Style = require('extplug/util/Style');
-  const InstallPluginDialog = require('extplug/views/dialogs/InstallPluginDialog');
+  const Style = require('../../../util/Style');
+  const InstallPluginDialog = require('../../dialogs/InstallPluginDialog');
   const FooterView = require('./GroupFooterView');
   const ControlGroupView = require('./ControlGroupView');
 
