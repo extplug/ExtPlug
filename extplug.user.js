@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        ExtPlug
 // @description Highly flexible, modular userscript extension for plug.dj.
-// @version     0.12.2
+// @version     0.12.3
 // @match       https://plug.dj/*
 // @namespace   https://extplug.github.io/
 // @downloadURL https://extplug.github.io/ExtPlug/extplug.user.js
@@ -1652,11 +1652,11 @@ define('extplug/models/Settings',['require','exports','module','backbone'],funct
 });
 
 
-define('extplug/store/settings',['require','exports','module','underscore','plug/store/settings','extplug/models/Settings'],function (require, exports, module) {
+define('extplug/store/settings',['require','exports','module','underscore','plug/store/settings','../models/Settings'],function (require, exports, module) {
 
   var _ = require('underscore');
   var plugSettings = require('plug/store/settings');
-  var Settings = require('extplug/models/Settings');
+  var Settings = require('../models/Settings');
 
   var settings = new Settings();
 
@@ -1720,10 +1720,10 @@ define('extplug/util/request',['require','exports','module','jquery'],function (
 });
 
 
-define('extplug/models/RoomSettings',['require','exports','module','plug/models/currentRoom','extplug/util/request','backbone','plug/core/Events'],function (require, exports, module) {
+define('extplug/models/RoomSettings',['require','exports','module','plug/models/currentRoom','../util/request','backbone','plug/core/Events'],function (require, exports, module) {
 
   var currentRoom = require('plug/models/currentRoom'),
-      request = require('extplug/util/request'),
+      request = require('../util/request'),
       Backbone = require('backbone'),
       Events = require('plug/core/Events');
 
@@ -1839,12 +1839,12 @@ define('extplug/models/PluginMeta',['require','exports','module','backbone'],fun
 });
 
 
-define('extplug/collections/PluginsCollection',['require','exports','module','backbone','extplug/models/PluginMeta'],function (require, exports, module) {
+define('extplug/collections/PluginsCollection',['require','exports','module','backbone','../models/PluginMeta'],function (require, exports, module) {
   var _require = require('backbone');
 
   var Collection = _require.Collection;
 
-  var PluginMeta = require('extplug/models/PluginMeta');
+  var PluginMeta = require('../models/PluginMeta');
 
   var PluginsCollection = Collection.extend({
     model: PluginMeta,
@@ -2058,14 +2058,14 @@ define('extplug/util/Style',['require','exports','module','jquery','underscore',
 });
 
 
-define('extplug/Plugin',['require','exports','module','jquery','underscore','backbone','plug/core/Class','extplug/models/Settings','extplug/util/Style'],function (require, exports, module) {
+define('extplug/Plugin',['require','exports','module','jquery','underscore','backbone','plug/core/Class','./models/Settings','./util/Style'],function (require, exports, module) {
 
   var jQuery = require('jquery');
   var _ = require('underscore');
   var Backbone = require('backbone');
   var Class = require('plug/core/Class');
-  var Settings = require('extplug/models/Settings');
-  var Style = require('extplug/util/Style');
+  var Settings = require('./models/Settings');
+  var Style = require('./util/Style');
 
   var Plugin = Class.extend({
     init: function init(id, ext) {
@@ -2131,46 +2131,11 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
 });
 
 
-define('extplug/facades/chatFacade',['require','exports','module','plug/facades/chatFacade','underscore','backbone'],function (require, exports, module) {
-
-  var chatFacade = require('plug/facades/chatFacade');
-
-  var _require = require('underscore');
-
-  var clone = _require.clone;
-
-  var Backbone = require('backbone');
-
-  function onChatCommand(text) {
-    var split = text.indexOf(' ');
-    if (split === -1) {
-      split = text.length;
-    }
-    var command = text.slice(1, split);
-    var params = text.slice(split + 1);
-
-    commands.trigger(command, params);
-  }
-
-  var commands = clone(Backbone.Events);
-
-  var addedListener = false;
-  chatFacade.registerCommand = function (command, callback) {
-    if (!addedListener) {
-      API.on(API.CHAT_COMMAND, onChatCommand);
-    }
-    commands.on(command, callback);
-  };
-
-  return chatFacade;
-});
-
-
 var _defineProperty = function (obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: key == null || typeof Symbol == 'undefined' || key.constructor !== Symbol, configurable: true, writable: true }); };
 
-define('extplug/load-plugin',['require','exports','module','extplug/util/request'],function (require, exports, module) {
+define('extplug/load-plugin',['require','exports','module','./util/request'],function (require, exports, module) {
 
-  var request = require('extplug/util/request');
+  var request = require('./util/request');
 
   function parse(name) {
     var parts = name.split(';');
@@ -2209,7 +2174,7 @@ define('extplug/load-plugin',['require','exports','module','extplug/util/request
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.12.2",
+  "version": "0.12.3",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "plug-modules": "^4.0.0"
@@ -2222,6 +2187,7 @@ define('extplug/package',{
     "gulp-rename": "^1.2.2",
     "gulp-template": "^3.0.0",
     "jscs": "^1.13.1",
+    "mkdirp": "^0.5.1",
     "requirejs": "^2.1.17",
     "run-sequence": "^1.1.0"
   },
@@ -2229,7 +2195,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1433597024585
+  "builtAt": 1434103027883
 });
 
 
@@ -3024,12 +2990,12 @@ define('extplug/views/users/settings/GroupFooterView',['require','exports','modu
 });
 
 
-define('extplug/views/users/settings/PluginsGroupView',['require','exports','module','plug/core/Events','plug/events/ShowDialogEvent','extplug/util/Style','extplug/views/dialogs/InstallPluginDialog','./GroupFooterView','./ControlGroupView'],function (require, exports, module) {
+define('extplug/views/users/settings/PluginsGroupView',['require','exports','module','plug/core/Events','plug/events/ShowDialogEvent','../../../util/Style','../../dialogs/InstallPluginDialog','./GroupFooterView','./ControlGroupView'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ShowDialogEvent = require('plug/events/ShowDialogEvent');
-  var Style = require('extplug/util/Style');
-  var InstallPluginDialog = require('extplug/views/dialogs/InstallPluginDialog');
+  var Style = require('../../../util/Style');
+  var InstallPluginDialog = require('../../dialogs/InstallPluginDialog');
   var FooterView = require('./GroupFooterView');
   var ControlGroupView = require('./ControlGroupView');
 
@@ -3338,19 +3304,19 @@ define('extplug/views/users/settings/RemoveBoxView',['require','exports','module
 });
 
 
-define('extplug/views/users/settings/SettingsView',['require','exports','module','backbone','extplug/views/users/settings/ControlGroupView','./PluginsGroupView','./ManagingGroupView','extplug/views/users/settings/CheckboxView','extplug/views/users/settings/DropdownView','extplug/views/users/settings/SliderView','./RemoveBoxView','extplug/models/PluginMeta','plug/core/Events','underscore','jquery'],function (require, exports, module) {
+define('extplug/views/users/settings/SettingsView',['require','exports','module','backbone','./ControlGroupView','./PluginsGroupView','./ManagingGroupView','./CheckboxView','./DropdownView','./SliderView','./RemoveBoxView','../../../models/PluginMeta','plug/core/Events','underscore','jquery'],function (require, exports, module) {
   var _require = require('backbone');
 
   var View = _require.View;
 
-  var ControlGroupView = require('extplug/views/users/settings/ControlGroupView');
+  var ControlGroupView = require('./ControlGroupView');
   var PluginsGroupView = require('./PluginsGroupView');
   var ManagingGroupView = require('./ManagingGroupView');
-  var CheckboxView = require('extplug/views/users/settings/CheckboxView');
-  var DropdownView = require('extplug/views/users/settings/DropdownView');
-  var SliderView = require('extplug/views/users/settings/SliderView');
+  var CheckboxView = require('./CheckboxView');
+  var DropdownView = require('./DropdownView');
+  var SliderView = require('./SliderView');
   var RemoveBoxView = require('./RemoveBoxView');
-  var PluginMeta = require('extplug/models/PluginMeta');
+  var PluginMeta = require('../../../models/PluginMeta');
   var Events = require('plug/core/Events');
   var _ = require('underscore');
   var $ = require('jquery');
@@ -3881,7 +3847,7 @@ define('extplug/hooks/playback',['require','exports','module','plug/core/Events'
 });
 
 
-define('extplug/hooks/settings',['require','exports','module','meld','plug/store/settings','extplug/store/settings'],function (require, exports, module) {
+define('extplug/hooks/settings',['require','exports','module','meld','plug/store/settings','../store/settings'],function (require, exports, module) {
 
   // Mirrors plug.dj settings to the ExtPlug settings model.
 
@@ -3890,7 +3856,7 @@ define('extplug/hooks/settings',['require','exports','module','meld','plug/store
   var before = _require.before;
 
   var plugSettings = require('plug/store/settings');
-  var extMirror = require('extplug/store/settings');
+  var extMirror = require('../store/settings');
 
   var advice = undefined;
 
@@ -3948,6 +3914,8 @@ define('extplug/styles/badge',{
 
 define('extplug/styles/inline-chat',{
   '#chat-messages .cm.inline': {
+    'min-height': '0',
+
     '.badge-box': {
       // remove badge background
       margin: '5px 8px 6px',
@@ -3959,6 +3927,12 @@ define('extplug/styles/inline-chat',{
       '.icon': {
         top: '50%',
         'margin-top': '-15px'
+      },
+
+      // center & resize actual user badges
+      '.bdg': {
+        top: '-7px',
+        transform: 'scale(0.5)'
       }
     },
     '.from': { display: 'inline' },
@@ -4029,37 +4003,30 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/models/currentMedia','plug/models/currentRoom','extplug/store/settings','plug/core/Events','plug/views/app/ApplicationView','plug/views/users/UserView','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','extplug/models/RoomSettings','extplug/models/PluginMeta','extplug/collections/PluginsCollection','extplug/Plugin','extplug/facades/chatFacade','extplug/load-plugin','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','extplug/package','jquery','underscore','backbone','meld','extplug/hooks/api-early','extplug/hooks/chat','extplug/hooks/playback','extplug/hooks/settings','extplug/hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./load-plugin','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./package','jquery','underscore','backbone','meld','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
-  var currentMedia = require('plug/models/currentMedia');
-  var currentRoom = require('plug/models/currentRoom');
-  var settings = require('extplug/store/settings');
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
-  var UserView = require('plug/views/users/UserView');
-  var ChatView = require('plug/views/rooms/chat/ChatView');
-  var plugUtil = require('plug/util/util');
-  var emoji = require('plug/util/emoji');
 
-  var RoomSettings = require('extplug/models/RoomSettings');
-  var PluginMeta = require('extplug/models/PluginMeta');
-  var PluginsCollection = require('extplug/collections/PluginsCollection');
-  var Plugin = require('extplug/Plugin');
-  var chatFacade = require('extplug/facades/chatFacade');
-  var loadPlugin = require('extplug/load-plugin');
+  var settings = require('./store/settings');
+  var RoomSettings = require('./models/RoomSettings');
+  var PluginMeta = require('./models/PluginMeta');
+  var PluginsCollection = require('./collections/PluginsCollection');
+  var Plugin = require('./Plugin');
+  var loadPlugin = require('./load-plugin');
 
   var VersionPlugin = require('./plugins/version');
   var SettingsTabPlugin = require('./plugins/settings-tab');
   var ChatTypePlugin = require('./plugins/custom-chat-type');
 
-  var _package = require('extplug/package');
+  var _package = require('./package');
 
   var $ = require('jquery');
   var _ = require('underscore');
   var Backbone = require('backbone');
   var meld = require('meld');
 
-  var hooks = [require('extplug/hooks/api-early'), require('extplug/hooks/chat'), require('extplug/hooks/playback'), require('extplug/hooks/settings'), require('extplug/hooks/popout-style')];
+  var hooks = [require('./hooks/api-early'), require('./hooks/chat'), require('./hooks/playback'), require('./hooks/settings'), require('./hooks/popout-style')];
 
   // LocalStorage key name for extplug
   var LS_NAME = 'extPlugins';
