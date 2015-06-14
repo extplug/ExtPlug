@@ -6,7 +6,7 @@ define(function (require, exports, module) {
 
   function sync() {
     _.defer(() => {
-      popoutView.$document.find('head').append($('.extplug-style').clone())
+      popoutView.$document.find('head').append($('.extplug-style').clone());
     });
   }
 
