@@ -21,6 +21,11 @@ define({
       '.bdg': {
         'top': '-7px',
         'transform': 'scale(0.5)'
+      },
+
+      // emoji badges
+      '.extplug-badji': {
+        'left': '7px'
       }
     },
     '.from': { 'display': 'inline' },
