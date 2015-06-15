@@ -4,6 +4,7 @@ define(function (require, exports, module) {
   const Events = require('plug/core/Events');
   const ChatView = require('plug/views/rooms/chat/ChatView');
   const util = require('plug/util/util');
+  const emoji = require('plug/util/emoji');
   const settings = require('plug/store/settings');
   const Plugin = require('../Plugin');
 
