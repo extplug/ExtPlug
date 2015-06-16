@@ -69,10 +69,14 @@ define(function (require, exports, module) {
       // insert the chat message element
       joinpoint.proceed();
 
+      let el = this.$chatMessages.children().last();
+      if (message.classes) {
+        el.addClass(message.classes);
+      }
       if (message.badge) {
         // emoji badge
         if (/^:(.*?):$/.test(message.badge)) {
-          let badgeBox = this.$chatMessages.children().last().find('.badge-box');
+          let badgeBox = el.find('.badge-box');
           let emojiName = message.badge.slice(1, -1);
           if (emoji.map[emojiName]) {
             badgeBox.find('i').remove();
@@ -85,14 +89,14 @@ define(function (require, exports, module) {
         }
         // icon badge
         else if (/^icon-(.*?)$/.test(message.badge)) {
-          let badgeBox = this.$chatMessages.children().last().find('.badge-box');
+          let badgeBox = el.find('.badge-box');
           badgeBox.find('i')
             .removeClass()
             .addClass('icon').addClass(message.badge);
         }
       }
       if (message.color) {
-        this.$chatMessages.children().last().find('.msg .text').css('color', message.color);
+        el.find('.msg .text').css('color', message.color);
       }
     }
   });
