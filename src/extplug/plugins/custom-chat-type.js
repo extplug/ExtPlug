@@ -62,39 +62,37 @@ define(function (require, exports, module) {
       if (message.type.split(' ').indexOf('custom') !== -1) {
         // plug.dj has some nice default styling on "update" messages
         message.type += ' update';
-        if (!message.timestamp) {
-          message.timestamp = util.getChatTimestamp(settings.settings.chatTimestamps === 24);
-        }
-        // insert the chat message element
-        joinpoint.proceed();
-        if (message.badge) {
-          // emoji badge
-          if (/^:(.*?):$/.test(message.badge)) {
-            let badgeBox = this.$chatMessages.children().last().find('.badge-box');
-            let emojiName = message.badge.slice(1, -1);
-            if (emoji.map[emojiName]) {
-              badgeBox.find('i').remove();
-              badgeBox.append(
-                $('<span />').addClass('emoji-glow extplug-badji').append(
-                  $('<span />').addClass('emoji emoji-' + emoji.map[emojiName])
-                )
-              );
-            }
-          }
-          // icon badge
-          else if (/^icon-(.*?)$/.test(message.badge)) {
-            let badgeBox = this.$chatMessages.children().last().find('.badge-box');
-            badgeBox.find('i')
-              .removeClass()
-              .addClass('icon').addClass(message.badge);
+      }
+      if (!message.timestamp) {
+        message.timestamp = util.getChatTimestamp(settings.settings.chatTimestamps === 24);
+      }
+      // insert the chat message element
+      joinpoint.proceed();
+
+      if (message.badge) {
+        // emoji badge
+        if (/^:(.*?):$/.test(message.badge)) {
+          let badgeBox = this.$chatMessages.children().last().find('.badge-box');
+          let emojiName = message.badge.slice(1, -1);
+          if (emoji.map[emojiName]) {
+            badgeBox.find('i').remove();
+            badgeBox.append(
+              $('<span />').addClass('emoji-glow extplug-badji').append(
+                $('<span />').addClass('emoji emoji-' + emoji.map[emojiName])
+              )
+            );
           }
         }
-        if (message.color) {
-          this.$chatMessages.children().last().find('.msg .text').css('color', message.color);
+        // icon badge
+        else if (/^icon-(.*?)$/.test(message.badge)) {
+          let badgeBox = this.$chatMessages.children().last().find('.badge-box');
+          badgeBox.find('i')
+            .removeClass()
+            .addClass('icon').addClass(message.badge);
         }
       }
-      else {
-        joinpoint.proceed();
+      if (message.color) {
+        this.$chatMessages.children().last().find('.msg .text').css('color', message.color);
       }
     }
   });
