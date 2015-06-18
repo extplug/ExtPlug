@@ -8,9 +8,9 @@
     "sistyl": "^0.4.2"
   },
   "devDependencies": {
+    "del": "^1.2.0",
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
-    "gulp-clean": "^0.3.1",
     "gulp-concat": "^2.5.2",
     "gulp-rename": "^1.2.2",
     "gulp-template": "^3.0.0",

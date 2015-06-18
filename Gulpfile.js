@@ -1,7 +1,7 @@
 var gulp   = require('gulp')
 var babel  = require('gulp-babel')
 var concat = require('gulp-concat')
-var clean  = require('gulp-clean')
+var del    = require('del')
 var rename = require('gulp-rename')
 var templ  = require('gulp-template')
 var runseq = require('run-sequence')
@@ -16,9 +16,8 @@ gulp.task('babel', [ 'clean-lib' ], function () {
     .pipe(gulp.dest('lib/'))
 })
 
-gulp.task('clean-lib', function () {
-  return gulp.src('lib', { read: false })
-    .pipe(clean())
+gulp.task('clean-lib', function (cb) {
+  del('lib', cb)
 })
 
 gulp.task('rjs', [ 'babel' ], function (done) {
@@ -65,9 +64,8 @@ gulp.task('build', [ 'rjs' ], function () {
     .pipe(gulp.dest('build/'))
 })
 
-gulp.task('clean-build', function () {
-  return gulp.src('build', { read: false })
-    .pipe(clean())
+gulp.task('clean-build', function (cb) {
+  del('build', cb)
 })
 
 gulp.task('chrome', function () {
