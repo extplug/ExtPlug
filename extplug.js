@@ -2163,15 +2163,17 @@ define('extplug/load-plugin',['require','exports','module','./util/request'],fun
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.12.3",
+  "version": "0.12.4",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
-    "plug-modules": "^4.0.0"
+    "meld": "1.x",
+    "plug-modules": "^4.0.0",
+    "sistyl": "^0.4.2"
   },
   "devDependencies": {
+    "del": "^1.2.0",
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
-    "gulp-clean": "^0.3.1",
     "gulp-concat": "^2.5.2",
     "gulp-rename": "^1.2.2",
     "gulp-template": "^3.0.0",
@@ -2184,7 +2186,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1434103027883
+  "builtAt": 1434622924535
 });
 
 
@@ -3601,7 +3603,7 @@ define('extplug/plugins/settings-tab',['require','exports','module','meld','plug
 });
 
 
-define('extplug/plugins/custom-chat-type',['require','exports','module','meld','plug/core/Events','plug/views/rooms/chat/ChatView','plug/util/util','plug/store/settings','../Plugin'],function (require, exports, module) {
+define('extplug/plugins/custom-chat-type',['require','exports','module','meld','plug/core/Events','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','plug/store/settings','../Plugin'],function (require, exports, module) {
   var _require = require('meld');
 
   var around = _require.around;
@@ -3609,6 +3611,7 @@ define('extplug/plugins/custom-chat-type',['require','exports','module','meld','
   var Events = require('plug/core/Events');
   var ChatView = require('plug/views/rooms/chat/ChatView');
   var util = require('plug/util/util');
+  var emoji = require('plug/util/emoji');
   var settings = require('plug/store/settings');
   var Plugin = require('../Plugin');
 
@@ -3666,32 +3669,35 @@ define('extplug/plugins/custom-chat-type',['require','exports','module','meld','
       if (message.type.split(' ').indexOf('custom') !== -1) {
         // plug.dj has some nice default styling on "update" messages
         message.type += ' update';
-        if (!message.timestamp) {
-          message.timestamp = util.getChatTimestamp(settings.settings.chatTimestamps === 24);
-        }
-        // insert the chat message element
-        joinpoint.proceed();
-        if (message.badge) {
-          // emoji badge
-          if (/^:(.*?):$/.test(message.badge)) {
-            var badgeBox = this.$chatMessages.children().last().find('.badge-box');
-            var emojiName = message.badge.slice(1, -1);
-            if (emoji.map[emojiName]) {
-              badgeBox.find('i').remove();
-              badgeBox.append($('<span />').addClass('emoji-glow extplug-badji').append($('<span />').addClass('emoji emoji-' + emoji.map[emojiName])));
-            }
+      }
+      if (!message.timestamp) {
+        message.timestamp = util.getChatTimestamp(settings.settings.chatTimestamps === 24);
+      }
+      // insert the chat message element
+      joinpoint.proceed();
+
+      var el = this.$chatMessages.children().last();
+      if (message.classes) {
+        el.addClass(message.classes);
+      }
+      if (message.badge) {
+        // emoji badge
+        if (/^:(.*?):$/.test(message.badge)) {
+          var badgeBox = el.find('.badge-box');
+          var emojiName = message.badge.slice(1, -1);
+          if (emoji.map[emojiName]) {
+            badgeBox.find('i').remove();
+            badgeBox.append($('<span />').addClass('emoji-glow extplug-badji').append($('<span />').addClass('emoji emoji-' + emoji.map[emojiName])));
           }
-          // icon badge
-          else if (/^icon-(.*?)$/.test(message.badge)) {
-            var badgeBox = this.$chatMessages.children().last().find('.badge-box');
-            badgeBox.find('i').removeClass().addClass('icon').addClass(message.badge);
-          }
         }
-        if (message.color) {
-          this.$chatMessages.children().last().find('.msg .text').css('color', message.color);
+        // icon badge
+        else if (/^icon-(.*?)$/.test(message.badge)) {
+          var badgeBox = el.find('.badge-box');
+          badgeBox.find('i').removeClass().addClass('icon').addClass(message.badge);
         }
-      } else {
-        joinpoint.proceed();
+      }
+      if (message.color) {
+        el.find('.msg .text').css('color', message.color);
       }
     }
   });
@@ -3922,6 +3928,11 @@ define('extplug/styles/inline-chat',{
       '.bdg': {
         top: '-7px',
         transform: 'scale(0.5)'
+      },
+
+      // emoji badges
+      '.extplug-badji': {
+        left: '7px'
       }
     },
     '.from': { display: 'inline' },
