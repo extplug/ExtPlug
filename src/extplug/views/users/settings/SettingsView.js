@@ -115,7 +115,7 @@ define(function (require, exports, module) {
         box.on('change', value => {
           // add / remove plugin settings group
           if (value) {
-            pluginMeta.enable();
+            plugin.enable();
             let pluginSettings = this.createSettingsGroup(pluginMeta);
             if (pluginSettings) {
               this.addGroup(pluginSettings);
@@ -123,7 +123,7 @@ define(function (require, exports, module) {
             }
           }
           else {
-            pluginMeta.disable();
+            plugin.disable();
             let pluginSettings = this.getGroup(name);
             if (pluginSettings) {
               this.removeGroup(name);

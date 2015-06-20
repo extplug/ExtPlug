@@ -7,6 +7,8 @@ define(function (require, exports, module) {
   const Settings = require('./models/Settings');
   const Style = require('./util/Style');
 
+  const stubHook = function () {};
+
   const Plugin = Class.extend({
     init(id, ext) {
       _.extend(this, Backbone.Events);
@@ -25,22 +27,42 @@ define(function (require, exports, module) {
       this.settings = settings;
 
       this.refresh = this.refresh.bind(this);
-      this.enable  = this.enable.bind(this);
-      this.disable = this.disable.bind(this);
-      this.$       = this.$.bind(this);
+      this.$ = this.$.bind(this);
+
+      // dis/enable hooks used to require _super() calls which were easy to
+      // forget. now, we attach events if the methods have been defined.
+      // it's all a bit ugly but...
+      if (this.enable !== stubHook) {
+        this.on('enable', this.enable, this);
+      }
+      if (this.disable !== stubHook) {
+        this.on('disable', this.disable, this);
+      }
+
+      // prevent overwriting dis/enable hooks later
+      // use the events if you need to do additional work
+      Object.defineProperties(this, {
+        enable: {
+          value: () => {
+            this.trigger('enable');
+          }
+        },
+        disable: {
+          value: () => {
+            this.removeStyles();
+            this.trigger('disable');
+          }
+        }
+      });
     },
 
     $(sel) {
       return jQuery(sel || document);
     },
 
-    disable() {
-      this.removeStyles();
-      this.trigger('disable');
-    },
-    enable() {
-      this.trigger('enable');
-    },
+    // obsolete, but some plugins call _super()
+    disable: stubHook,
+    enable: stubHook,
 
     refresh() {
       this.disable();
