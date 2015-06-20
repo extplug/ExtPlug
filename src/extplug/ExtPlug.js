@@ -96,11 +96,6 @@ define(function (require, exports, module) {
 
     },
 
-    registerModule(id, cb) {
-      console.warn('ExtPlug#registerModule is deprecated. Use #registerPlugin instead.');
-      return this.registerPlugin(id, cb);
-    },
-
     /**
      * Register an ExtPlug plugin by require.js module name.
      * This can be anything that is accepted by require.js, including
@@ -133,11 +128,6 @@ define(function (require, exports, module) {
         }
       );
       return this;
-    },
-
-    unregisterModule(id) {
-      console.warn('ExtPlug#unregisterModule is deprecated. Use #unregisterPlugin instead.');
-      return this.unregisterPlugin(id);
     },
 
     /**

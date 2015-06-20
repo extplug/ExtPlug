@@ -28,10 +28,7 @@ gulp.task('rjs', [ 'babel' ], function (done) {
   rjs.optimize({
     baseUrl: 'lib/',
     name: 'extplug/boot',
-    include: [
-      'extplug/ExtPlug',
-      'extplug/Module'
-    ],
+    include: [ 'extplug/ExtPlug' ],
     paths: {
       // plug-modules defines, these are defined at runtime
       // so the r.js optimizer can't find them
