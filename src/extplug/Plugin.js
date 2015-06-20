@@ -36,8 +36,10 @@ define(function (require, exports, module) {
 
     disable() {
       this.removeStyles();
+      this.trigger('disable');
     },
     enable() {
+      this.trigger('enable');
     },
 
     refresh() {
