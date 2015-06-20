@@ -10,16 +10,20 @@ define(function (require, exports, module) {
       instance: null
     },
 
+    initialize() {
+      this.get('instance')
+        .on('enable',  () => { this.set('enabled', true);  })
+        .on('disable', () => { this.set('enabled', false); });
+    },
+
     enable() {
       if (!this.get('enabled')) {
-        this.set('enabled', true);
         this.get('instance').enable();
       }
     },
 
     disable() {
       if (this.get('enabled')) {
-        this.set('enabled', false);
         this.get('instance').disable();
       }
     }
