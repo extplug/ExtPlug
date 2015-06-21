@@ -5,6 +5,7 @@ define(function (require, exports, module) {
   const PluginMeta = Model.extend({
 
     defaults: {
+      id: '',
       enabled: false,
       name: '',
       instance: null

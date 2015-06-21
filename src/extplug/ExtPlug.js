@@ -141,6 +141,11 @@ define(function (require, exports, module) {
       }
     },
 
+    getPlugin(id) {
+      let meta = this._plugins.get(id);
+      return meta ? meta.get('instance') : null;
+    },
+
     /**
      * Installs a plugin. This is basically registerPlugin(), but it also
      * remembers the plugin name so it can be loaded again automatically
