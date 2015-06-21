@@ -3,6 +3,7 @@ define(function (require, exports, module) {
   const ControlGroupView = require('./ControlGroupView');
   const CheckboxView = require('./CheckboxView');
   const DropdownView = require('./DropdownView');
+  const InputView = require('./InputView');
   const SliderView = require('./SliderView');
   const { each, has } = require('underscore');
 
@@ -26,6 +27,13 @@ define(function (require, exports, module) {
         min: setting.min,
         max: setting.max,
         value: settings.get(name)
+      });
+    },
+    text(setting, value) {
+      return new InputView({
+        label: setting.label,
+        description: setting.description,
+        value: value
       });
     }
   };
