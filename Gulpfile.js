@@ -1,3 +1,4 @@
+var browserify = require('browserify')
 var gulp   = require('gulp')
 var babel  = require('gulp-babel')
 var concat = require('gulp-concat')
@@ -7,10 +8,11 @@ var templ  = require('gulp-template')
 var runseq = require('run-sequence')
 var rjs    = require('requirejs')
 var mkdirp = require('mkdirp')
+var source = require('vinyl-source-stream')
 var fs     = require('fs')
 var packg  = require('./package.json')
 
-gulp.task('babel', [ 'clean-lib' ], function () {
+gulp.task('babel', function () {
   return gulp.src('src/**/*')
     .pipe(babel({ modules: 'ignore' }))
     .pipe(gulp.dest('lib/'))
@@ -20,7 +22,20 @@ gulp.task('clean-lib', function (cb) {
   del('lib', cb)
 })
 
-gulp.task('rjs', [ 'babel' ], function (done) {
+gulp.task('lib-debug', function () {
+  var b = browserify({
+    entries: './node_modules/debug/browser.js',
+    standalone: 'debug'
+  })
+
+  return b.bundle()
+    .pipe(source('debug.js'))
+    .pipe(gulp.dest('lib/debug/'))
+})
+
+gulp.task('dependencies', [ 'lib-debug' ])
+
+gulp.task('rjs', function (done) {
   var npm = '../node_modules/'
   packg.builtAt = Date.now()
   var packgString = JSON.stringify(packg, null, 2)
@@ -38,7 +53,8 @@ gulp.task('rjs', [ 'babel' ], function (done) {
       underscore: 'empty:',
       meld: npm + 'meld/meld',
       sistyl: npm + 'sistyl/lib/sistyl',
-      'plug-modules': npm + 'plug-modules/plug-modules'
+      'plug-modules': npm + 'plug-modules/plug-modules',
+      'debug': 'debug/debug'
     },
     rawText: {
       'extplug/package': 'define(' + packgString + ')'
@@ -53,7 +69,7 @@ gulp.task('rjs', [ 'babel' ], function (done) {
   })
 })
 
-gulp.task('build', [ 'rjs' ], function () {
+gulp.task('build', function () {
   return gulp.src([ 'build/build.rjs.js'
                   , 'lib/plugins/*'
                   , 'lib/extplug/plugdj.user.js' ])
@@ -92,7 +108,10 @@ gulp.task('clean', [ 'clean-lib', 'clean-build' ])
 
 gulp.task('default', function () {
   return runseq(
-    'clean-build',
+    'clean',
+    'babel',
+    'dependencies',
+    'rjs',
     'build',
     [ 'chrome', 'userscript' ]
   )
