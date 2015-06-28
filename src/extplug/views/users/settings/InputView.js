@@ -1,6 +1,7 @@
 define(function (require, exports, module) {
 
   const { View } = require('backbone');
+  const { omit } = require('underscore');
   const $ = require('jquery');
 
   const KEY_ENTER = 13;
@@ -12,7 +13,10 @@ define(function (require, exports, module) {
       this.label = o.label;
       this.description = o.description;
       this.value = o.value;
-      this.type = o.type || 'text';
+
+      o.type = o.type || 'text';
+      this.attributes = omit(o, 'label', 'value', 'description');
+
       this.onKeyUp = this.onKeyUp.bind(this);
       this.onKeyDown = this.onKeyDown.bind(this);
       this.onBlur = this.onBlur.bind(this);
@@ -20,7 +24,7 @@ define(function (require, exports, module) {
 
     render() {
       this.$label = $('<label />').addClass('title').text(this.label);
-      this.$input = $('<input />').attr('type', this.type).val(this.value);
+      this.$input = $('<input />').attr(this.attributes).val(this.value);
       this.$el.append(this.$label, this.$input);
       if (this.description) {
         this.$label
