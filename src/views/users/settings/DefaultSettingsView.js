@@ -35,6 +35,14 @@ define(function (require, exports, module) {
         description: setting.description,
         value: value
       });
+    },
+    number(setting, value) {
+      return new InputView({
+        type: 'number',
+        label: setting.label,
+        description: setting.description,
+        value: value
+      })
     }
   };
 
