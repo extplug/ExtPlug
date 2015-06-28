@@ -79,6 +79,7 @@ gulp.task('rjs', function (done) {
       extplug: 'lib',
       'plug-modules': npm + 'plug-modules/plug-modules',
       'debug': 'build/_deps/debug',
+      'onecolor': npm + 'onecolor/one-color-all',
       'regexp-quote': 'build/_deps/regexp-quote',
       'semver-compare': 'build/_deps/semvercmp'
     },

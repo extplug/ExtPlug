@@ -19,13 +19,16 @@ define(function (require, exports, module) {
 
       this.onKeyUp = this.onKeyUp.bind(this);
       this.onKeyDown = this.onKeyDown.bind(this);
+      this.onFocus = this.onFocus.bind(this);
       this.onBlur = this.onBlur.bind(this);
+      this.focus = this.focus.bind(this);
     },
 
     render() {
       this.$label = $('<label />').addClass('title').text(this.label);
       this.$input = $('<input />').attr(this.attributes).val(this.value);
-      this.$el.append(this.$label, this.$input);
+      this.$wrapper = $('<div />').addClass('extplug-input-wrap');
+      this.$el.append(this.$label, this.$wrapper.append(this.$input));
       if (this.description) {
         this.$label
           .on('mouseenter', () => {
@@ -36,7 +39,10 @@ define(function (require, exports, module) {
 
       this.$input.on('keyup', this.onKeyUp);
       this.$input.on('keydown', this.onKeyDown);
+      this.$input.on('focus', this.onFocus);
       this.$input.on('blur', this.onBlur);
+
+      this.$el.on('mousedown', this.focus);
     },
 
     onKeyUp() {
@@ -48,10 +54,21 @@ define(function (require, exports, module) {
       }
     },
 
-    onBlur() {
-      this.trigger('change', this.$input.val());
-    }
+    focus() {
+      this.$input.focus();
+    },
 
+    onFocus() {
+      this.$wrapper.addClass('focused');
+    },
+    onBlur() {
+      this.$wrapper.removeClass('focused');
+      this.trigger('change', this.value());
+    },
+
+    value() {
+      return this.$input.val();
+    }
   });
 
   module.exports = InputView;

@@ -2,6 +2,7 @@ define(function (require, exports, module) {
 
   const ControlGroupView = require('./ControlGroupView');
   const CheckboxView = require('./CheckboxView');
+  const ColorInputView = require('./ColorInputView');
   const DropdownView = require('./DropdownView');
   const InputView = require('./InputView');
   const SliderView = require('./SliderView');
@@ -46,6 +47,13 @@ define(function (require, exports, module) {
         max:  has(setting, 'max')  ? setting.max  : '',
         step: has(setting, 'step') ? setting.step : ''
       })
+    },
+    color(setting, value) {
+      return new ColorInputView({
+        label: setting.label,
+        description: setting.description,
+        value: value
+      });
     }
   };
 

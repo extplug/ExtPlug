@@ -33,23 +33,45 @@ define({
         'font-size': '14px',
         'width': '50%'
       },
-      'input': {
+      '.extplug-input-wrap': {
         'position': 'absolute',
-        'background': 'rgba(17, 19, 23, 0.77)',
-        'border': '1px solid #444a59',
-        'padding': '1px',
-        'font': '14px "Open Sans", sans-serif',
+        'background': '#212328',
+        'box-shadow': 'inset 0 0 0 1px #444a59',
         'box-sizing': 'border-box',
-        'color': '#808691',
-
         'height': '31px',
+        'padding': '1px',
         'width': '47%',
         'left': '50%',
         'top': '-6px'
       },
-      'input:focus': {
+      'input': {
+        'padding': '1px 1px 1px 5px',
+        'height': '29px',
+        'width': '100%',
+        'box-sizing': 'border-box',
+        'font': '14px "Open Sans", sans-serif',
         'color': '#ccc',
-        'border-color': '#009cdd'
+        'background': 'transparent',
+        'border': 'none'
+      },
+      '.error': {
+        // someone decided to !important the default .focused style ):
+        'box-shadow': 'inset 0 0 0 1px #f04f30 !important'
+      }
+    },
+
+    // colour inputs
+    '.extplug-color-input': {
+      '.extplug-color-swatch': {
+        'height': '23px',
+        'width': '23px',
+        'top': '4px',
+        'left': '4px',
+        'position': 'absolute'
+      },
+      'input': {
+        'width': 'calc(100% - 29px)',
+        'margin-left': '29px'
       }
     }
   }

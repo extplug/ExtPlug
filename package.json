@@ -6,6 +6,7 @@
     "debug": "^2.2.0",
     "es6-symbol": "^2.0.1",
     "meld": "1.x",
+    "onecolor": "^2.5.0",
     "plug-modules": "^4.2.2",
     "regexp-quote": "0.0.0",
     "semver-compare": "^1.0.0",
