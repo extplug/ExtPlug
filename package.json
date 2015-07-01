@@ -5,7 +5,7 @@
   "dependencies": {
     "debug": "^2.2.0",
     "meld": "1.x",
-    "plug-modules": "^4.0.0",
+    "plug-modules": "^4.2.2",
     "sistyl": "^0.4.2"
   },
   "devDependencies": {
