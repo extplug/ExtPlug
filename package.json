@@ -1,6 +1,6 @@
 {
   "name": "extplug",
-  "version": "0.12.4",
+  "version": "0.12.5",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
