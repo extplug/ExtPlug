@@ -74,11 +74,18 @@ var todo = function () {
  * The Context keeps track of the long names, and provides some convenience methods
  * for working with renamed modules.
  */
-function Context() {
+function Context(target) {
   this._nameMapping = {};
   this._notFound = [];
   this._detectives = [];
   this._ran = false;
+  this.target = target
+  if (!target) try {
+    this.target = requirejs.s.contexts._.defined;
+  }
+  catch (e) {
+    this.target = null
+  }
 }
 // adds a Detective to this context. these detectives will
 // be run by Context#run.
@@ -111,7 +118,7 @@ Context.prototype.resolveName = function (path) {
   return this._nameMapping[path] ? this.resolveName(this._nameMapping[path]) : path;
 };
 Context.prototype.require = function (path) {
-  var defined = require.s.contexts._.defined;
+  var defined = this.target;
   return defined[path] || (this._nameMapping[path] && this.require(this._nameMapping[path])) || undefined;
 };
 Context.prototype.isDefined = function (path) {
@@ -119,6 +126,7 @@ Context.prototype.isDefined = function (path) {
 };
 Context.prototype.define = function (newPath, oldPath) {
   this._nameMapping[newPath] = oldPath;
+  this.require(oldPath).__plugModule = newPath
   return this;
 };
 Context.prototype.setNotFound = function (path) {
@@ -126,7 +134,7 @@ Context.prototype.setNotFound = function (path) {
 };
 Context.prototype.getUnknownModules = function () {
   var knownModules = _.values(this._nameMapping);
-  var allModules = _.keys(require.s.contexts._.defined).filter(function (moduleName) {
+  var allModules = _.keys(this.target).filter(function (moduleName) {
     return moduleName.substr(0, 5) !== 'plug/' &&
       moduleName.substr(0, 4) !== 'hbs!' &&
       this.require(moduleName) !== undefined;
@@ -141,7 +149,7 @@ Context.prototype.isInSameNamespace = function (name, otherModuleName) {
 // Add the new names to the global module registry
 Context.prototype.register = function () {
   for (var newName in this._nameMapping) if (this._nameMapping.hasOwnProperty(newName)) {
-    require.s.contexts._.defined[newName] = this.require(newName);
+    this.target[newName] = this.require(newName);
   }
 };
 
@@ -187,7 +195,7 @@ Matcher.prototype.match = function (context, module, name) {
   throw new Error('Matcher "match" method not implemented');
 };
 Matcher.prototype.resolve = function (context) {
-  var defines = require.s.contexts._.defined;
+  var defines = context.target;
   var fn = this.fn;
   for (var name in defines) if (defines.hasOwnProperty(name)) {
     try {
@@ -217,7 +225,7 @@ Fetcher.prototype.resolve = function (context) {
   var module = this.fetch(context);
   if (module) {
     // find module name
-    var defines = require.s.contexts._.defined,
+    var defines = context.target,
       name;
     for (name in defines) if (defines.hasOwnProperty(name)) {
       if (defines[name] && defines[name] === module) {
@@ -298,17 +306,38 @@ EventMatcher.prototype.match = function (context, module, name) {
 /**
  * An ActionMatcher finds a module definition that defines a certain plug.dj Action.
  */
-function ActionMatcher(method, url) {
+function ActionMatcher(method, url, regex, params) {
   Matcher.call(this);
 
   this._method = method.toUpperCase();
   this._url = url;
+  this._regex = regex;
+  this._params = params || [];
+  this._fakeInstance = {};
+  Object.defineProperty(this._fakeInstance, '_super', {
+    get: function () {
+      // fake _super method
+      return function () {};
+    },
+    set: function () {
+      // ignore
+    }
+  });
 }
 ActionMatcher.prototype = Object.create(Matcher.prototype);
 ActionMatcher.prototype.match = function (context, module, name) {
-  return module.prototype &&
-    functionContains(module.prototype.execute, '.execute("' + this._method) &&
-    functionContains(module.prototype.execute, this._url);
+  if (module.prototype && module.prototype.type === this._method) {
+    if (this._url) {
+      return module.prototype.route === this._url;
+    }
+    else if (this._regex) {
+      module.prototype.init.apply(this._fakeInstance, this._params);
+      return typeof this._regex === 'string'
+        ? this._fakeInstance.route.indexOf(this._regex) === 0
+        : this._regex.test(this._fakeInstance.route);
+    }
+  }
+  return false;
 };
 
 /**
@@ -361,56 +390,58 @@ var plugModules = {
   'plug/actions/auth/AuthTokenAction': new ActionMatcher('GET', 'auth/token'),
   'plug/actions/auth/FacebookAuthAction': new ActionMatcher('POST', 'auth/facebook'),
   'plug/actions/auth/KillSessionAction': new ActionMatcher('DELETE', 'auth/session'),
+  'plug/actions/auth/LoginAction': new ActionMatcher('POST', 'auth/login'),
   'plug/actions/bans/BanAction': new ActionMatcher('POST', 'bans/add'),
   'plug/actions/bans/ListBansAction': new ActionMatcher('GET', 'bans'),
-  'plug/actions/bans/UnbanAction': new ActionMatcher('DELETE', 'bans/'),
+  'plug/actions/bans/UnbanAction': new ActionMatcher('DELETE', null, 'bans/'),
   'plug/actions/booth/JoinWaitlistAction': new ActionMatcher('POST', 'booth'),
   'plug/actions/booth/LeaveWaitlistAction': new ActionMatcher('DELETE', 'booth'),
   'plug/actions/booth/ModerateAddDJAction': new ActionMatcher('POST', 'booth/add'),
-  'plug/actions/booth/ModerateForceSkipAction': new ActionMatcher('POST', 'booth/skip"'),
-  'plug/actions/booth/ModerateRemoveDJAction': new ActionMatcher('DELETE', 'booth/remove/'),
+  'plug/actions/booth/ModerateForceSkipAction': new ActionMatcher('POST', 'booth/skip'),
+  'plug/actions/booth/ModerateRemoveDJAction': new ActionMatcher('DELETE', null, 'booth/remove/'),
   'plug/actions/booth/SkipTurnAction': new ActionMatcher('POST', 'booth/skip/me'),
   'plug/actions/booth/BoothLockAction': new ActionMatcher('PUT', 'booth/lock'),
   'plug/actions/booth/BoothMoveAction': new ActionMatcher('POST', 'booth/move'),
   'plug/actions/booth/BoothSetCycleAction': new ActionMatcher('PUT', 'booth/cycle'),
   'plug/actions/friends/BefriendAction': new ActionMatcher('POST', 'friends'),
-  'plug/actions/friends/ListFriendsAction': new ActionMatcher('GET', 'friends"'),
+  'plug/actions/friends/ListFriendsAction': new ActionMatcher('GET', 'friends'),
   'plug/actions/friends/ListInvitesAction': new ActionMatcher('GET', 'friends/invites'),
   'plug/actions/friends/IgnoreRequestAction': new ActionMatcher('PUT', 'friends/ignore'),
-  'plug/actions/friends/UnfriendAction': new ActionMatcher('DELETE', 'friends/'),
+  'plug/actions/friends/UnfriendAction': new ActionMatcher('DELETE', null, 'friends/'),
   'plug/actions/ignores/IgnoreAction': new ActionMatcher('POST', 'ignores'),
-  'plug/actions/ignores/UnignoreAction': new ActionMatcher('DELETE', 'ignores/'),
+  'plug/actions/ignores/UnignoreAction': new ActionMatcher('DELETE', null, 'ignores/'),
   'plug/actions/ignores/IgnoresListAction': new ActionMatcher('GET', 'ignores'),
-  'plug/actions/media/ListMediaAction': new ActionMatcher('GET', 'playlists/'),
-  'plug/actions/media/MediaDeleteAction': new ActionMatcher('POST', 'playlists/"+this.id+"/media/delete'),
+  'plug/actions/media/ListMediaAction': new ActionMatcher('GET', null, 'playlists/'),
+  'plug/actions/media/MediaDeleteAction': new ActionMatcher('POST', null, /\/media\/delete$/),
   'plug/actions/media/MediaGrabAction': new ActionMatcher('POST', 'grabs'),
-  'plug/actions/media/MediaInsertAction': new ActionMatcher('POST', 'playlists/"+this.id+"/media/insert'),
-  'plug/actions/media/MediaMoveAction': new ActionMatcher('PUT', 'playlists/"+this.id+"/media/move'),
-  'plug/actions/media/MediaUpdateAction': new ActionMatcher('PUT', 'playlists/"+this.id+"/media/update'),
+  'plug/actions/media/MediaInsertAction': new ActionMatcher('POST', null, /\/media\/insert$/, [ null, [], null ]),
+  'plug/actions/media/MediaMoveAction': new ActionMatcher('PUT', null, /\/media\/move$/, [ null, [], null ]),
+  'plug/actions/media/MediaUpdateAction': new ActionMatcher('PUT', null, /\/media\/update$/),
   'plug/actions/mutes/MuteAction': new ActionMatcher('POST', 'mutes'),
-  'plug/actions/mutes/UnmuteAction': new ActionMatcher('DELETE', 'mutes/'),
+  'plug/actions/mutes/UnmuteAction': new ActionMatcher('DELETE', null, 'mutes/'),
   'plug/actions/mutes/MutesListAction': new ActionMatcher('GET', 'mutes'),
   'plug/actions/news/NewsListAction': new ActionMatcher('GET', 'news'),
-  'plug/actions/notifications/NotificationReadAction': new ActionMatcher('DELETE', 'notifications/'),
+  'plug/actions/notifications/NotificationReadAction': new ActionMatcher('DELETE', null, 'notifications/'),
   'plug/actions/playlists/ListPlaylistsAction': new ActionMatcher('GET', 'playlists'),
-  'plug/actions/playlists/PlaylistActivateAction': new ActionMatcher('PUT', 'playlists/"+this.data+"/activate'),
-  'plug/actions/playlists/PlaylistCreateAction': new ActionMatcher('POST', 'playlists"'),
-  'plug/actions/playlists/PlaylistDeleteAction': new ActionMatcher('DELETE', 'playlists/'),
-  'plug/actions/playlists/PlaylistRenameAction': new ActionMatcher('PUT', 'playlists/"+this.id+"/rename'),
-  'plug/actions/playlists/PlaylistShuffleAction': new ActionMatcher('PUT', 'playlists/"+this.data+"/shuffle'),
+  'plug/actions/playlists/PlaylistActivateAction': new ActionMatcher('PUT', null, /\/activate$/),
+  'plug/actions/playlists/PlaylistCreateAction': new ActionMatcher('POST', 'playlists'),
+  'plug/actions/playlists/PlaylistDeleteAction': new ActionMatcher('DELETE', null, 'playlists/'),
+  'plug/actions/playlists/PlaylistRenameAction': new ActionMatcher('PUT', null, /\/rename$/),
+  'plug/actions/playlists/PlaylistShuffleAction': new ActionMatcher('PUT', null, /\/shuffle$/),
   'plug/actions/profile/SetBlurbAction': new ActionMatcher('PUT', 'profile/blurb'),
-  'plug/actions/rooms/ListFavoritesAction': new ActionMatcher('GET', 'rooms/favorites'),
+  'plug/actions/rooms/ListFavoritesAction': new ActionMatcher('GET', null, 'rooms/favorites'),
   'plug/actions/rooms/ListMyRoomsAction': new ActionMatcher('GET', 'rooms/me'),
-  'plug/actions/rooms/ListRoomsAction': new ActionMatcher('GET', 'rooms"'),
-  'plug/actions/rooms/ModerateDeleteChatAction': new ActionMatcher('DELETE', 'chat/"+this.data'),
+  'plug/actions/rooms/ListRoomsAction': new ActionMatcher('GET', null, 'rooms?q='),
+  'plug/actions/rooms/ModerateDeleteChatAction': new ActionMatcher('DELETE', null, 'chat/'),
   'plug/actions/rooms/RoomCreateAction': new ActionMatcher('POST', 'rooms'),
   'plug/actions/rooms/RoomFavoriteAction': new ActionMatcher('POST', 'rooms/favorites'),
   'plug/actions/rooms/RoomHistoryAction': new ActionMatcher('GET', 'rooms/history'),
   'plug/actions/rooms/RoomJoinAction': new ActionMatcher('POST', 'rooms/join'),
   'plug/actions/rooms/RoomStateAction': new ActionMatcher('GET', 'rooms/state'),
-  'plug/actions/rooms/RoomUnfavoriteAction': new ActionMatcher('DELETE', 'rooms/favorites'),
+  'plug/actions/rooms/RoomUnfavoriteAction': new ActionMatcher('DELETE', null, 'rooms/favorites'),
   'plug/actions/rooms/RoomUpdateAction': new ActionMatcher('POST', 'rooms/update'),
-  'plug/actions/rooms/RoomValidateAction': new ActionMatcher('GET', 'rooms/validate'),
+  'plug/actions/rooms/RoomValidateAction': new ActionMatcher('GET', null, 'rooms/validate'),
+  'plug/actions/rooms/SOSAction': new ActionMatcher('POST', 'rooms/sos'),
   'plug/actions/rooms/VoteAction': new ActionMatcher('POST', 'votes'),
   'plug/actions/soundcloud/SoundCloudSearchService': function (m) {
     return _.isFunction(m) && _.isFunction(m.prototype.onResolve) && _.isFunction(m.prototype.parse);
@@ -433,23 +464,24 @@ var plugModules = {
       _.isFunction(m.prototype.onComplete);
   },
   'plug/actions/staff/StaffListAction': new ActionMatcher('GET', 'staff'),
-  'plug/actions/staff/StaffRemoveAction': new ActionMatcher('DELETE', 'staff/'),
+  'plug/actions/staff/StaffRemoveAction': new ActionMatcher('DELETE', null, 'staff/'),
   'plug/actions/staff/StaffUpdateAction': new ActionMatcher('POST', 'staff/update'),
   'plug/actions/store/ChangeUsernameAction': new ActionMatcher('POST', 'store/purchase/username'),
   'plug/actions/store/PurchaseAction': new ActionMatcher('POST', 'store/purchase'),
-  'plug/actions/store/ProductsAction': new ActionMatcher('GET', 'store/products'),
-  'plug/actions/store/InventoryAction': new ActionMatcher('GET', 'store/inventory'),
-  'plug/actions/users/ValidateNameAction': new ActionMatcher('GET', 'users/validate/'),
+  'plug/actions/store/ProductsAction': new ActionMatcher('GET', null, 'store/products'),
+  'plug/actions/store/InventoryAction': new ActionMatcher('GET', null, 'store/inventory'),
+  'plug/actions/users/ValidateNameAction': new ActionMatcher('GET', null, 'users/validate/'),
   'plug/actions/users/SetLanguageAction': new ActionMatcher('PUT', 'users/language'),
   'plug/actions/users/SetAvatarAction': new ActionMatcher('PUT', 'users/avatar'),
   'plug/actions/users/SetBadgeAction': new ActionMatcher('PUT', 'users/badge'),
-  'plug/actions/users/MeAction': new ActionMatcher('GET', '"users/me"'),
+  'plug/actions/users/MeAction': new ActionMatcher('GET', 'users/me'),
   'plug/actions/users/ListTransactionsAction': new ActionMatcher('GET', 'users/me/transactions'),
   'plug/actions/users/UserHistoryAction': new ActionMatcher('GET', 'users/me/history'),
-  'plug/actions/users/UserFindAction': new ActionMatcher('GET', 'users/"+this.data'),
+  'plug/actions/users/UserFindAction': new ActionMatcher('GET', null, 'users/'),
   'plug/actions/users/BulkFindAction': new ActionMatcher('POST', 'users/bulk'),
   'plug/actions/users/SendGiftAction': new ActionMatcher('POST', 'gift'),
   'plug/actions/users/SaveSettingsAction': new ActionMatcher('PUT', 'users/settings'),
+  'plug/actions/users/SignupAction': new ActionMatcher('POST', 'users/signup'),
   'plug/actions/youtube/YouTubePlaylistService': function (m) {
     return _.isFunction(m) && _.isFunction(m.prototype.sortByName) && _.isFunction(m.prototype.next);
   },
@@ -817,11 +849,31 @@ var plugModules = {
     return isCollectionOf(m, this.require('plug/models/Badge')) &&
       !_.isFunction(m.onChange); // myBadges
   }).needs('plug/models/Badge'),
-  'plug/collections/searchResults': new SimpleMatcher(function (m) {
-    // TODO
-    return isCollectionOf(m, this.require('plug/models/Media')) && false;
-  }).needs('plug/models/Media'),
-  'plug/collections/restrictedMediaAlternatives': new SimpleMatcher(function (m) {
+  'plug/collections/restrictedMediaAlternatives': new StepwiseMatcher({
+    setup: function () {
+      var RSHandler = this.require('plug/handlers/RestrictedSearchHandler');
+      // the restricted search result handler resets the searchResults
+      // array
+      RSHandler.prototype.onResult.call(
+        { finish: function () {} },
+        [ {
+          id: -1000,
+          author: 'plug-modules',
+          title: 'Test item used to find the right collection.'
+        } ]
+      );
+    },
+    check: function (m) {
+      return isCollectionOf(m, this.require('plug/models/Media')) &&
+        m.last().get('id') === -1000;
+    },
+    cleanup: function (searchResults) {
+      // we cannot get back the original search results, unfortunately,
+      // without re-running the search query (which may be possible, but
+      // is a little expensive)
+    }
+  }).needs('plug/handlers/RestrictedSearchHandler', 'plug/models/Media'),
+  'plug/collections/relatedMedia': new SimpleMatcher(function (m) {
     // TODO
     return isCollectionOf(m, this.require('plug/models/Media')) && false;
   }).needs('plug/models/Media'),
@@ -910,7 +962,7 @@ var plugModules = {
     return _.isFunction(m.ytSearch) && _.isFunction(m.ytRelated) && _.isFunction(m.scPermalink);
   },
   'plug/facades/playlistsSearchFacade': function (m) {
-    return _.isFunction(m.setQuery) && _.isFunction(m.onTimeout);
+    return _.isFunction(m.setQuery) && _.isFunction(m.onHistory);
   },
 
   // application views
@@ -1102,9 +1154,63 @@ var plugModules = {
   'plug/views/playlists/import/PlaylistImportPanelView': function (m) {
     return isView(m) && m.prototype.id === 'playlist-import-panel';
   },
+  'plug/views/playlists/media/headers/MediaHeaderView': function (m) {
+    return isView(m) && m.prototype.className === 'header' &&
+      m.__super__ === Backbone.View;
+  },
   'plug/views/playlists/media/headers/ImportHeaderView': function (m) {
     return isView(m) && m.prototype.className === 'header import' &&
       m.prototype.template === this.require('hbs!templates/playlist/media/headers/ImportHeader')();
+  },
+  'plug/views/playlists/media/headers/PlaylistMediaHeaderView': function (m) {
+    return isView(m) && m.prototype.className === 'header no-icon' &&
+      _.isFunction(m.prototype.onShuffleClick);
+  },
+  'plug/views/playlists/media/headers/PlaylistSearchHeader': function (m) {
+    return isView(m) && !_.isFunction(m.prototype.onQueryUpdate) &&
+      m.prototype.template === this.require('hbs!templates/playlist/media/headers/SearchMediaHeader')();
+  },
+  'plug/views/playlists/media/headers/SearchRelatedHeader': function (m) {
+    return isView(m) && m.prototype.className === 'header with-back' &&
+      _.isFunction(m.prototype.onBackClick);
+  },
+  'plug/views/playlists/media/headers/YouTubePlaylistsHeader': function (m) {
+    const Lang = this.require('lang/Lang');
+    return isView(m) && m.prototype.className === 'header import' &&
+      m.prototype.template === this.require('hbs!templates/playlist/media/headers/ImportYouTubePlaylistsHeader')(Lang);
+  },
+  'plug/views/playlists/media/headers/SimpleTitleHeader': function (m) {
+    return isView(m) && m.prototype.className === 'header' &&
+      m.prototype.template === this.require('hbs!templates/playlist/media/headers/SimpleTitleHeader')();
+  },
+  'plug/views/playlists/media/headers/YouTubeMediaHeader': function (m) {
+    return isView(m) && m.prototype.className === 'header import-with-back' &&
+      _.isFunction(m.prototype.onImportClick) &&
+      _.isFunction(m.prototype.onImport) &&
+      _.isFunction(m.prototype.onBackClick);
+  },
+  'plug/views/playlists/media/headers/SoundCloudSetsHeader': function (m) {
+    const Lang = this.require('lang/Lang');
+    return isView(m) && m.prototype.className === 'header import' &&
+      _.isFunction(m.prototype.onImportClick) &&
+      m.prototype.template === this.require('hbs!templates/playlist/media/headers/ImportSoundCloudSetsHeader')(Lang);
+  },
+  'plug/views/playlists/media/headers/SearchMediaHeader': function (m) {
+    return isView(m) && _.isFunction(m.prototype.onQueryUpdate) &&
+      m.prototype.template === this.require('hbs!templates/playlist/media/headers/SearchMediaHeader')();
+  },
+  // iffy naming below:
+  'plug/views/playlists/media/headers/SoundCloudMediaHeader': function (m) {
+    return isView(m) && m.prototype.className === 'header import-with-back' &&
+      _.isFunction(m.prototype.onImportClick) &&
+      !_.isFunction(m.prototype.onImport) &&
+      _.isFunction(m.prototype.onBackClick);
+  },
+  'plug/views/playlists/media/headers/SoundCloudTracksHeader': function (m) {
+    const Lang = this.require('lang/Lang');
+    return isView(m) && m.prototype.className === 'header import' &&
+      _.isFunction(m.prototype.onImportClick) &&
+      m.prototype.template === this.require('hbs!templates/playlist/media/headers/ImportSoundCloudHeader')(Lang);
   },
   'plug/views/playlists/media/MediaPanelView': function (m) {
     // TODO ensure that there are no other modules that match this footprint
@@ -1419,6 +1525,9 @@ var plugModules = {
   'plug/views/rooms/VotePanelView': function (m) {
     return isView(m) && m.prototype.id === 'vote';
   },
+  'plug/views/rooms/WalkthroughView': function () {
+    return isView(m) && m.prototype.id === 'walkthrough';
+  },
   'plug/views/rooms/header/HistoryPanelView': function (m) {
     return isView(m) && m.prototype.id === 'history-panel';
   },
@@ -1548,8 +1657,17 @@ var plugModules = {
       'template' in m.prototype && m.prototype.template === undefined;
   },
 
+  'plug/views/welcome/LoginView': function () {
+    return isView(m) && m.prototype.className.indexOf('login-mode') !== -1;
+  },
+  'plug/views/welcome/RegisterView': function () {
+    return isView(m) && m.prototype.className.indexOf('register-mode') !== -1;
+  },
+  'plug/views/welcome/SignupOverlayView': function () {
+    return isView(m) && m.prototype.className === 'sign-up-overlay';
+  },
   'plug/views/welcome/UsernameView': function (m) {
-    return isView(m) && m.prototype.className === 'section username empty';
+    return isView(m) && m.prototype.className === 'username';
   }
 
 };
@@ -1578,6 +1696,17 @@ context.SimpleFetcher = SimpleFetcher;
 context.HandlerFetcher = HandlerFetcher;
 
 context.modules = plugModules;
+
+context.load = function (name, req, cb, config) {
+  context.run();
+  var result = context.require(name);
+  if (result) {
+    cb(result);
+  }
+  else {
+    cb.error(new Error('module "' + name + '" not found'));
+  }
+};
 
 return context;
 
@@ -1803,21 +1932,30 @@ define('extplug/models/PluginMeta',['require','exports','module','backbone'],fun
   var PluginMeta = Model.extend({
 
     defaults: {
+      id: '',
       enabled: false,
       name: '',
       instance: null
     },
 
+    initialize: function initialize() {
+      var _this = this;
+
+      this.get('instance').on('enable', function () {
+        _this.set('enabled', true);
+      }).on('disable', function () {
+        _this.set('enabled', false);
+      });
+    },
+
     enable: function enable() {
       if (!this.get('enabled')) {
-        this.set('enabled', true);
         this.get('instance').enable();
       }
     },
 
     disable: function disable() {
       if (this.get('enabled')) {
-        this.set('enabled', false);
         this.get('instance').disable();
       }
     }
@@ -2056,8 +2194,12 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
   var Settings = require('./models/Settings');
   var Style = require('./util/Style');
 
+  var stubHook = function stubHook() {};
+
   var Plugin = Class.extend({
     init: function init(id, ext) {
+      var _this = this;
+
       _.extend(this, Backbone.Events);
 
       this.id = id;
@@ -2074,19 +2216,42 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
       this.settings = settings;
 
       this.refresh = this.refresh.bind(this);
-      this.enable = this.enable.bind(this);
-      this.disable = this.disable.bind(this);
       this.$ = this.$.bind(this);
+
+      // dis/enable hooks used to require _super() calls which were easy to
+      // forget. now, we attach events if the methods have been defined.
+      // it's all a bit ugly but...
+      if (this.enable !== stubHook) {
+        this.on('enable', this.enable, this);
+      }
+      if (this.disable !== stubHook) {
+        this.on('disable', this.disable, this);
+      }
+
+      // prevent overwriting dis/enable hooks later
+      // use the events if you need to do additional work
+      Object.defineProperties(this, {
+        enable: {
+          value: function value() {
+            _this.trigger('enable');
+          }
+        },
+        disable: {
+          value: function value() {
+            _this.removeStyles();
+            _this.trigger('disable');
+          }
+        }
+      });
     },
 
     $: function $(sel) {
       return jQuery(sel || document);
     },
 
-    disable: function disable() {
-      this.removeStyles();
-    },
-    enable: function enable() {},
+    // obsolete, but some plugins call _super()
+    disable: stubHook,
+    enable: stubHook,
 
     refresh: function refresh() {
       this.disable();
@@ -2163,14 +2328,16 @@ define('extplug/load-plugin',['require','exports','module','./util/request'],fun
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.12.4",
+  "version": "0.12.5",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
+    "debug": "^2.2.0",
     "meld": "1.x",
-    "plug-modules": "^4.0.0",
+    "plug-modules": "^4.2.2",
     "sistyl": "^0.4.2"
   },
   "devDependencies": {
+    "browserify": "^10.2.4",
     "del": "^1.2.0",
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
@@ -2180,13 +2347,14 @@ define('extplug/package',{
     "jscs": "^1.13.1",
     "mkdirp": "^0.5.1",
     "requirejs": "^2.1.17",
-    "run-sequence": "^1.1.0"
+    "run-sequence": "^1.1.0",
+    "vinyl-source-stream": "^1.1.0"
   },
   "scripts": {
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1434622924535
+  "builtAt": 1435791421638
 });
 
 
@@ -3416,14 +3584,14 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
         box.on('change', function (value) {
           // add / remove plugin settings group
           if (value) {
-            pluginMeta.enable();
+            plugin.enable();
             var pluginSettings = _this.createSettingsGroup(pluginMeta);
             if (pluginSettings) {
               _this.addGroup(pluginSettings);
               _this.$container.append(pluginSettings.render().$el);
             }
           } else {
-            pluginMeta.disable();
+            plugin.disable();
             var pluginSettings = _this.getGroup(name);
             if (pluginSettings) {
               _this.removeGroup(name);
@@ -4100,11 +4268,6 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
       this._core = [new VersionPlugin('version', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this)];
     },
 
-    registerModule: function registerModule(id, cb) {
-      console.warn('ExtPlug#registerModule is deprecated. Use #registerPlugin instead.');
-      return this.registerPlugin(id, cb);
-    },
-
     /**
      * Register an ExtPlug plugin by require.js module name.
      * This can be anything that is accepted by require.js, including
@@ -4137,11 +4300,6 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
       return this;
     },
 
-    unregisterModule: function unregisterModule(id) {
-      console.warn('ExtPlug#unregisterModule is deprecated. Use #unregisterPlugin instead.');
-      return this.unregisterPlugin(id);
-    },
-
     /**
      * Disables and removes an ExtPlug plugin.
      */
@@ -4151,6 +4309,11 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
         plugin.disable();
         this._plugins.remove(plugin);
       }
+    },
+
+    getPlugin: function getPlugin(id) {
+      var meta = this._plugins.get(id);
+      return meta ? meta.get('instance') : null;
     },
 
     /**
@@ -4366,14 +4529,6 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   });
 
   module.exports = ExtPlug;
-});
-
-
-define('extplug/Module',['require','exports','module','./Plugin'],function (require, exports, module) {
-
-  console.warn('extplug/Module is deprecated. Use extplug/Plugin instead');
-
-  module.exports = require('./Plugin');
 });
 
 'use strict';
