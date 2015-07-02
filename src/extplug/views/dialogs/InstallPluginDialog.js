@@ -6,15 +6,6 @@ define(function (require, exports, module) {
   const AlertEvent = require('plug/events/AlertEvent');
   const SpinnerView = require('plug/views/spinner/SpinnerView');
 
-  function dirname(str) {
-    str = str.split('/');
-    str.pop();
-    return str.join('/');
-  }
-  function basename(str) {
-    return str.split('/').pop();
-  }
-
   const InstallPluginDialog = Dialog.extend({
     id: 'dialog-install-plugin',
     className: 'dialog',
