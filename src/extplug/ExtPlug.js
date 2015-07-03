@@ -13,6 +13,7 @@ define(function (require, exports, module) {
   const VersionPlugin = require('./plugins/version');
   const SettingsTabPlugin = require('./plugins/settings-tab');
   const ChatTypePlugin = require('./plugins/custom-chat-type');
+  const ChatClassesPlugin = require('./plugins/chat-classes');
 
   const _package = require('./package');
 
@@ -91,7 +92,8 @@ define(function (require, exports, module) {
       this._core = [
         new VersionPlugin('version', this),
         new SettingsTabPlugin('settings-tab', this),
-        new ChatTypePlugin('custom-chat-type', this)
+        new ChatTypePlugin('custom-chat-type', this),
+        new ChatClassesPlugin('chat-classes', this)
       ];
 
     },
