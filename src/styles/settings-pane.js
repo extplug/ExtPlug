@@ -27,12 +27,13 @@ define({
       }
     },
 
+    'label.title': {
+      'top': '0px',
+      'font-size': '14px',
+      'width': '50%'
+    },
+
     '.extplug-input': {
-      'label.title': {
-        'top': '0px',
-        'font-size': '14px',
-        'width': '50%'
-      },
       '.extplug-input-wrap': {
         'position': 'absolute',
         'background': '#212328',
@@ -73,6 +74,26 @@ define({
         'width': 'calc(100% - 29px)',
         'margin-left': '29px'
       }
+    },
+
+    // playlist select
+    '.extplug-playlist-select': {
+      '.extplug-playlist-selected': {
+        'margin-left': '50%',
+        'width': '50%',
+        'background': '#282c35',
+        'padding': '7px',
+        'margin': '-7px 0 -7px 50%',
+        'position': 'absolute',
+        'box-sizing': 'border-box'
+      }
+    }
+  },
+
+  '.extplug-playlist-select-menu': {
+    '.icon-playlist': {
+      'top': '9px',
+      'left': '9px'
     }
   }
 });

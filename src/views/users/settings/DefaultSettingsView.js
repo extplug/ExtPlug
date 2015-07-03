@@ -5,6 +5,7 @@ define(function (require, exports, module) {
   const ColorInputView = require('./ColorInputView');
   const DropdownView = require('./DropdownView');
   const InputView = require('./InputView');
+  const PlaylistSelectView = require('./PlaylistSelectView');
   const SliderView = require('./SliderView');
   const { each, has } = require('underscore');
 
@@ -54,6 +55,13 @@ define(function (require, exports, module) {
         description: setting.description,
         value: value
       });
+    },
+    playlist(setting, value) {
+      return new PlaylistSelectView({
+        label: setting.label,
+        description: setting.description,
+        value: value
+      })
     }
   };
 
