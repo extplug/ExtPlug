@@ -1,6 +1,7 @@
 define(function (require, exports, module) {
 
-  // Mirrors plug.dj settings to the ExtPlug settings model.
+  // Mirrors plug.dj settings to the ExtPlug settings model, firing
+  // change events.
 
   const { before } = require('meld');
   const plugSettings = require('plug/store/settings');

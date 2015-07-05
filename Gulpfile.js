@@ -36,12 +36,12 @@ gulp.task('lib-debug', function () {
 gulp.task('dependencies', [ 'lib-debug' ])
 
 gulp.task('rjs', function (done) {
-  var npm = '../node_modules/'
+  var npm = 'node_modules/'
   packg.builtAt = Date.now()
   var packgString = JSON.stringify(packg, null, 2)
   delete packg.builtAt
   rjs.optimize({
-    baseUrl: 'lib/',
+    baseUrl: './',
     name: 'extplug/boot',
     include: [ 'extplug/ExtPlug' ],
     paths: {
@@ -53,6 +53,7 @@ gulp.task('rjs', function (done) {
       underscore: 'empty:',
       meld: npm + 'meld/meld',
       sistyl: npm + 'sistyl/lib/sistyl',
+      extplug: 'lib',
       'plug-modules': npm + 'plug-modules/plug-modules',
       'debug': 'debug/debug'
     },
@@ -71,7 +72,7 @@ gulp.task('rjs', function (done) {
 
 gulp.task('build', function () {
   return gulp.src([ 'build/build.rjs.js'
-                  , 'lib/extplug/plugdj.user.js' ])
+                  , 'lib/plugdj.user.js' ])
     .pipe(concat('extplug.js'))
     .pipe(gulp.dest('build/'))
 })
