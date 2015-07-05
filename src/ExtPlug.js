@@ -231,7 +231,8 @@ define(function (require, exports, module) {
             'extplug/compact-history/main',
           'hide-badges/build/hide-badges.js;extplug/hide-badges/main',
           'meh-icons/build/meh-icons.js;extplug/meh-icons/main',
-          'room-styles/build/room-styles.js;extplug/room-styles/main'
+          'room-styles/build/room-styles.js;extplug/room-styles/main',
+          'show-deleted/build/show-deleted.js;extplug/show-deleted/main'
         ].map(path => `https://extplug.github.io/${path}`),
         plugins: {}
       }));
@@ -396,6 +397,16 @@ define(function (require, exports, module) {
         let fullSizeVideo = 'extplug/plugins/full-size-video/main';
         stored.installed = _.without(stored.installed, fullSizeVideo);
         delete stored.plugins[fullSizeVideo];
+      }
+      if (semvercmp(stored.version, '0.13.1') < 0) {
+        stored.version = '0.13.1'
+        // show-deleted was added to core in 0.13
+        let showDeleted =
+            'https://extplug.github.io/show-deleted/build/show-deleted.js;' +
+            'extplug/show-deleted/main';
+        if (stored.installed.indexOf(showDeleted) === -1) {
+          stored.installed.push(showDeleted);
+        }
       }
 
       localStorage.setItem(LS_NAME, JSON.stringify(stored));
