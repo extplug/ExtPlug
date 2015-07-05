@@ -224,14 +224,15 @@ define(function (require, exports, module) {
       localStorage.setItem(LS_NAME, JSON.stringify({
         version: _package.version,
         installed: [
-          'extplug/plugins/autowoot/main',
-          'extplug/plugins/chat-notifications/main',
-          'extplug/plugins/compact-history/main',
-          'extplug/plugins/full-size-video/main',
-          'extplug/plugins/meh-icon/main',
-          'extplug/plugins/room-styles/main',
-          'extplug/plugins/hide-badges/main'
-        ],
+          'autowoot/build/autowoot.js;extplug/autowoot/main',
+          'chat-notifications/build/chat-notifications.js;' +
+            'extplug/chat-notifications/main',
+          'compact-history/build/compact-history.js;' +
+            'extplug/compact-history/main',
+          'hide-badges/build/hide-badges.js;extplug/hide-badges/main',
+          'meh-icons/build/meh-icons.js;extplug/meh-icons/main',
+          'room-styles/build/room-styles.js;extplug/room-styles/main'
+        ].map(path => `https://extplug.github.io/${path}`),
         plugins: {}
       }));
     },
