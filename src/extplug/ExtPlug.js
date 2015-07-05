@@ -351,19 +351,63 @@ define(function (require, exports, module) {
       // "rollover-blurbs" was removed from core in 0.12.0
       if (semvercmp(stored.version, '0.12.0') < 0) {
         stored.version = '0.12.0';
-        const oldPlugin = 'extplug/plugins/rollover-blurbs/main';
-        const newPlugin = 'https://extplug.github.io/rollover-blurb/build/rollover-blurb.js;' +
-                          'extplug/rollover-blurb/main';
-        let i = stored.installed.indexOf(oldPlugin);
-        if (i !== -1) {
-          stored.installed.splice(i, 1, newPlugin);
-          // move settings
-          stored.plugins[newPlugin] = stored.plugins[oldPlugin];
-          delete stored.plugins[oldPlugin];
-        }
+        replace(
+          'extplug/plugins/rollover-blurbs/main',
+          'https://extplug.github.io/rollover-blurb/build/rollover-blurb.js',
+          'extplug/rollover-blurb/main'
+        );
+      }
+
+      if (semvercmp(stored.version, '0.13.0') < 0) {
+        stored.version = '0.13.0';
+        replace(
+          'extplug/plugins/autowoot/main',
+          'https://extplug.github.io/autowoot/build/autowoot.js',
+          'extplug/autowoot/main'
+        );
+        replace(
+          'extplug/plugins/chat-notifications/main',
+          'https://extplug.github.io/chat-notifications/build/chat-notifications.js',
+          'extplug/chat-notifications/main'
+        );
+        replace(
+          'extplug/plugins/compact-history/main',
+          'https://extplug.github.io/compact-history/build/compact-history.js',
+          'extplug/compact-history/main'
+        );
+        replace(
+          'extplug/plugins/hide-badges/main',
+          'https://extplug.github.io/hide-badges/build/hide-badges.js',
+          'extplug/hide-badges/main'
+        );
+        replace(
+          'extplug/plugins/meh-icon/main',
+          'https://extplug.github.io/meh-icons/build/meh-icons.js;' +
+          'extplug/meh-icons/main'
+        );
+        replace(
+          'extplug/plugins/room-styles/main',
+          'https://extplug.github.io/room-styles/build/room-styles.js',
+          'extplug/room-styles/main'
+        );
+
+        // full-size video was removed in favour of plug's Video Only mode
+        let fullSizeVideo = 'extplug/plugins/full-size-video/main';
+        stored.installed = _.without(stored.installed, fullSizeVideo);
+        delete stored.plugins[fullSizeVideo];
       }
 
       localStorage.setItem(LS_NAME, JSON.stringify(stored));
+
+      function replace(oldPlugin, url, name) {
+        let i = stored.installed.indexOf(oldPlugin);
+        if (i !== -1) {
+          stored.installed.splice(i, 1, `${url};${name}`);
+          // move settings
+          stored.plugins[name] = stored.plugins[oldPlugin];
+          delete stored.plugins[oldPlugin];
+        }
+      }
     }
   });
 
