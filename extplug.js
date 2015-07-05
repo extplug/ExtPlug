@@ -2328,7 +2328,7 @@ define('extplug/load-plugin',['require','exports','module','./util/request'],fun
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.12.5",
+  "version": "0.13.0",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -2354,7 +2354,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1435791421638
+  "builtAt": 1436104994959
 });
 
 
@@ -3070,15 +3070,6 @@ define('extplug/views/dialogs/InstallPluginDialog',['require','exports','module'
   var Events = require('plug/core/Events');
   var AlertEvent = require('plug/events/AlertEvent');
   var SpinnerView = require('plug/views/spinner/SpinnerView');
-
-  function dirname(str) {
-    str = str.split('/');
-    str.pop();
-    return str.join('/');
-  }
-  function basename(str) {
-    return str.split('/').pop();
-  }
 
   var InstallPluginDialog = Dialog.extend({
     id: 'dialog-install-plugin',
@@ -3874,6 +3865,57 @@ define('extplug/plugins/custom-chat-type',['require','exports','module','meld','
 });
 
 
+define('extplug/plugins/chat-classes',['require','exports','module','../Plugin','plug/core/Events'],function (require, exporst, module) {
+
+  var Plugin = require('../Plugin');
+  var Events = require('plug/core/Events');
+
+  var ChatClasses = Plugin.extend({
+    name: 'Chat Classes',
+    description: 'Adds some CSS classes for roles and IDs to chat messages.',
+
+    enable: function enable() {
+      Events.on('chat:beforereceive', this.onMessage, this);
+    },
+    disable: function disable() {
+      Events.off('chat:beforereceive', this.onMessage);
+    },
+
+    onMessage: function onMessage(msg) {
+      var r = API.ROLE;
+      var roleClasses = ['from-user', 'from-dj', 'from-bouncer', 'from-manager', 'from-cohost', 'from-host'];
+
+      var classes = msg.classes ? [msg.classes] : [];
+      if (msg.uid) {
+        classes.push('fromID-' + msg.uid);
+
+        var user = API.getUser(msg.uid);
+        if (msg.uid === API.getUser().id) {
+          classes.push('from-you');
+        }
+        if (user) {
+          if (user.gRole === r.HOST) {
+            classes.push('from-admin');
+          } else if (user.gRole >= r.BOUNCER) {
+            classes.push('from-ambassador');
+          }
+          // normal user & staff roles
+          classes.push(roleClasses[user.role]);
+        }
+      }
+
+      if (msg.sub) {
+        classes.push('from-subscriber');
+      }
+
+      msg.classes = classes.join(' ');
+    }
+  });
+
+  module.exports = ChatClasses;
+});
+
+
 var _toArray = function (arr) { return Array.isArray(arr) ? arr : Array.from(arr); };
 
 var _toConsumableArray = function (arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } };
@@ -4012,7 +4054,8 @@ define('extplug/hooks/playback',['require','exports','module','plug/core/Events'
 
 define('extplug/hooks/settings',['require','exports','module','meld','plug/store/settings','../store/settings'],function (require, exports, module) {
 
-  // Mirrors plug.dj settings to the ExtPlug settings model.
+  // Mirrors plug.dj settings to the ExtPlug settings model, firing
+  // change events.
 
   var _require = require('meld');
 
@@ -4171,7 +4214,7 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./load-plugin','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./package','jquery','underscore','backbone','meld','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./load-plugin','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/chat-classes','./package','jquery','underscore','backbone','meld','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
@@ -4186,6 +4229,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var VersionPlugin = require('./plugins/version');
   var SettingsTabPlugin = require('./plugins/settings-tab');
   var ChatTypePlugin = require('./plugins/custom-chat-type');
+  var ChatClassesPlugin = require('./plugins/chat-classes');
 
   var _package = require('./package');
 
@@ -4265,7 +4309,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
     init: function init() {
       this._super('extplug', this);
 
-      this._core = [new VersionPlugin('version', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this)];
+      this._core = [new VersionPlugin('version', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this), new ChatClassesPlugin('chat-classes', this)];
     },
 
     /**
@@ -4513,600 +4557,41 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
       // "rollover-blurbs" was removed from core in 0.12.0
       if (semvercmp(stored.version, '0.12.0') < 0) {
         stored.version = '0.12.0';
-        var oldPlugin = 'extplug/plugins/rollover-blurbs/main';
-        var newPlugin = 'https://extplug.github.io/rollover-blurb/build/rollover-blurb.js;' + 'extplug/rollover-blurb/main';
-        var i = stored.installed.indexOf(oldPlugin);
-        if (i !== -1) {
-          stored.installed.splice(i, 1, newPlugin);
-          // move settings
-          stored.plugins[newPlugin] = stored.plugins[oldPlugin];
-          delete stored.plugins[oldPlugin];
-        }
+        replace('extplug/plugins/rollover-blurbs/main', 'https://extplug.github.io/rollover-blurb/build/rollover-blurb.js', 'extplug/rollover-blurb/main');
+      }
+
+      if (semvercmp(stored.version, '0.13.0') < 0) {
+        stored.version = '0.13.0';
+        replace('extplug/plugins/autowoot/main', 'https://extplug.github.io/autowoot/build/autowoot.js', 'extplug/autowoot/main');
+        replace('extplug/plugins/chat-notifications/main', 'https://extplug.github.io/chat-notifications/build/chat-notifications.js', 'extplug/chat-notifications/main');
+        replace('extplug/plugins/compact-history/main', 'https://extplug.github.io/compact-history/build/compact-history.js', 'extplug/compact-history/main');
+        replace('extplug/plugins/hide-badges/main', 'https://extplug.github.io/hide-badges/build/hide-badges.js', 'extplug/hide-badges/main');
+        replace('extplug/plugins/meh-icon/main', 'https://extplug.github.io/meh-icons/build/meh-icons.js;' + 'extplug/meh-icons/main');
+        replace('extplug/plugins/room-styles/main', 'https://extplug.github.io/room-styles/build/room-styles.js', 'extplug/room-styles/main');
+
+        // full-size video was removed in favour of plug's Video Only mode
+        var fullSizeVideo = 'extplug/plugins/full-size-video/main';
+        stored.installed = _.without(stored.installed, fullSizeVideo);
+        delete stored.plugins[fullSizeVideo];
       }
 
       localStorage.setItem(LS_NAME, JSON.stringify(stored));
+
+      function replace(oldPlugin, url, name) {
+        var i = stored.installed.indexOf(oldPlugin);
+        if (i !== -1) {
+          stored.installed.splice(i, 1, '' + url + ';' + name);
+          // move settings
+          stored.plugins[name] = stored.plugins[oldPlugin];
+          delete stored.plugins[oldPlugin];
+        }
+      }
     }
   });
 
   module.exports = ExtPlug;
 });
 
-'use strict';
-
-define('extplug/plugins/autowoot/main', function (require, exports, module) {
-
-  var Plugin = require('extplug/Plugin');
-
-  var Autowoot = Plugin.extend({
-    name: 'Autowoot',
-
-    init: function init(id, ext) {
-      this._super(id, ext);
-      this.onAdvance = this.onAdvance.bind(this);
-      this.woot = this.woot.bind(this);
-    },
-
-    enable: function enable() {
-      this._super();
-      this.wootElement = this.$('#woot');
-      this.woot();
-      API.on(API.ADVANCE, this.onAdvance);
-    },
-
-    disable: function disable() {
-      this._super();
-      API.off(API.ADVANCE, this.onAdvance);
-    },
-
-    allowed: function allowed() {
-      var rules = this.ext.roomSettings.get('rules');
-      return !rules || rules.allowAutowoot !== false && rules.allowAutowoot != 'false';
-    },
-
-    woot: function woot() {
-      if (this.allowed()) {
-        this.wootElement.click();
-      }
-    },
-
-    onAdvance: function onAdvance() {
-      if (this.allowed()) {
-        setTimeout(this.woot, 3000 + Math.floor(Math.random() * 5000));
-      }
-    }
-
-  });
-
-  module.exports = Autowoot;
-});
-'use strict';
-
-define('extplug/plugins/chat-notifications/main', function (require, exports, module) {
-
-  var Plugin = require('extplug/Plugin'),
-      Events = require('plug/core/Events');
-
-  module.exports = Plugin.extend({
-    name: 'Chat Notifications',
-
-    settings: {
-      inline: { type: 'boolean', label: 'Small Notifications', 'default': true },
-      userJoin: { type: 'boolean', label: 'User Join', 'default': true },
-      userLeave: { type: 'boolean', label: 'User Leave', 'default': true },
-      advance: { type: 'boolean', label: 'DJ Advance', 'default': true },
-      grab: { type: 'boolean', label: 'Media Grab', 'default': true },
-      meh: { type: 'boolean', label: 'Meh Vote', 'default': true },
-      woot: { type: 'boolean', label: 'Woot Vote', 'default': false }
-    },
-
-    init: function init(id, ext) {
-      this._super(id, ext);
-      this.onJoin = this.onJoin.bind(this);
-      this.onLeave = this.onLeave.bind(this);
-      this.onAdvance = this.onAdvance.bind(this);
-      this.onGrab = this.onGrab.bind(this);
-      this.onVote = this.onVote.bind(this);
-    },
-
-    enable: function enable() {
-      this._super();
-      API.on(API.USER_JOIN, this.onJoin);
-      API.on(API.BEFORE_USER_LEAVE, this.onLeave);
-      API.on(API.ADVANCE, this.onAdvance);
-      API.on(API.GRAB_UPDATE, this.onGrab);
-      API.on(API.VOTE_UPDATE, this.onVote);
-
-      this.Style({
-        '.cm.extplug-user-join .msg': { color: '#2ecc40' },
-        '.cm.extplug-user-leave .msg': { color: '#ff851b' },
-        '.cm.extplug-advance .msg': { color: '#7fdbff' },
-        '.cm.extplug-grab .msg': { color: '#a670fe' },
-        '.cm.extplug-meh .msg': { color: '#ff4136' },
-        '.cm.extplug-woot .msg': { color: '#90ad2f' }
-      });
-    },
-
-    disable: function disable() {
-      this._super();
-      API.off(API.USER_JOIN, this.onJoin);
-      API.off(API.BEFORE_USER_LEAVE, this.onLeave);
-      API.off(API.ADVANCE, this.onAdvance);
-      API.off(API.GRAB_UPDATE, this.onGrab);
-      API.off(API.VOTE_UPDATE, this.onVote);
-    },
-
-    _class: function _class() {
-      return 'custom extplug-notification ' + (this.settings.get('inline') ? 'inline ' : '');
-    },
-
-    onJoin: function onJoin(e) {
-      if (this.settings.get('userJoin')) {
-        Events.trigger('chat:receive', {
-          type: this._class() + 'extplug-user-join',
-          message: 'joined the room',
-          uid: e.id,
-          un: e.username,
-          badge: 'icon-community-users'
-        });
-      }
-    },
-
-    onLeave: function onLeave(user) {
-      if (this.settings.get('userLeave')) {
-        Events.trigger('chat:receive', {
-          type: this._class() + 'extplug-user-leave',
-          message: 'left the room',
-          uid: user.id,
-          un: user.username,
-          badge: 'icon-community-users'
-        });
-      }
-    },
-
-    onAdvance: function onAdvance(e) {
-      if (this.settings.get('advance')) {
-        Events.trigger('chat:receive', {
-          type: 'custom extplug-advance',
-          message: e.media.author + ' – ' + e.media.title,
-          uid: e.dj.id,
-          un: e.dj.username,
-          badge: 'icon-play-next'
-        });
-      }
-    },
-
-    onGrab: function onGrab(e) {
-      if (this.settings.get('grab')) {
-        var media = API.getMedia();
-        Events.trigger('chat:receive', {
-          type: this._class() + 'extplug-grab',
-          message: 'grabbed this track',
-          uid: e.user.id,
-          un: e.user.username,
-          badge: 'icon-grab'
-        });
-      }
-    },
-
-    onVote: function onVote(e) {
-      if (this.settings.get('meh') && e.vote === -1) {
-        Events.trigger('chat:receive', {
-          type: this._class() + 'extplug-meh',
-          message: 'meh\'d this track',
-          uid: e.user.id,
-          un: e.user.username,
-          badge: 'icon-meh'
-        });
-      }
-      if (this.settings.get('woot') && e.vote === 1) {
-        Events.trigger('chat:receive', {
-          type: this._class() + 'extplug-woot',
-          message: 'wooted this track',
-          uid: e.user.id,
-          un: e.user.username,
-          badge: 'icon-woot'
-        });
-      }
-    }
-  });
-});
-'use strict';
-
-define('extplug/plugins/compact-history/main', function (require, exports, module) {
-
-  var Plugin = require('extplug/Plugin');
-  var _ = require('underscore');
-  var $ = require('jquery');
-
-  var ITEM_HEIGHT = 20;
-
-  var CompactHistory = Plugin.extend({
-    name: 'Compact History',
-    description: 'Lays out the room history in a much more compact view.',
-
-    // We'll just use CSS
-    enable: function enable() {
-      this._super();
-      this.Style({
-        '#history-panel .media-list.history .playlist-media-item:not(.selected)': {
-          height: '' + ITEM_HEIGHT + 'px',
-
-          img: {
-            height: '' + ITEM_HEIGHT + 'px',
-            width: '' + ITEM_HEIGHT * 1.5 + 'px',
-            'margin-top': '0px'
-          },
-
-          '.score': {
-            height: 'auto',
-            width: 'auto',
-            top: '0px',
-            left: '65px',
-            '.item': {
-              'margin-right': '10px'
-            }
-          },
-
-          '.meta': {
-            height: 'auto',
-            span: {
-              height: '' + ITEM_HEIGHT + 'px',
-              top: '0px'
-            },
-            '.author': {
-              left: '120px',
-              right: '300px',
-              width: 'auto'
-            },
-            '.name': {
-              right: '125px'
-            }
-          },
-
-          '.actions': {
-            height: '' + ITEM_HEIGHT + 'px',
-            top: '0px',
-            div: {
-              height: '' + ITEM_HEIGHT + 'px',
-              i: {
-                top: '-4px'
-              }
-            }
-          }
-        }
-      });
-    }
-
-  });
-
-  module.exports = CompactHistory;
-});
-'use strict';
-
-define('extplug/plugins/full-size-video/main', function (require, exports, module) {
-  var Plugin = require('extplug/Plugin'),
-      win = require('plug/util/window');
-
-  module.exports = Plugin.extend({
-    name: 'Full-Size Video',
-
-    init: function init(id, ext) {
-      this._super(id, ext);
-      this.enter = this.enter.bind(this);
-      this.leave = this.leave.bind(this);
-    },
-
-    enable: function enable() {
-      this._super();
-      this.Style({
-        '#playback': {
-          left: '0px !important',
-          right: '343px !important',
-          width: 'auto !important',
-          bottom: '54px !important',
-          height: 'auto !important'
-        },
-        '#playback .background img': { display: 'none' },
-        '#playback-controls': {
-          left: '25% !important',
-          width: '50% !important'
-        },
-        '#playback-container': {
-          top: '0px !important',
-          left: '0px !important',
-          right: '0px !important',
-          width: 'auto !important',
-          bottom: '0px !important',
-          height: 'auto !important',
-          background: '#000'
-        },
-        '#avatars-container': { display: 'none !important' }
-      });
-      setTimeout(function () {
-        win.onResize();
-      }, 1);
-
-      this.$('#playback').on('mouseenter', this.enter).on('mouseleave', this.leave);
-      this.leave();
-    },
-
-    enter: function enter() {
-      this.$('#dj-button, #vote').show();
-    },
-    leave: function leave(e) {
-      // don't hide if the new target is one of the buttons
-      if (e && e.relatedTarget && $(e.relatedTarget).closest('#dj-button, #vote').length > 0) {
-        return;
-      }
-      this.$('#dj-button, #vote').hide();
-    },
-
-    disable: function disable() {
-      this._super();
-      this.enter();
-      this.$('#playback').off('mouseenter', this.enter).off('mouseleave', this.leave);
-      setTimeout(function () {
-        win.onResize();
-      }, 1);
-    }
-
-  });
-});
-'use strict';
-
-define('extplug/plugins/hide-badges/main', function (require, exports, module) {
-
-  var Plugin = require('extplug/Plugin');
-
-  var HideBadges = Plugin.extend({
-    name: 'Hide Badges',
-    description: 'Hides user chat badges.',
-
-    enable: function enable() {
-      this._super();
-      this.Style({
-        '#chat': {
-          '.msg': { padding: '5px 8px 6px 8px' },
-          '.badge-box': { display: 'none' }
-        }
-      });
-    }
-
-  });
-
-  module.exports = HideBadges;
-});
-'use strict';
-
-define('extplug/plugins/meh-icon/main', function (require, exports, module) {
-
-  var Plugin = require('extplug/Plugin');
-  var UserRowView = require('plug/views/rooms/users/RoomUserRowView');
-  var $ = require('jquery');
-
-  var _require = require('meld');
-
-  var around = _require.around;
-
-  var MehIcon = Plugin.extend({
-    name: 'Meh Icons',
-
-    enable: function enable() {
-      this._super();
-      this.advice = around(UserRowView.prototype, 'vote', this.showVote);
-      this.Style({
-        '#user-lists .list.room .user .icon-meh': {
-          top: '-1px',
-          right: '9px',
-          left: 'auto'
-        },
-        // grab icon next to a vote icon
-        '#user-lists .list.room .user .icon + .icon-grab': {
-          right: '28px'
-        }
-      });
-    },
-
-    disable: function disable() {
-      this.advice.remove();
-      this._super();
-    },
-
-    // bound to the UserRowView instance
-    // shows all relevant vote icons instead of just grab or woot.
-    showVote: function showVote() {
-      if (this.$icon) this.$icon.remove();
-      this.$icon = $();
-      if (this.model.get('vote') < 0) {
-        this.$icon = this.$icon.add($('<i />').addClass('icon icon-meh extplug-meh-icon'));
-      }
-      if (this.model.get('vote') > 0) {
-        this.$icon = this.$icon.add($('<i />').addClass('icon icon-woot'));
-      }
-      if (this.model.get('grab')) {
-        this.$icon = this.$icon.add($('<i />').addClass('icon icon-grab'));
-      }
-      this.$icon.appendTo(this.$el);
-    }
-  });
-
-  module.exports = MehIcon;
-});
-'use strict';
-
-define('extplug/plugins/room-styles/main', function (require, exports, module) {
-
-  var Plugin = require('extplug/Plugin');
-  var request = require('extplug/util/request');
-  var Style = require('extplug/util/Style');
-  var _ = require('underscore');
-  var $ = require('jquery');
-
-  var ranks = ['subscriber', 'host', 'cohost', 'manager', 'bouncer', 'dj', 'admin', 'ambassador'];
-
-  var RoomStyles = Plugin.extend({
-    name: 'Room Styles',
-    description: 'Applies custom room-specific styles. ' + 'Supports both the plugCubed and Radiant Script formats.',
-
-    init: function init(id, ext) {
-      this._super(id, ext);
-      this.colors = this.colors.bind(this);
-      this.css = this.css.bind(this);
-      this.images = this.images.bind(this);
-      this.unload = this.unload.bind(this);
-      this.reload = this.reload.bind(this);
-    },
-
-    enable: function enable() {
-      this._super();
-      this.all();
-
-      this.ext.roomSettings.on('change', this.reload);
-    },
-
-    disable: function disable() {
-      this._super();
-      this.unload();
-      this.ext.roomSettings.off('change', this.reload);
-    },
-
-    reload: function reload() {
-      this.unload();
-      this.all();
-    },
-
-    _normalizeRanks: function _normalizeRanks(ranks) {
-      // plug³ and RCS have different names for Resident DJ colours and icons.
-      // we simply use the plug.dj icon classname instead.
-      if (ranks.rdj && !ranks.dj) ranks.dj = ranks.rdj;
-      if (ranks.residentdj && !ranks.dj) ranks.dj = ranks.residentdj;
-      // plug³ room styles have an `icons` sub-property on their `images`
-      // properties, but RCS doesn't. so we don't particularly care if it's
-      // there or not.
-      if (ranks.icons) ranks.icons = this._normalizeRanks(ranks.icons);
-      return ranks;
-    },
-
-    colors: function colors() {
-      var _this = this;
-
-      // plugCubed
-      var colors = this.ext.roomSettings.get('colors');
-      // Radiant
-      var ccc = this.ext.roomSettings.get('ccc');
-
-      var chatColors = colors && colors.chat || ccc;
-      if (_.isObject(chatColors)) {
-        (function () {
-          var colorStyles = _this.Style();
-
-          chatColors = _this._normalizeRanks(chatColors);
-          ranks.forEach(function (level) {
-            if (chatColors[level]) {
-              var color = chatColors[level];
-              if (color[0] !== '#') color = '#' + color;
-              var value = { color: '' + color + ' !important' };
-              colorStyles.set('#chat-messages .icon-chat-' + level + ' ~ .un', value).set('#user-rollover .icon-chat-' + level + ' + span', value).set('#user-lists    .icon-chat-' + level + ' + span', value).set('#waitlist      .icon-chat-' + level + ' + span', value);
-            }
-          });
-        })();
-      }
-    },
-
-    css: function css() {
-      var css = this.ext.roomSettings.get('css');
-      // plugCubed
-      if (_.isObject(css)) {
-        if (_.isObject(css.rule)) {
-          this.Style(css.rule);
-        }
-
-        if (_.isArray(css['import'])) {
-          this._imports = $('<style>').text(css['import'].map(function (url) {
-            return '@import url(' + url + ');';
-          }).join('\n')).appendTo('head');
-        }
-      }
-      // Radiant
-      else if (_.isString(css)) {
-        this._imports = $('<style>').text('@import url(' + css + ');').appendTo('head');
-      }
-    },
-
-    images: function images() {
-      var _this2 = this;
-
-      var images = this.ext.roomSettings.get('images');
-      if (_.isObject(images)) {
-        (function () {
-          var style = _this2.Style();
-          if (images.background) {
-            style.set({
-              '.room-background': {
-                'background-image': 'url(' + images.background + ') !important'
-              }
-            });
-          }
-          if (images.playback) {
-            var playbackImg = _this2.$('#playback .background img');
-            _this2._oldPlayback = playbackImg.attr('src');
-            playbackImg.attr('src', images.playback);
-          }
-          if (images.booth) {
-            style.set({
-              '.extplug-booth': {
-                position: 'absolute',
-                width: '300px',
-                height: '100px',
-                left: '15px',
-                top: '135px',
-                'z-index': -1
-              }
-            });
-            _this2.$booth = $('<div />')
-            // plug³ compatibility
-            .attr('id', 'p3-dj-booth').addClass('extplug-booth').css({ background: 'url(' + images.booth + ') no-repeat center center' }).appendTo(_this2.$('#dj-booth'));
-          }
-
-          images = _this2._normalizeRanks(images);
-          ranks.forEach(function (rank) {
-            var url = images[rank] || images.icons && images.icons[rank];
-            if (url) {
-              style.set('.icon.icon-chat-' + rank, {
-                background: 'url(' + url + ')'
-              });
-            }
-          });
-        })();
-      }
-    },
-
-    all: function all() {
-      this.colors();
-      this.css();
-      this.images();
-    },
-
-    unload: function unload() {
-      if (this.$booth) {
-        this.$booth.remove();
-        this.$booth = null;
-      }
-      if (this._oldPlayback) {
-        this.$('#playback .background img').attr('src', this._oldPlayback);
-        delete this._oldPlayback;
-      }
-      if (this._imports) {
-        this._imports.remove();
-        this._imports = null;
-      }
-      this.removeStyles();
-    }
-
-  });
-
-  module.exports = RoomStyles;
-});
 'use strict';
 
 ;(function _initExtPlug() {
