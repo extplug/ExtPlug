@@ -2328,7 +2328,7 @@ define('extplug/load-plugin',['require','exports','module','./util/request'],fun
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -2354,7 +2354,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1436104994959
+  "builtAt": 1436106383021
 });
 
 
@@ -4439,7 +4439,9 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
     onFirstRun: function onFirstRun() {
       localStorage.setItem(LS_NAME, JSON.stringify({
         version: _package.version,
-        installed: ['extplug/plugins/autowoot/main', 'extplug/plugins/chat-notifications/main', 'extplug/plugins/compact-history/main', 'extplug/plugins/full-size-video/main', 'extplug/plugins/meh-icon/main', 'extplug/plugins/room-styles/main', 'extplug/plugins/hide-badges/main'],
+        installed: ['autowoot/build/autowoot.js;extplug/autowoot/main', 'chat-notifications/build/chat-notifications.js;' + 'extplug/chat-notifications/main', 'compact-history/build/compact-history.js;' + 'extplug/compact-history/main', 'hide-badges/build/hide-badges.js;extplug/hide-badges/main', 'meh-icons/build/meh-icons.js;extplug/meh-icons/main', 'room-styles/build/room-styles.js;extplug/room-styles/main', 'show-deleted/build/show-deleted.js;extplug/show-deleted/main'].map(function (path) {
+          return 'https://extplug.github.io/' + path;
+        }),
         plugins: {}
       }));
     },
@@ -4573,6 +4575,14 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
         var fullSizeVideo = 'extplug/plugins/full-size-video/main';
         stored.installed = _.without(stored.installed, fullSizeVideo);
         delete stored.plugins[fullSizeVideo];
+      }
+      if (semvercmp(stored.version, '0.13.1') < 0) {
+        stored.version = '0.13.1';
+        // show-deleted was added to core in 0.13
+        var showDeleted = 'https://extplug.github.io/show-deleted/build/show-deleted.js;' + 'extplug/show-deleted/main';
+        if (stored.installed.indexOf(showDeleted) === -1) {
+          stored.installed.push(showDeleted);
+        }
       }
 
       localStorage.setItem(LS_NAME, JSON.stringify(stored));
