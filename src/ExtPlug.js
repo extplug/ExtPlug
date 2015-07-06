@@ -23,6 +23,7 @@ define(function (require, exports, module) {
   const meld = require('meld');
 
   let hooks = [
+    require('./hooks/waitlist'),
     require('./hooks/api-early'),
     require('./hooks/chat'),
     require('./hooks/playback'),
