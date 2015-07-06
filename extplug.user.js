@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        ExtPlug
 // @description Highly flexible, modular userscript extension for plug.dj.
-// @version     0.13.1
+// @version     0.13.2
 // @match       https://plug.dj/*
 // @namespace   https://extplug.github.io/
 // @downloadURL https://extplug.github.io/ExtPlug/extplug.user.js
@@ -2339,7 +2339,7 @@ define('extplug/load-plugin',['require','exports','module','./util/request'],fun
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -2365,7 +2365,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1436106383021
+  "builtAt": 1436222909300
 });
 
 
@@ -3668,7 +3668,7 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
       this.groups.sort(function (a, b) {
         var c = b.priority - a.priority;
         if (c === 0) {
-          c = a.items.get('name') > b.items.get('name') ? 1 : a.items.get('name') < b.items.get('name') ? -1 : 0;
+          c = a.items.name > b.items.name ? 1 : a.items.name < b.items.name ? -1 : 0;
         }
         return c;
       });
@@ -3924,6 +3924,51 @@ define('extplug/plugins/chat-classes',['require','exports','module','../Plugin',
   });
 
   module.exports = ChatClasses;
+});
+
+
+define('extplug/hooks/waitlist',['require','exports','module','plug/models/booth','plug/collections/waitlist','plug/collections/users','underscore'],function (require, exports, module) {
+
+  var booth = require('plug/models/booth');
+  var waitlist = require('plug/collections/waitlist');
+  var users = require('plug/collections/users');
+
+  var _require = require('underscore');
+
+  var difference = _require.difference;
+  var extend = _require.extend;
+
+  var events = {
+    WAIT_LIST_LEAVE: 'waitListLeave',
+    WAIT_LIST_JOIN: 'waitListJoin'
+  };
+
+  function onChange() {
+    var newList = booth.get('waitingDJs');
+    var oldList = booth.previous('waitingDJs');
+    var left = difference(oldList, newList);
+    var entered = difference(newList, oldList);
+
+    extend(API, events);
+
+    left.forEach(function (uid) {
+      API.dispatch(API.WAIT_LIST_LEAVE, API.getUser(uid));
+    });
+    entered.forEach(function (uid) {
+      API.dispatch(API.WAIT_LIST_JOIN, API.getUser(uid));
+    });
+  }
+
+  exports.install = function () {
+    booth.on('change:waitingDJs', onChange);
+  };
+
+  exports.uninstall = function () {
+    booth.off('change:waitingDJs', onChange);
+    Object.keys(events).forEach(function (n) {
+      delete API[n];
+    });
+  };
 });
 
 
@@ -4225,7 +4270,7 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./load-plugin','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/chat-classes','./package','jquery','underscore','backbone','meld','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./load-plugin','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/chat-classes','./package','jquery','underscore','backbone','meld','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
@@ -4249,7 +4294,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var Backbone = require('backbone');
   var meld = require('meld');
 
-  var hooks = [require('./hooks/api-early'), require('./hooks/chat'), require('./hooks/playback'), require('./hooks/settings'), require('./hooks/popout-style')];
+  var hooks = [require('./hooks/waitlist'), require('./hooks/api-early'), require('./hooks/chat'), require('./hooks/playback'), require('./hooks/settings'), require('./hooks/popout-style')];
 
   // LocalStorage key name for extplug
   var LS_NAME = 'extPlugins';
