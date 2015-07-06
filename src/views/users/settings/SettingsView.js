@@ -198,8 +198,8 @@ define(function (require, exports, module) {
       this.groups.sort(function (a, b) {
         var c = b.priority - a.priority;
         if (c === 0) {
-          c = a.items.get('name') > b.items.get('name') ? 1
-            : a.items.get('name') < b.items.get('name') ? -1
+          c = a.items.name > b.items.name ? 1
+            : a.items.name < b.items.name ? -1
             : 0;
         }
         return c;
