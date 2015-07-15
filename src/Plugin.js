@@ -6,6 +6,7 @@ define(function (require, exports, module) {
   const Class = require('plug/core/Class');
   const Settings = require('./models/Settings');
   const Style = require('./util/Style');
+  const SettingsView = require('./views/users/settings/DefaultSettingsView');
   const debug = require('debug');
 
   const stubHook = function () {};
@@ -19,7 +20,7 @@ define(function (require, exports, module) {
 
       this.debug = debug(`extplug:plugin:${id}`);
 
-      let settings = new Settings({});
+      let settings = new Settings({}, { meta: this.settings });
       if (this.settings) {
         _.each(this.settings, (setting, name) => {
           settings.set(name, setting.default);
@@ -100,7 +101,12 @@ define(function (require, exports, module) {
         this._styles.forEach(style => style.remove());
       }
       this._styles = [];
+    },
+
+    getSettingsView() {
+      return new SettingsView({ model: this.settings });
     }
+
   });
 
   _.extend(Plugin, Backbone.Events);

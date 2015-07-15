@@ -2,14 +2,12 @@ define(function (require, exports, module) {
   const { View } = require('backbone');
   const ControlGroupView = require('./ControlGroupView');
   const PluginsGroupView = require('./PluginsGroupView');
-  const ManagingGroupView = require('./ManagingGroupView');
   const CheckboxView = require('./CheckboxView');
-  const DropdownView = require('./DropdownView');
-  const SliderView = require('./SliderView');
   const RemoveBoxView = require('./RemoveBoxView');
   const PluginMeta = require('../../../models/PluginMeta');
   const Events = require('plug/core/Events');
-  const _ = require('underscore');
+  const window = require('plug/util/window');
+  const { defer } = require('underscore');
   const $ = require('jquery');
 
   /**
@@ -31,22 +29,18 @@ define(function (require, exports, module) {
     initialize(o) {
       this.plugins = o.plugins;
       this.ext = o.ext;
-      this.mode = 'normal';
 
       this.refresh();
-      this.onUpdate = this.onUpdate.bind(this);
-      this.manage   = this.manage.bind(this);
-      this.unmanage = this.unmanage.bind(this);
 
-      this.plugins.on('reset add remove', this.onUpdate);
-      Events.on('extplug:plugins:manage', this.manage);
-      Events.on('extplug:plugins:unmanage', this.unmanage);
+      this.plugins
+        .on('change:enabled', this.onEnabledChange, this)
+        .on('reset add remove', this.onUpdate, this);
     },
 
     remove() {
-      this.plugins.off('reset add remove', this.onUpdate);
-      Events.off('extplug:plugins:manage', this.manage);
-      Events.off('extplug:plugins:unmanage', this.unmanage);
+      this.plugins
+        .on('change:enabled', this.onEnabledChange)
+        .off('reset add remove', this.onUpdate);
     },
 
     onUpdate() {
@@ -54,44 +48,46 @@ define(function (require, exports, module) {
       this.render();
     },
 
+    onEnabledChange() {
+      // TODO only add/remove changed groups
+      this.onUpdate();
+    },
+
     refresh() {
       this.groups = [];
-      if (this.mode === 'manage') {
-        this.addGroup(this.createPluginsManageGroup(), 1000);
-      }
-      else {
-        this.addGroup(this.createPluginsGroup(), 1000);
-      }
-      this.addGroup(this.createExtPlugGroup(), 999);
+      this.addGroup('Plugins', this.createPluginsGroup(), 1000);
+      this.addGroup('ExtPlug', this.createExtPlugGroup(), 999);
       this.plugins.forEach(function (plugin) {
         // add plugin settings group for stuff that was already enabled
         if (plugin.get('enabled')) {
-          var pluginSettings = this.createSettingsGroup(plugin);
+          let pluginSettings = this.createSettingsGroup(plugin);
           if (pluginSettings) {
-            this.addGroup(pluginSettings);
+            this.addGroup(plugin.get('name'), pluginSettings);
           }
         }
       }, this);
     },
 
-    manage() {
-      this.mode = 'manage';
-      this.refresh();
-      this.render();
-    },
-    unmanage() {
-      this.mode = 'normal';
-      this.refresh();
-      this.render();
-    },
-
     render() {
+      if (this.scrollPane) {
+        this.scrollPane.destroy();
+        defer(() => {
+          let size = window.getSize();
+          this.onResize(size.width, size.height);
+        });
+      }
       this.$container = $('<div>').addClass('container');
       this.$el.empty().append(this.$container);
 
       this.sort();
       this.groups.forEach(function (group) {
-        this.$container.append(group.items.render().$el);
+        let header = $('<div />').addClass('header').append(
+          $('<span>').text(group.name)
+        );
+        group.view.render();
+        this.$container
+          .append(header)
+          .append(group.view.$el);
       }, this);
 
       this.$container.jScrollPane();
@@ -101,54 +97,13 @@ define(function (require, exports, module) {
     },
 
     createPluginsGroup() {
-      let pluginsGroup = new PluginsGroupView({ name: 'Plugins' });
-      // generate plugin list
-      this.plugins.forEach(pluginMeta => {
-        let plugin = pluginMeta.get('instance');
-        let name = pluginMeta.get('name');
-        let box = new CheckboxView({
-          label: name,
-          description: plugin.description || false,
-          enabled: pluginMeta.get('enabled')
-        });
-        pluginsGroup.add(box);
-        box.on('change', value => {
-          // add / remove plugin settings group
-          if (value) {
-            plugin.enable();
-            let pluginSettings = this.createSettingsGroup(pluginMeta);
-            if (pluginSettings) {
-              this.addGroup(pluginSettings);
-              this.$container.append(pluginSettings.render().$el);
-            }
-          }
-          else {
-            plugin.disable();
-            let pluginSettings = this.getGroup(name);
-            if (pluginSettings) {
-              this.removeGroup(name);
-              pluginSettings.remove();
-            }
-          }
-        });
+      let pluginsGroup = new PluginsGroupView({
+        collection: this.plugins
       });
-
-      return pluginsGroup;
-    },
-    createPluginsManageGroup  () {
-      let pluginsGroup = new ManagingGroupView({ name: 'Manage Plugins' });
-      // generate plugin list
-      this.plugins.forEach(plugin => {
-        pluginsGroup.add(new RemoveBoxView({ model: plugin }));
-      });
-
       return pluginsGroup;
     },
     createExtPlugGroup() {
-      return this.createSettingsGroup(new PluginMeta({
-        instance: this.ext,
-        name: 'ExtPlug'
-      }));
+      return this.ext.getSettingsView();
     },
 
     createSettingsGroup(pluginMeta) {
@@ -156,50 +111,16 @@ define(function (require, exports, module) {
       if (!plugin._settings) {
         return;
       }
-      let group = new ControlGroupView({ name: pluginMeta.get('name') });
-      let meta = plugin._settings;
-      let settings = plugin.settings;
 
-      _.each(meta, (setting, name) => {
-        let control;
-        switch (setting.type) {
-          case 'boolean':
-            control = new CheckboxView({
-              label: setting.label,
-              enabled: settings.get(name)
-            });
-            break;
-          case 'dropdown':
-            control = new DropdownView({
-              label: setting.label,
-              options: setting.options,
-              selected: settings.get(name)
-            });
-            break;
-          case 'slider':
-            control = new SliderView({
-              label: setting.label,
-              min: setting.min,
-              max: setting.max,
-              value: settings.get(name)
-            });
-            break;
-        }
-        if (control) {
-          wireSettingToModel(control, settings, name);
-          group.add(control);
-        }
-      });
-
-      return group;
+      return plugin.getSettingsView();
     },
 
     sort() {
-      this.groups.sort(function (a, b) {
-        var c = b.priority - a.priority;
+      this.groups.sort((a, b) => {
+        let c = b.priority - a.priority;
         if (c === 0) {
-          c = a.items.name > b.items.name ? 1
-            : a.items.name < b.items.name ? -1
+          c = a.name > b.name ? 1
+            : a.name < b.name ? -1
             : 0;
         }
         return c;
@@ -213,28 +134,29 @@ define(function (require, exports, module) {
       }
     },
 
-    addGroup(items, priority) {
+    addGroup(name, view, priority) {
       this.groups.push({
-        items: items,
+        name: name,
+        view: view,
         priority: typeof priority === 'number' ? priority : 0
       });
     },
 
     getGroup(name) {
       for (let i = 0, l = this.groups.length; i < l; i++) {
-        if (this.groups[i].items.name === name) {
-          return this.groups[i].items;
+        if (this.groups[i].name === name) {
+          return this.groups[i].view;
         }
       }
     },
 
     hasGroup(name) {
-      return this.groups.some(group => group.items.name === name);
+      return this.groups.some(group => group.name === name);
     },
 
     removeGroup(name) {
-      for (var i = 0, l = this.groups.length; i < l; i++) {
-        if (this.groups[i].items.name === name) {
+      for (let i = 0, l = this.groups.length; i < l; i++) {
+        if (this.groups[i].name === name) {
           return this.groups.splice(i, 1);
         }
       }
