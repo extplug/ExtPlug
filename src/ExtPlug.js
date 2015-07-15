@@ -390,7 +390,7 @@ define(function (require, exports, module) {
         delete stored.plugins[fullSizeVideo];
       }
       if (semvercmp(stored.version, '0.13.1') < 0) {
-        stored.version = '0.13.1'
+        stored.version = '0.13.1';
         // show-deleted was added to core in 0.13
         let showDeleted =
             'https://extplug.github.io/show-deleted/build/show-deleted.js;' +

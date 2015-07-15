@@ -18,7 +18,7 @@ define(function (require, exports, module) {
         label: setting.label,
         options: setting.options,
         selected: value
-      })
+      });
     },
     slider(setting, value) {
       return new SliderView({
@@ -26,7 +26,7 @@ define(function (require, exports, module) {
         min: setting.min,
         max: setting.max,
         value: settings.get(name)
-      })
+      });
     }
   };
 
