@@ -45,12 +45,14 @@ define(function (require, exports, module) {
         enable: {
           value: () => {
             this.trigger('enable');
+            Plugin.trigger('enable', this);
           }
         },
         disable: {
           value: () => {
             this.removeStyles();
             this.trigger('disable');
+            Plugin.trigger('disable', this);
           }
         }
       });
@@ -81,6 +83,8 @@ define(function (require, exports, module) {
       }
     }
   });
+
+  _.extend(Plugin, Backbone.Events);
 
   module.exports = Plugin;
 
