@@ -65,11 +65,6 @@ var viewHasElement = function (View, sel) {
   }
 };
 
-// A stub matcher function, matching nothing, for modules that can not yet be matched uniquely.
-var todo = function () {
-  return false;
-};
-
 /**
  * The Context keeps track of the long names, and provides some convenience methods
  * for working with renamed modules.
@@ -199,7 +194,8 @@ Matcher.prototype.resolve = function (context) {
   var fn = this.fn;
   for (var name in defines) if (defines.hasOwnProperty(name)) {
     try {
-      if (defines[name] && this.match(context, defines[name], name)) {
+      if (defines[name] && !defines[name].__plugModule &&
+          this.match(context, defines[name], name)) {
         return name;
       }
     }
@@ -1156,7 +1152,7 @@ var plugModules = {
   },
   'plug/views/playlists/media/headers/MediaHeaderView': function (m) {
     return isView(m) && m.prototype.className === 'header' &&
-      m.__super__ === Backbone.View;
+      !('template' in m.prototype);
   },
   'plug/views/playlists/media/headers/ImportHeaderView': function (m) {
     return isView(m) && m.prototype.className === 'header import' &&
@@ -1175,7 +1171,7 @@ var plugModules = {
       _.isFunction(m.prototype.onBackClick);
   },
   'plug/views/playlists/media/headers/YouTubePlaylistsHeader': function (m) {
-    const Lang = this.require('lang/Lang');
+    var Lang = this.require('lang/Lang');
     return isView(m) && m.prototype.className === 'header import' &&
       m.prototype.template === this.require('hbs!templates/playlist/media/headers/ImportYouTubePlaylistsHeader')(Lang);
   },
@@ -1190,7 +1186,7 @@ var plugModules = {
       _.isFunction(m.prototype.onBackClick);
   },
   'plug/views/playlists/media/headers/SoundCloudSetsHeader': function (m) {
-    const Lang = this.require('lang/Lang');
+    var Lang = this.require('lang/Lang');
     return isView(m) && m.prototype.className === 'header import' &&
       _.isFunction(m.prototype.onImportClick) &&
       m.prototype.template === this.require('hbs!templates/playlist/media/headers/ImportSoundCloudSetsHeader')(Lang);
@@ -1207,7 +1203,7 @@ var plugModules = {
       _.isFunction(m.prototype.onBackClick);
   },
   'plug/views/playlists/media/headers/SoundCloudTracksHeader': function (m) {
-    const Lang = this.require('lang/Lang');
+    var Lang = this.require('lang/Lang');
     return isView(m) && m.prototype.className === 'header import' &&
       _.isFunction(m.prototype.onImportClick) &&
       m.prototype.template === this.require('hbs!templates/playlist/media/headers/ImportSoundCloudHeader')(Lang);
@@ -1697,17 +1693,6 @@ context.HandlerFetcher = HandlerFetcher;
 
 context.modules = plugModules;
 
-context.load = function (name, req, cb, config) {
-  context.run();
-  var result = context.require(name);
-  if (result) {
-    cb(result);
-  }
-  else {
-    cb.error(new Error('module "' + name + '" not found'));
-  }
-};
-
 return context;
 
 }));
@@ -1838,12 +1823,13 @@ define('extplug/util/request',['require','exports','module','jquery'],function (
 });
 
 
-define('extplug/models/RoomSettings',['require','exports','module','plug/models/currentRoom','../util/request','backbone','plug/core/Events'],function (require, exports, module) {
+define('extplug/models/RoomSettings',['require','exports','module','plug/models/currentRoom','plug/util/util','../util/request','backbone','plug/core/Events'],function (require, exports, module) {
 
-  var currentRoom = require('plug/models/currentRoom'),
-      request = require('../util/request'),
-      Backbone = require('backbone'),
-      Events = require('plug/core/Events');
+  var currentRoom = require('plug/models/currentRoom');
+  var util = require('plug/util/util');
+  var request = require('../util/request');
+  var Backbone = require('backbone');
+  var Events = require('plug/core/Events');
 
   var RoomSettings = Backbone.Model.extend({
 
@@ -1872,7 +1858,8 @@ define('extplug/models/RoomSettings',['require','exports','module','plug/models/
           m = description.match(/(?:^|\n)@(?:p3|rcs)=(.*?)(?:\n|$)/);
 
       if (m) {
-        request.json(m[1]).then(function (settings) {
+        var url = util.h2t(m[1]);
+        request.json(url).then(function (settings) {
           if (unload) {
             _this.unload();
           } else {
@@ -2131,13 +2118,18 @@ define('extplug/util/Style',['require','exports','module','jquery','underscore',
 
   var $ = require('jquery');
   var _ = require('underscore');
-  var sistyl = require('sistyl');
+
+  var _require = require('sistyl');
+
+  var Sistyl = _require.Sistyl;
+
   var Class = require('plug/core/Class');
   var popoutView = require('plug/views/rooms/popout/PopoutView');
 
-  var Style = Class.extend({
+  // hack to get plug.dj-like Class inheritance on a not-plug.dj-like Class
+  var Style = Class.extend.call(Sistyl, {
     init: function init(defaults) {
-      this._sistyl = sistyl(defaults);
+      Sistyl.call(this, defaults);
       this._timeout = null;
 
       this.refresh = this.refresh.bind(this);
@@ -2159,7 +2151,7 @@ define('extplug/util/Style',['require','exports','module','jquery','underscore',
     },
 
     set: function set(sel, props) {
-      this._sistyl.set(sel, props);
+      this._super(sel, props);
 
       // throttle updates
       clearTimeout(this._timeout);
@@ -2173,10 +2165,6 @@ define('extplug/util/Style',['require','exports','module','jquery','underscore',
 
     remove: function remove() {
       this.$().remove();
-    },
-
-    toString: function toString() {
-      return this._sistyl.toString();
     }
 
   });
@@ -2234,12 +2222,14 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
         enable: {
           value: function value() {
             _this.trigger('enable');
+            Plugin.trigger('enable', _this);
           }
         },
         disable: {
           value: function value() {
             _this.removeStyles();
             _this.trigger('disable');
+            Plugin.trigger('disable', _this);
           }
         }
       });
@@ -2280,6 +2270,8 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
       }
     }
   });
+
+  _.extend(Plugin, Backbone.Events);
 
   module.exports = Plugin;
 });
@@ -2328,12 +2320,13 @@ define('extplug/load-plugin',['require','exports','module','./util/request'],fun
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.13.2",
+  "version": "0.13.3",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
     "meld": "1.x",
     "plug-modules": "^4.2.2",
+    "semver-compare": "^1.0.0",
     "sistyl": "^0.4.2"
   },
   "devDependencies": {
@@ -2354,7 +2347,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1436222909300
+  "builtAt": 1437063628114
 });
 
 
@@ -3914,6 +3907,23 @@ define('extplug/plugins/chat-classes',['require','exports','module','../Plugin',
 
   module.exports = ChatClasses;
 });
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define('semver-compare',[],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.semvercmp = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports = function cmp (a, b) {
+    var pa = a.split('.');
+    var pb = b.split('.');
+    for (var i = 0; i < 3; i++) {
+        var na = Number(pa[i]);
+        var nb = Number(pb[i]);
+        if (na > nb) return 1;
+        if (nb > na) return -1;
+        if (!isNaN(na) && isNaN(nb)) return 1;
+        if (isNaN(na) && !isNaN(nb)) return -1;
+    }
+    return 0;
+};
+
+},{}]},{},[1])(1)
+});
 
 
 define('extplug/hooks/waitlist',['require','exports','module','plug/models/booth','plug/collections/waitlist','plug/collections/users','underscore'],function (require, exports, module) {
@@ -4259,7 +4269,7 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./load-plugin','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/chat-classes','./package','jquery','underscore','backbone','meld','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./load-plugin','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/chat-classes','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
@@ -4282,6 +4292,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var _ = require('underscore');
   var Backbone = require('backbone');
   var meld = require('meld');
+  var semvercmp = require('semver-compare');
 
   var hooks = [require('./hooks/waitlist'), require('./hooks/api-early'), require('./hooks/chat'), require('./hooks/playback'), require('./hooks/settings'), require('./hooks/popout-style')];
 
@@ -4294,24 +4305,6 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
       return JSON.parse(str) || {};
     } catch (e) {}
     return {};
-  }
-
-  // compare semver version numbers
-  function semvercmp(a, b) {
-    a = a.split('.').map(function (n) {
-      return parseInt(n, 10);
-    });
-    b = b.split('.').map(function (n) {
-      return parseInt(n, 10);
-    });
-    for (var i = 0; i < 3; i++) {
-      if (a[i] > b[i]) {
-        return 1;
-      }if (a[i] < b[i]) {
-        return -1;
-      }
-    }
-    return 0;
   }
 
   /**
