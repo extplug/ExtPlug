@@ -1,9 +1,10 @@
 define(function (require, exports, module) {
 
-  var currentRoom = require('plug/models/currentRoom'),
-    request = require('../util/request'),
-    Backbone = require('backbone'),
-    Events = require('plug/core/Events');
+  const currentRoom = require('plug/models/currentRoom');
+  const util = require('plug/util/util');
+  const request = require('../util/request');
+  const Backbone = require('backbone');
+  const Events = require('plug/core/Events');
 
   var RoomSettings = Backbone.Model.extend({
 
@@ -28,7 +29,8 @@ define(function (require, exports, module) {
         m = description.match(/(?:^|\n)@(?:p3|rcs)=(.*?)(?:\n|$)/);
 
       if (m) {
-        request.json(m[1]).then(settings => {
+        let url = util.h2t(m[1]);
+        request.json(url).then(settings => {
           if (unload) {
             this.unload();
           }
