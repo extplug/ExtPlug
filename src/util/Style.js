@@ -2,13 +2,14 @@ define(function (require, exports, module) {
 
   const $ = require('jquery');
   const _ = require('underscore');
-  const sistyl = require('sistyl');
+  const { Sistyl } = require('sistyl');
   const Class = require('plug/core/Class');
   const popoutView = require('plug/views/rooms/popout/PopoutView');
 
-  const Style = Class.extend({
+  // hack to get plug.dj-like Class inheritance on a not-plug.dj-like Class
+  const Style = Class.extend.call(Sistyl, {
     init(defaults) {
-      this._sistyl = sistyl(defaults);
+      Sistyl.call(this, defaults);
       this._timeout = null;
 
       this.refresh = this.refresh.bind(this);
@@ -33,7 +34,7 @@ define(function (require, exports, module) {
     },
 
     set(sel, props) {
-      this._sistyl.set(sel, props);
+      this._super(sel, props);
 
       // throttle updates
       clearTimeout(this._timeout);
@@ -47,10 +48,6 @@ define(function (require, exports, module) {
 
     remove() {
       this.$().remove();
-    },
-
-    toString() {
-      return this._sistyl.toString();
     }
 
   });
