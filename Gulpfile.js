@@ -30,10 +30,21 @@ gulp.task('lib-debug', function () {
 
   return b.bundle()
     .pipe(source('debug.js'))
-    .pipe(gulp.dest('lib/debug/'))
+    .pipe(gulp.dest('build/_deps/'))
 })
 
-gulp.task('dependencies', [ 'lib-debug' ])
+gulp.task('lib-semvercmp', function () {
+  var b = browserify({
+    entries: './node_modules/semver-compare/index.js',
+    standalone: 'semvercmp'
+  })
+
+  return b.bundle()
+    .pipe(source('semver-compare.js'))
+    .pipe(gulp.dest('build/_deps/'))
+})
+
+gulp.task('dependencies', [ 'lib-debug', 'lib-semvercmp' ])
 
 gulp.task('rjs', function (done) {
   var npm = 'node_modules/'
@@ -55,7 +66,8 @@ gulp.task('rjs', function (done) {
       sistyl: npm + 'sistyl/lib/sistyl',
       extplug: 'lib',
       'plug-modules': npm + 'plug-modules/plug-modules',
-      'debug': 'debug/debug'
+      'debug': 'build/_deps/debug',
+      'semver-compare': 'build/_deps/semver-compare'
     },
     rawText: {
       'extplug/package': 'define(' + packgString + ')'

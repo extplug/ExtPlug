@@ -21,6 +21,7 @@ define(function (require, exports, module) {
   const _ = require('underscore');
   const Backbone = require('backbone');
   const meld = require('meld');
+  const semvercmp = require('semver-compare');
 
   let hooks = [
     require('./hooks/waitlist'),
@@ -39,17 +40,6 @@ define(function (require, exports, module) {
     try { return JSON.parse(str) || {}; }
     catch (e) {}
     return {};
-  }
-
-  // compare semver version numbers
-  function semvercmp(a, b) {
-    a = a.split('.').map(n => parseInt(n, 10));
-    b = b.split('.').map(n => parseInt(n, 10));
-    for (let i = 0; i < 3; i++) {
-      if (a[i] > b[i]) return 1;
-      if (a[i] < b[i]) return -1;
-    }
-    return 0;
   }
 
   /**

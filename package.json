@@ -6,6 +6,7 @@
     "debug": "^2.2.0",
     "meld": "1.x",
     "plug-modules": "^4.2.2",
+    "semver-compare": "^1.0.0",
     "sistyl": "^0.4.2"
   },
   "devDependencies": {
