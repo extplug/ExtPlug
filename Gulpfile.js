@@ -14,7 +14,7 @@ var packg  = require('./package.json')
 
 gulp.task('babel', function () {
   return gulp.src('src/**/*')
-    .pipe(babel({ modules: 'ignore' }))
+    .pipe(babel({ only: '**/*.js', modules: 'ignore' }))
     .pipe(gulp.dest('lib/'))
 })
 
