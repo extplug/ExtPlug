@@ -22,29 +22,27 @@ gulp.task('clean-lib', function (cb) {
   del('lib', cb)
 })
 
-gulp.task('lib-debug', function () {
-  var b = browserify({
-    entries: './node_modules/debug/browser.js',
-    standalone: 'debug'
-  })
+var nodelib = function (entry, standalone, name) {
+  name = name || standalone + '.js'
 
-  return b.bundle()
-    .pipe(source('debug.js'))
-    .pipe(gulp.dest('build/_deps/'))
-})
+  var opts = {
+    entries: './node_modules/' + entry
+  }
+  if (standalone) opts.standalone = standalone
 
-gulp.task('lib-semvercmp', function () {
-  var b = browserify({
-    entries: './node_modules/semver-compare/index.js',
-    standalone: 'semvercmp'
-  })
+  return function () {
+    return browserify(opts)
+      .bundle()
+      .pipe(source(name))
+      .pipe(gulp.dest('build/_deps/'))
+  }
+}
 
-  return b.bundle()
-    .pipe(source('semver-compare.js'))
-    .pipe(gulp.dest('build/_deps/'))
-})
+gulp.task('lib-debug', nodelib('debug/browser.js', 'debug'))
+gulp.task('lib-semvercmp', nodelib('semver-compare/index.js', 'semvercmp'))
+gulp.task('lib-symbol', nodelib('es6-symbol/implement.js', false, 'es6-symbol.js'))
 
-gulp.task('dependencies', [ 'lib-debug', 'lib-semvercmp' ])
+gulp.task('dependencies', [ 'lib-debug', 'lib-semvercmp', 'lib-symbol' ])
 
 gulp.task('rjs', function (done) {
   var npm = 'node_modules/'
@@ -67,7 +65,7 @@ gulp.task('rjs', function (done) {
       extplug: 'lib',
       'plug-modules': npm + 'plug-modules/plug-modules',
       'debug': 'build/_deps/debug',
-      'semver-compare': 'build/_deps/semver-compare'
+      'semver-compare': 'build/_deps/semvercmp'
     },
     rawText: {
       'extplug/package': 'define(' + packgString + ')'
@@ -83,7 +81,8 @@ gulp.task('rjs', function (done) {
 })
 
 gulp.task('build', function () {
-  return gulp.src([ 'build/build.rjs.js'
+  return gulp.src([ 'build/_deps/es6-symbol.js'
+                  , 'build/build.rjs.js'
                   , 'lib/plugdj.user.js' ])
     .pipe(concat('extplug.js'))
     .pipe(gulp.dest('build/'))
@@ -121,8 +120,7 @@ gulp.task('clean', [ 'clean-lib', 'clean-build' ])
 gulp.task('default', function () {
   return runseq(
     'clean',
-    'babel',
-    'dependencies',
+    [ 'babel', 'dependencies' ],
     'rjs',
     'build',
     [ 'chrome', 'userscript' ]

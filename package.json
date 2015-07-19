@@ -4,6 +4,7 @@
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
+    "es6-symbol": "^2.0.1",
     "meld": "1.x",
     "plug-modules": "^4.2.2",
     "semver-compare": "^1.0.0",
