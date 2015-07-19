@@ -16,7 +16,7 @@ define(function (require, exports, module) {
     render() {
       this.$label = $('<label />')
         .addClass('title')
-        .append($('<span />').text(this.label));
+        .text(this.label);
       this.$selected = $('<div />')
         .addClass('extplug-playlist-selected')
         .text(this.value.get('name'))
