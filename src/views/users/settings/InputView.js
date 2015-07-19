@@ -1,5 +1,6 @@
 define(function (require, exports, module) {
 
+  const Events = require('plug/core/Events');
   const { View } = require('backbone');
   const { omit } = require('underscore');
   const $ = require('jquery');
@@ -63,11 +64,7 @@ define(function (require, exports, module) {
     },
     onBlur() {
       this.$wrapper.removeClass('focused');
-      this.trigger('change', this.value());
-    },
-
-    value() {
-      return this.$input.val();
+      this.trigger('change', this.$input.val());
     }
   });
 
