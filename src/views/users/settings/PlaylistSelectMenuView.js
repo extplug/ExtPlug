@@ -16,13 +16,9 @@ define(function (require, exports, module) {
     // plug has a little delay in here because it auto-hides the grab
     // menu when the mouse leaves the area.
     hide() {
+      this.$modal && this.$modal.remove();
       if (this._hide) this._hide();
       else this._super();
-    },
-
-    onDocClick(e) {
-      // TODO check if e.target is child
-      this.hide();
     },
 
     onRowPress(playlist) {
@@ -47,6 +43,13 @@ define(function (require, exports, module) {
           }
         }
       });
+
+      this.$modal = $('<div />')
+        .addClass('user-rollover-modal')
+        .on('click', this.hide.bind(this))
+        .appendTo('body');
+      this.$el.css('z-index', parseInt(this.$modal.css('z-index'), 10) + 1);
+
       return this;
     }
   });
