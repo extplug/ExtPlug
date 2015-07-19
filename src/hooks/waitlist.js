@@ -16,8 +16,6 @@ define(function (require, exports, module) {
     let left = difference(oldList, newList);
     let entered = difference(newList, oldList);
 
-    extend(API, events);
-
     left.forEach(uid => {
       API.dispatch(API.WAIT_LIST_LEAVE, API.getUser(uid));
     });
@@ -28,6 +26,7 @@ define(function (require, exports, module) {
 
   exports.install = function () {
     booth.on('change:waitingDJs', onChange);
+    extend(API, events);
   };
 
   exports.uninstall = function () {
