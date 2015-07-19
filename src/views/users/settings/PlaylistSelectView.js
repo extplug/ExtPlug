@@ -26,7 +26,9 @@ define(function (require, exports, module) {
     },
 
     open() {
-      let menu = new PlaylistSelectMenuView();
+      let menu = new PlaylistSelectMenuView({
+        selected: this.value
+      });
       menu.show(this.$selected);
       menu.on('select', playlist => {
         this.value = playlist;

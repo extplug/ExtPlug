@@ -34,7 +34,19 @@ define(function (require, exports, module) {
       this._super(el, fakeMedia, container);
       this.$icon.removeClass('icon-add').addClass('icon-playlist');
       this.$title.text(Lang.playlist.yourPlaylists);
-      // TODO fix icon-check-purple position
+
+      // show the check mark in front of the selected playlist instead of the
+      // active one
+      this.rows.forEach(row => {
+        if (row.model) {
+          if (row.model.get('id') === this.options.selected.get('id')) {
+            row.$el.append($('<i />').addClass('icon icon-check-purple'));
+          }
+          else if (row.model.get('active')) {
+            row.$el.find('.icon-check-purple').remove();
+          }
+        }
+      });
       return this;
     }
   });
