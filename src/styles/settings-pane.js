@@ -79,13 +79,18 @@ define({
     // playlist select
     '.extplug-playlist-select': {
       '.extplug-playlist-selected': {
+        'background': '#282c35',
+        // positioning
         'margin-left': '50%',
         'width': '50%',
-        'background': '#282c35',
         'padding': '7px',
         'margin': '-7px 0 -7px 50%',
         'position': 'absolute',
-        'box-sizing': 'border-box'
+        'box-sizing': 'border-box',
+        // cut off long playlist names
+        'white-space': 'nowrap',
+        'text-overflow': 'ellipsis',
+        'overflow': 'hidden'
       }
     }
   },
