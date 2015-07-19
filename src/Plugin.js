@@ -15,7 +15,6 @@ define(function (require, exports, module) {
 
       this.id = id;
       this.ext = ext;
-      this._styles = [];
 
       let settings = new Settings({});
       if (this.settings) {
@@ -50,11 +49,22 @@ define(function (require, exports, module) {
         },
         disable: {
           value: () => {
-            this.removeStyles();
             this.trigger('disable');
             Plugin.trigger('disable', this);
           }
         }
+      });
+
+      // Styles API
+      this._styles = [];
+      if (this.style) {
+        // declarative `style: {}` API
+        this.on('enable', () => {
+          this.createStyle(this.style);
+        });
+      }
+      this.on('disable', () => {
+        this.removeStyles();
       });
     },
 
@@ -71,16 +81,22 @@ define(function (require, exports, module) {
       this.enable();
     },
 
-    Style(o) {
-      var style = new Style(o);
+    // Styles API
+    createStyle(defaults = {}) {
+      let style = new Style(defaults);
       this._styles.push(style);
       return style;
     },
-
+    Style(defaults) {
+      console.warn(`[${this.id}] Plugin#Style is deprecated. ` +
+                   `Use Plugin#createStyle instead.`);
+      return this.createStyle(defaults);
+    },
     removeStyles() {
-      while (this._styles.length > 0) {
-        this._styles.pop().remove();
+      if (this._styles) {
+        this._styles.forEach(style => style.remove());
       }
+      this._styles = [];
     }
   });
 

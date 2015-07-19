@@ -255,13 +255,6 @@ define(function (require, exports, module) {
       settings.update();
       this.appView = getApplicationView();
 
-      // ExtPlug styles
-      this.Style()
-        .set(require('./styles/badge'))
-        .set(require('./styles/inline-chat'))
-        .set(require('./styles/settings-pane'))
-        .set(require('./styles/install-plugin-dialog'));
-
       // install extra events
       hooks.forEach(hook => {
         hook.install();
@@ -270,6 +263,13 @@ define(function (require, exports, module) {
       this._core.forEach(plugin => {
         plugin.enable();
       });
+
+      // ExtPlug styles
+      this.createStyle()
+        .set(require('./styles/badge'))
+        .set(require('./styles/inline-chat'))
+        .set(require('./styles/settings-pane'))
+        .set(require('./styles/install-plugin-dialog'));
 
       // room settings
       this.roomSettings = new RoomSettings(this);
