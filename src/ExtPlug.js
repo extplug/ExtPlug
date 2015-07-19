@@ -20,10 +20,7 @@ define(function (require, exports, module) {
 
   const _package = require('./package');
 
-  const $ = require('jquery');
   const _ = require('underscore');
-  const Backbone = require('backbone');
-  const meld = require('meld');
   const semvercmp = require('semver-compare');
 
   let hooks = [
