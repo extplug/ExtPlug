@@ -117,12 +117,13 @@ gulp.task('userscript', [ 'userscript-meta' ], function () {
 
 gulp.task('clean', [ 'clean-lib', 'clean-build' ])
 
-gulp.task('default', function () {
-  return runseq(
+gulp.task('default', function (cb) {
+  runseq(
     'clean',
     [ 'babel', 'dependencies' ],
     'rjs',
     'build',
-    [ 'chrome', 'userscript' ]
+    [ 'chrome', 'userscript' ],
+    cb
   )
 })
