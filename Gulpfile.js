@@ -51,7 +51,7 @@ gulp.task('rjs', function (done) {
   delete packg.builtAt
   rjs.optimize({
     baseUrl: './',
-    name: 'extplug/boot',
+    name: 'extplug/main',
     include: [ 'extplug/ExtPlug' ],
     paths: {
       // plug-modules defines, these are defined at runtime
@@ -70,6 +70,7 @@ gulp.task('rjs', function (done) {
     rawText: {
       'extplug/package': 'define(' + packgString + ')'
     },
+    insertRequire: [ 'extplug/main' ],
     optimize: 'none',
     out: function (text) {
       mkdirp('build', function (e) {
@@ -82,8 +83,7 @@ gulp.task('rjs', function (done) {
 
 gulp.task('build', function () {
   return gulp.src([ 'build/_deps/es6-symbol.js'
-                  , 'build/build.rjs.js'
-                  , 'lib/plugdj.user.js' ])
+                  , 'build/build.rjs.js' ])
     .pipe(concat('extplug.js'))
     .pipe(gulp.dest('build/'))
 })
