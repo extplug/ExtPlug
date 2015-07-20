@@ -6,6 +6,7 @@ define(function (require, exports, module) {
   const Class = require('plug/core/Class');
   const Settings = require('./models/Settings');
   const Style = require('./util/Style');
+  const debug = require('debug');
 
   const stubHook = function () {};
 
@@ -15,6 +16,8 @@ define(function (require, exports, module) {
 
       this.id = id;
       this.ext = ext;
+
+      this.debug = debug(`extplug:plugin:${id}`);
 
       let settings = new Settings({});
       if (this.settings) {
@@ -69,6 +72,7 @@ define(function (require, exports, module) {
     },
 
     $(sel) {
+      this.debug(`Plugin#$ is deprecated. Use require('jquery') instead.`)
       return jQuery(sel || document);
     },
 
@@ -88,8 +92,7 @@ define(function (require, exports, module) {
       return style;
     },
     Style(defaults) {
-      console.warn(`[${this.id}] Plugin#Style is deprecated. ` +
-                   `Use Plugin#createStyle instead.`);
+      this.debug(`Plugin#Style is deprecated. Use Plugin#createStyle instead.`);
       return this.createStyle(defaults);
     },
     removeStyles() {
