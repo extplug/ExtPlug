@@ -40,6 +40,9 @@ define(function (require, exporst, module) {
           else if (user.gRole >= r.BOUNCER) {
             classes.push('from-ambassador');
           }
+          if (user.friend) {
+            classes.push('from-friend');
+          }
           // normal user & staff roles
           classes.push(roleClasses[user.role]);
         }
