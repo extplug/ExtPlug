@@ -8,7 +8,7 @@ define(function (require, exports, module) {
   const PluginMeta = require('./models/PluginMeta');
   const PluginsCollection = require('./collections/PluginsCollection');
   const Plugin = require('./Plugin');
-  const loadPlugin = require('./load-plugin');
+  const pluginLoader = require('./pluginLoader');
 
   const VersionPlugin = require('./plugins/version');
   const SettingsTabPlugin = require('./plugins/settings-tab');
@@ -95,31 +95,22 @@ define(function (require, exports, module) {
      * modules using require.js plugins or modules on remote URLs.
      */
     registerPlugin(id, cb) {
-      require(
-        [ `extplug/load-plugin!${id}` ],
-        plugin => {
-          let meta = new PluginMeta({
-            id: plugin.id,
-            name: plugin.name,
-            instance: plugin
+      pluginLoader.load(id, (e, meta) => {
+        if (e) return cb && cb(e);
+        this._plugins.add(meta);
+        let instance = meta.get('instance');
+        let state = this._getPluginSettings(meta.get('id'));
+        instance.settings.set(state.settings);
+        instance.settings.on('change', () => {
+          this._savePluginSettings(meta.get('id'));
+        });
+        if (state.enabled) {
+          _.defer(() => {
+            meta.enable();
           });
-          this._plugins.add(meta);
-          let settings = this._getPluginSettings(plugin.id);
-          plugin.settings.set(settings.settings);
-          plugin.settings.on('change', () => {
-            this._savePluginSettings(plugin.id);
-          });
-          if (settings.enabled) {
-            _.defer(() => {
-              meta.enable();
-            });
-          }
-          if (cb) cb(null);
-        },
-        (err) => {
-          if (cb) cb(err);
         }
-      );
+        if (cb) cb(null);
+      });
       return this;
     },
 

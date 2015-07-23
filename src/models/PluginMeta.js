@@ -6,9 +6,12 @@ define(function (require, exports, module) {
 
     defaults: {
       id: '',
+      fullUrl: '',
       enabled: false,
       name: '',
-      instance: null
+      description: '',
+      instance: null,
+      class: null
     },
 
     initialize() {
