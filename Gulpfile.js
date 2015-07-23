@@ -61,6 +61,7 @@ gulp.task('rjs', function (done) {
       // plug-modules defines, these are defined at runtime
       // so the r.js optimizer can't find them
       plug: 'empty:',
+      lang: 'empty:',
       backbone: 'empty:',
       jquery: 'empty:',
       underscore: 'empty:',
