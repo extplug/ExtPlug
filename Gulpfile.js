@@ -41,8 +41,12 @@ var nodelib = function (entry, standalone, name) {
 gulp.task('lib-debug', nodelib('debug/browser.js', 'debug'))
 gulp.task('lib-semvercmp', nodelib('semver-compare/index.js', 'semvercmp'))
 gulp.task('lib-symbol', nodelib('es6-symbol/implement.js', false, 'es6-symbol.js'))
+gulp.task('lib-regexp-quote', nodelib('regexp-quote/regexp-quote.js', 'regexp-quote'))
 
-gulp.task('dependencies', [ 'lib-debug', 'lib-semvercmp', 'lib-symbol' ])
+gulp.task('dependencies', [ 'lib-debug'
+                          , 'lib-semvercmp'
+                          , 'lib-symbol'
+                          , 'lib-regexp-quote' ])
 
 gulp.task('rjs', function (done) {
   var npm = 'node_modules/'
@@ -65,6 +69,7 @@ gulp.task('rjs', function (done) {
       extplug: 'lib',
       'plug-modules': npm + 'plug-modules/plug-modules',
       'debug': 'build/_deps/debug',
+      'regexp-quote': 'build/_deps/regexp-quote',
       'semver-compare': 'build/_deps/semvercmp'
     },
     rawText: {

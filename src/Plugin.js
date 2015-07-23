@@ -8,6 +8,7 @@ define(function (require, exports, module) {
   const Style = require('./util/Style');
   const SettingsView = require('./views/users/settings/DefaultSettingsView');
   const debug = require('debug');
+  const quote = require('regexp-quote');
 
   const stubHook = function () {};
 
@@ -70,6 +71,20 @@ define(function (require, exports, module) {
       this.on('disable', () => {
         this.removeStyles();
       });
+
+      // Chat Commands API
+      this._commands = [];
+      if (this.commands) {
+        // declarative `commands: {}` API
+        this.on('enable', () => {
+          _.each(this.commands, (method, name) => {
+            this.addCommand(name, this[method].bind(this));
+          });
+        });
+      }
+      this.on('disable', () => {
+        this.removeCommands();
+      });
     },
 
     $(sel) {
@@ -103,6 +118,23 @@ define(function (require, exports, module) {
       this._styles = [];
     },
 
+    // Chat Commands API
+    addCommand(name, cb) {
+      const rx = new RegExp(`^/${quote(name)}\\b`)
+      const fn = text => {
+        if (rx.test(text)) {
+          cb(text.slice(name.length + 2));
+        }
+      };
+      this._commands.push(fn);
+      API.on(API.CHAT_COMMAND, fn);
+    },
+    removeCommands() {
+      this._commands.forEach(_.partial(API.off, API.CHAT_COMMAND), API);
+      this._commands = [];
+    },
+
+    // Settings API
     getSettingsView() {
       return new SettingsView({ model: this.settings });
     }
