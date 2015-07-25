@@ -9,7 +9,7 @@
     "plug-modules": "^4.2.2",
     "regexp-quote": "0.0.0",
     "semver-compare": "^1.0.0",
-    "sistyl": "^0.4.2"
+    "sistyl": "^1.0.0"
   },
   "devDependencies": {
     "browserify": "^10.2.4",
