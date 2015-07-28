@@ -1,3 +1,338 @@
+/**
+ * ExtPlug loader. Waits for the necessary plug.dj code to load before running
+ * ExtPlug.
+ */
+
+;(function load() {
+
+  window._load = load
+
+  if (window.require && window.define && window.API) {
+    (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict';
+
+if (!require('./is-implemented')()) {
+	Object.defineProperty(require('es5-ext/global'), 'Symbol',
+		{ value: require('./polyfill'), configurable: true, enumerable: false,
+			writable: true });
+}
+
+},{"./is-implemented":2,"./polyfill":18,"es5-ext/global":5}],2:[function(require,module,exports){
+'use strict';
+
+module.exports = function () {
+	var symbol;
+	if (typeof Symbol !== 'function') return false;
+	symbol = Symbol('test symbol');
+	try { String(symbol); } catch (e) { return false; }
+	if (typeof Symbol.iterator === 'symbol') return true;
+
+	// Return 'true' for polyfills
+	if (typeof Symbol.isConcatSpreadable !== 'object') return false;
+	if (typeof Symbol.iterator !== 'object') return false;
+	if (typeof Symbol.toPrimitive !== 'object') return false;
+	if (typeof Symbol.toStringTag !== 'object') return false;
+	if (typeof Symbol.unscopables !== 'object') return false;
+
+	return true;
+};
+
+},{}],3:[function(require,module,exports){
+'use strict';
+
+module.exports = function (x) {
+	return (x && ((typeof x === 'symbol') || (x['@@toStringTag'] === 'Symbol'))) || false;
+};
+
+},{}],4:[function(require,module,exports){
+'use strict';
+
+var assign        = require('es5-ext/object/assign')
+  , normalizeOpts = require('es5-ext/object/normalize-options')
+  , isCallable    = require('es5-ext/object/is-callable')
+  , contains      = require('es5-ext/string/#/contains')
+
+  , d;
+
+d = module.exports = function (dscr, value/*, options*/) {
+	var c, e, w, options, desc;
+	if ((arguments.length < 2) || (typeof dscr !== 'string')) {
+		options = value;
+		value = dscr;
+		dscr = null;
+	} else {
+		options = arguments[2];
+	}
+	if (dscr == null) {
+		c = w = true;
+		e = false;
+	} else {
+		c = contains.call(dscr, 'c');
+		e = contains.call(dscr, 'e');
+		w = contains.call(dscr, 'w');
+	}
+
+	desc = { value: value, configurable: c, enumerable: e, writable: w };
+	return !options ? desc : assign(normalizeOpts(options), desc);
+};
+
+d.gs = function (dscr, get, set/*, options*/) {
+	var c, e, options, desc;
+	if (typeof dscr !== 'string') {
+		options = set;
+		set = get;
+		get = dscr;
+		dscr = null;
+	} else {
+		options = arguments[3];
+	}
+	if (get == null) {
+		get = undefined;
+	} else if (!isCallable(get)) {
+		options = get;
+		get = set = undefined;
+	} else if (set == null) {
+		set = undefined;
+	} else if (!isCallable(set)) {
+		options = set;
+		set = undefined;
+	}
+	if (dscr == null) {
+		c = true;
+		e = false;
+	} else {
+		c = contains.call(dscr, 'c');
+		e = contains.call(dscr, 'e');
+	}
+
+	desc = { get: get, set: set, configurable: c, enumerable: e };
+	return !options ? desc : assign(normalizeOpts(options), desc);
+};
+
+},{"es5-ext/object/assign":6,"es5-ext/object/is-callable":9,"es5-ext/object/normalize-options":13,"es5-ext/string/#/contains":15}],5:[function(require,module,exports){
+'use strict';
+
+module.exports = new Function("return this")();
+
+},{}],6:[function(require,module,exports){
+'use strict';
+
+module.exports = require('./is-implemented')()
+	? Object.assign
+	: require('./shim');
+
+},{"./is-implemented":7,"./shim":8}],7:[function(require,module,exports){
+'use strict';
+
+module.exports = function () {
+	var assign = Object.assign, obj;
+	if (typeof assign !== 'function') return false;
+	obj = { foo: 'raz' };
+	assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
+	return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
+};
+
+},{}],8:[function(require,module,exports){
+'use strict';
+
+var keys  = require('../keys')
+  , value = require('../valid-value')
+
+  , max = Math.max;
+
+module.exports = function (dest, src/*, …srcn*/) {
+	var error, i, l = max(arguments.length, 2), assign;
+	dest = Object(value(dest));
+	assign = function (key) {
+		try { dest[key] = src[key]; } catch (e) {
+			if (!error) error = e;
+		}
+	};
+	for (i = 1; i < l; ++i) {
+		src = arguments[i];
+		keys(src).forEach(assign);
+	}
+	if (error !== undefined) throw error;
+	return dest;
+};
+
+},{"../keys":10,"../valid-value":14}],9:[function(require,module,exports){
+// Deprecated
+
+'use strict';
+
+module.exports = function (obj) { return typeof obj === 'function'; };
+
+},{}],10:[function(require,module,exports){
+'use strict';
+
+module.exports = require('./is-implemented')()
+	? Object.keys
+	: require('./shim');
+
+},{"./is-implemented":11,"./shim":12}],11:[function(require,module,exports){
+'use strict';
+
+module.exports = function () {
+	try {
+		Object.keys('primitive');
+		return true;
+	} catch (e) { return false; }
+};
+
+},{}],12:[function(require,module,exports){
+'use strict';
+
+var keys = Object.keys;
+
+module.exports = function (object) {
+	return keys(object == null ? object : Object(object));
+};
+
+},{}],13:[function(require,module,exports){
+'use strict';
+
+var forEach = Array.prototype.forEach, create = Object.create;
+
+var process = function (src, obj) {
+	var key;
+	for (key in src) obj[key] = src[key];
+};
+
+module.exports = function (options/*, …options*/) {
+	var result = create(null);
+	forEach.call(arguments, function (options) {
+		if (options == null) return;
+		process(Object(options), result);
+	});
+	return result;
+};
+
+},{}],14:[function(require,module,exports){
+'use strict';
+
+module.exports = function (value) {
+	if (value == null) throw new TypeError("Cannot use null or undefined");
+	return value;
+};
+
+},{}],15:[function(require,module,exports){
+'use strict';
+
+module.exports = require('./is-implemented')()
+	? String.prototype.contains
+	: require('./shim');
+
+},{"./is-implemented":16,"./shim":17}],16:[function(require,module,exports){
+'use strict';
+
+var str = 'razdwatrzy';
+
+module.exports = function () {
+	if (typeof str.contains !== 'function') return false;
+	return ((str.contains('dwa') === true) && (str.contains('foo') === false));
+};
+
+},{}],17:[function(require,module,exports){
+'use strict';
+
+var indexOf = String.prototype.indexOf;
+
+module.exports = function (searchString/*, position*/) {
+	return indexOf.call(this, searchString, arguments[1]) > -1;
+};
+
+},{}],18:[function(require,module,exports){
+'use strict';
+
+var d              = require('d')
+  , validateSymbol = require('./validate-symbol')
+
+  , create = Object.create, defineProperties = Object.defineProperties
+  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
+  , Symbol, HiddenSymbol, globalSymbols = create(null);
+
+var generateName = (function () {
+	var created = create(null);
+	return function (desc) {
+		var postfix = 0, name;
+		while (created[desc + (postfix || '')]) ++postfix;
+		desc += (postfix || '');
+		created[desc] = true;
+		name = '@@' + desc;
+		defineProperty(objPrototype, name, d.gs(null, function (value) {
+			defineProperty(this, name, d(value));
+		}));
+		return name;
+	};
+}());
+
+HiddenSymbol = function Symbol(description) {
+	if (this instanceof HiddenSymbol) throw new TypeError('TypeError: Symbol is not a constructor');
+	return Symbol(description);
+};
+module.exports = Symbol = function Symbol(description) {
+	var symbol;
+	if (this instanceof Symbol) throw new TypeError('TypeError: Symbol is not a constructor');
+	symbol = create(HiddenSymbol.prototype);
+	description = (description === undefined ? '' : String(description));
+	return defineProperties(symbol, {
+		__description__: d('', description),
+		__name__: d('', generateName(description))
+	});
+};
+defineProperties(Symbol, {
+	for: d(function (key) {
+		if (globalSymbols[key]) return globalSymbols[key];
+		return (globalSymbols[key] = Symbol(String(key)));
+	}),
+	keyFor: d(function (s) {
+		var key;
+		validateSymbol(s);
+		for (key in globalSymbols) if (globalSymbols[key] === s) return key;
+	}),
+	hasInstance: d('', Symbol('hasInstance')),
+	isConcatSpreadable: d('', Symbol('isConcatSpreadable')),
+	iterator: d('', Symbol('iterator')),
+	match: d('', Symbol('match')),
+	replace: d('', Symbol('replace')),
+	search: d('', Symbol('search')),
+	species: d('', Symbol('species')),
+	split: d('', Symbol('split')),
+	toPrimitive: d('', Symbol('toPrimitive')),
+	toStringTag: d('', Symbol('toStringTag')),
+	unscopables: d('', Symbol('unscopables'))
+});
+defineProperties(HiddenSymbol.prototype, {
+	constructor: d(Symbol),
+	toString: d('', function () { return this.__name__; })
+});
+
+defineProperties(Symbol.prototype, {
+	toString: d(function () { return 'Symbol (' + validateSymbol(this).__description__ + ')'; }),
+	valueOf: d(function () { return validateSymbol(this); })
+});
+defineProperty(Symbol.prototype, Symbol.toPrimitive, d('',
+	function () { return validateSymbol(this); }));
+defineProperty(Symbol.prototype, Symbol.toStringTag, d('c', 'Symbol'));
+
+defineProperty(HiddenSymbol.prototype, Symbol.toPrimitive,
+	d('c', Symbol.prototype[Symbol.toPrimitive]));
+defineProperty(HiddenSymbol.prototype, Symbol.toStringTag,
+	d('c', Symbol.prototype[Symbol.toStringTag]));
+
+},{"./validate-symbol":19,"d":4}],19:[function(require,module,exports){
+'use strict';
+
+var isSymbol = require('./is-symbol');
+
+module.exports = function (value) {
+	if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
+	return value;
+};
+
+},{"./is-symbol":3}]},{},[1]);
+
 ;(function (root, factory) {
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
@@ -1699,36 +2034,37 @@ return context;
 
 
 
-define('extplug/boot',['plug-modules'],function () {
+define('extplug/main',['plug-modules'],function () {
 
   var plugModules = require('plug-modules');
+
+  function waitFor(cond, fn) {
+    var i = setInterval(function () {
+      if (cond()) {
+        clearInterval(i);
+        fn();
+      }
+    }, 20);
+  }
 
   plugModules.run();
   plugModules.register();
 
-  var timer = null;
   require(['extplug/ExtPlug'], function _loaded(ExtPlug) {
-    if (appViewExists()) {
+    waitFor(appViewExists, function () {
       var ext = new ExtPlug();
       window.extp = ext;
 
       ext.enable();
-      if (timer) {
-        clearInterval(timer);
-      }
-    } else if (!timer) {
-      timer = setInterval(function () {
-        _loaded(ExtPlug);
-      }, 20);
-    }
+    });
   });
 
   function appViewExists() {
     try {
       var _ret = (function () {
         // the ApplicationView attaches an event handler on instantiation.
-        var AppView = plugModules.require('plug/views/app/ApplicationView'),
-            Events = plugModules.require('plug/core/Events');
+        var AppView = plugModules.require('plug/views/app/ApplicationView');
+        var Events = plugModules.require('plug/core/Events');
         var evts = Events._events['show:room'];
         return {
           v: evts.some(function (event) {
@@ -1749,7 +2085,19 @@ define('extplug/models/Settings',['require','exports','module','backbone'],funct
 
   var Backbone = require('backbone');
 
-  var Settings = Backbone.Model.extend({});
+  var Settings = Backbone.Model.extend({
+
+    initialize: function initialize(attrs) {
+      var opts = arguments[1] === undefined ? {} : arguments[1];
+
+      this._meta = opts.meta;
+    },
+
+    meta: function meta() {
+      return this._meta;
+    }
+
+  });
 
   module.exports = Settings;
 });
@@ -1920,9 +2268,12 @@ define('extplug/models/PluginMeta',['require','exports','module','backbone'],fun
 
     defaults: {
       id: '',
+      fullUrl: '',
       enabled: false,
       name: '',
-      instance: null
+      description: '',
+      instance: null,
+      'class': null
     },
 
     initialize: function initialize() {
@@ -1969,26 +2320,31 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
 
   module.exports = PluginsCollection;
 });
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define('sistyl',[],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.sistyl = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global, factory) {
   if (typeof define === 'function' && define.amd) {
-    define('sistyl',['exports', 'module'], factory);
+    define(['exports', 'module', 'split-selector'], factory);
   } else if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
-    factory(exports, module);
+    factory(exports, module, require('split-selector'));
   } else {
     var mod = {
       exports: {}
     };
-    factory(mod.exports, mod);
+    factory(mod.exports, mod, global.splitSelector);
     global.sistyl = mod.exports;
   }
-})(this, function (exports, module) {
+})(this, function (exports, module, _splitSelector) {
   'use strict';
 
   var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
   module.exports = sistyl;
 
+  function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
   function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+  var _splitSelector2 = _interopRequireDefault(_splitSelector);
 
   function sistyl(defaults) {
     return new sistyl.Sistyl(defaults);
@@ -1999,7 +2355,7 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
     // sistyl constructor, takes an optional default set of rulesets
 
     function Sistyl() {
-      var defaults = arguments[0] === undefined ? {} : arguments[0];
+      var defaults = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
       _classCallCheck(this, Sistyl);
 
@@ -2008,8 +2364,24 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
       if (defaults) this.set(defaults);
     }
 
+    // concats and regroups selectors. Deals with nested groups like
+    //
+    //   expand('#a, #b', '.x, .y')
+    //
+    // returns:
+    //
+    //   '#a .x, #a .y, #b .x, #b .y'
+
     _createClass(Sistyl, [{
-      key: 'set',
+      key: '_expand',
+      value: function _expand(base, sub) {
+        var children = (0, _splitSelector2['default'])(sub);
+        return (0, _splitSelector2['default'])(base).reduce(function (selectors, parent) {
+          return selectors.concat(children.map(function (child) {
+            return parent + ' ' + child;
+          }));
+        }, []).join(', ');
+      }
 
       // .set() takes a selector name and an object of properties
       // and nested rulesets (passing an object as a property value)
@@ -2025,6 +2397,8 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
       //     '.selector-1': { 'css-prop': 'one' },
       //     '.selector-2': { 'css-prop': 'two' }
       //   })
+    }, {
+      key: 'set',
       value: function set(sel, props) {
         var _this = this;
 
@@ -2035,7 +2409,7 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
             var val = props[prop];
             if (typeof val === 'object') {
               // nested rules
-              _this.set('' + sel + ' ' + prop, val);
+              _this.set(_this._expand(sel, prop), val);
             } else {
               if (!(sel in _this._rules)) {
                 _this._rules[sel] = {};
@@ -2052,8 +2426,6 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
 
         return this;
       }
-    }, {
-      key: 'unset',
 
       // .unset() removes a ruleset from the sistyl instance, that
       // corresponds to the given selector.
@@ -2065,6 +2437,8 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
       //                          // ruleset
       // style.unset('.selector', // removes the `color` property
       //             'color')     // from the `.selector` ruleset.
+    }, {
+      key: 'unset',
       value: function unset(selector, prop) {
         if (prop !== undefined) {
           delete this._rules[selector][prop];
@@ -2073,8 +2447,6 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
         }
         return this;
       }
-    }, {
-      key: 'rulesets',
 
       // returns the flattened rulesets on this sistyl object
       // i.e. after
@@ -2085,21 +2457,23 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
       //
       //   { '.parent .child': {} }
       //
+    }, {
+      key: 'rulesets',
       value: function rulesets() {
         return this._rules;
       }
-    }, {
-      key: 'toString',
 
       // formats the current rulesets as a valid CSS string
       // (unless you set invalid property values, but then
       // you're to blame!)
+    }, {
+      key: 'toString',
       value: function toString() {
         var str = '';
         var rules = this._rules;
         Object.keys(rules).forEach(function (selector) {
           var ruleset = rules[selector];
-          str += '' + selector + ' {\n';
+          str += selector + ' {\n';
           Object.keys(ruleset).forEach(function (property) {
             str += '  ' + property + ': ' + ruleset[property] + ';\n';
           });
@@ -2111,6 +2485,49 @@ define('extplug/collections/PluginsCollection',['require','exports','module','ba
 
     return Sistyl;
   })();
+});
+},{"split-selector":2}],2:[function(require,module,exports){
+// attr regex, from Sizzle via css-what:
+// https://github.com/fb55/css-what/blob/3083ac06/index.js#L8
+// https://github.com/jquery/sizzle/blob/a7020477/src/sizzle.js#L84
+var attr = /^\s*((?:\\.|[\w\u00c0-\uFFFF\-])+)\s*(?:(\S?)=\s*(?:(['"])(.*?)\3|(#?(?:\\.|[\w\u00c0-\uFFFF\-])*)|)|)\s*(i)?\]/
+// all the non-attr things
+var normalBits = /^([^\[\],]+)/
+
+module.exports = function splitSelector(selector) {
+  var i = 0
+  var chunk = selector
+  var parts = []
+  var current = ''
+  var match
+
+  while (chunk = chunk.slice(i)) {
+    if (match = normalBits.exec(chunk)) {
+      i = match[0].length
+      current += match[0]
+    }
+    else if (chunk[0] === ',') {
+      parts.push(current.trim())
+      current = ''
+      i = 1
+    }
+    else if (chunk[0] === '[') {
+      match = attr.exec(chunk.slice(1))
+      if (match) {
+        current += '[' + match[0]
+        i = 1 + match[0].length
+      }
+    }
+    else {
+      throw new Error('Could not parse: ' + chunk)
+    }
+  }
+
+  if (current) parts.push(current.trim())
+
+  return parts
+}
+},{}]},{},[1])(1)
 });
 
 
@@ -2173,7 +2590,811 @@ define('extplug/util/Style',['require','exports','module','jquery','underscore',
 });
 
 
-define('extplug/Plugin',['require','exports','module','jquery','underscore','backbone','plug/core/Class','./models/Settings','./util/Style'],function (require, exports, module) {
+define('extplug/views/users/settings/ControlGroupView',['require','exports','module','jquery','backbone'],function (require, exports, module) {
+
+  var $ = require('jquery');
+
+  var _require = require('backbone');
+
+  var View = _require.View;
+
+  var ControlGroupView = View.extend({
+    className: 'extplug control-group',
+
+    initialize: function initialize() {
+      this.controls = [];
+    },
+
+    render: function render() {
+      var _this = this;
+
+      var switchAt = Math.ceil(this.controls.length / 2 - 1);
+      var current = $('<div />').addClass('left').appendTo(this.$el);
+      this.controls.forEach(function (item, i) {
+        current.append(item.$el);
+        item.render();
+        if (i === switchAt) {
+          current = $('<div />').addClass('right').appendTo(_this.$el);
+        }
+      });
+      return this;
+    },
+
+    addControl: function addControl(control) {
+      this.controls.push(control);
+      return this;
+    }
+  });
+
+  module.exports = ControlGroupView;
+});
+
+
+define('extplug/views/users/settings/CheckboxView',['require','exports','module','backbone','jquery','plug/core/Events'],function (require, exports, module) {
+
+  var Backbone = require('backbone');
+  var $ = require('jquery');
+  var Events = require('plug/core/Events');
+
+  /**
+   * A checkbox setting item.
+   */
+  var CheckboxView = Backbone.View.extend({
+    className: 'item',
+    initialize: function initialize(o) {
+      this.label = o.label;
+      this.description = o.description;
+      this.enabled = o.enabled || false;
+      this.onChange = this.onChange.bind(this);
+    },
+    render: function render() {
+      this.$el.append('<i class="icon icon-check-blue" />').append($('<span />').text(this.label));
+
+      if (this.description) {
+        this.$el.on('mouseenter', (function () {
+          Events.trigger('tooltip:show', this.description, this.$el);
+        }).bind(this)).on('mouseleave', function () {
+          Events.trigger('tooltip:hide');
+        });
+      }
+
+      if (this.enabled) {
+        this.$el.addClass('selected');
+      }
+
+      this.$el.on('click', this.onChange);
+      return this;
+    },
+    onChange: function onChange() {
+      this.$el.toggleClass('selected');
+      var enabled = this.enabled;
+      this.enabled = this.$el.hasClass('selected');
+      if (enabled !== this.enabled) {
+        this.trigger('change', this.enabled);
+      }
+    }
+  });
+
+  module.exports = CheckboxView;
+});
+
+
+define('extplug/views/users/settings/DropdownView',['require','exports','module','backbone','jquery','underscore'],function (require, exports, module) {
+
+  var Backbone = require('backbone');
+  var $ = require('jquery');
+  var _ = require('underscore');
+
+  var DropdownView = Backbone.View.extend({
+    className: 'dropdown',
+    tagName: 'dl',
+    initialize: function initialize() {
+      if (!this.options.selected) {
+        this.options.selected = Object.keys(this.options.options)[0];
+      }
+
+      this.onDocumentClick = this.onDocumentClick.bind(this);
+      this.onBaseClick = this.onBaseClick.bind(this);
+      this.onRowClick = this.onRowClick.bind(this);
+    },
+    render: function render() {
+      this.$selectedValue = $('<span />');
+      this.$selected = $('<dt />').append(this.$selectedValue).append($('<i />').addClass('icon icon-arrow-down-grey')).append($('<i />').addClass('icon icon-arrow-up-grey'));
+
+      this.$rows = $('<dd />');
+      var selected;
+      _.each(this.options.options, function (text, value) {
+        var row = $('<div />').addClass('row').data('value', value),
+            el = $('<span />').text(text);
+        if (this.options.selected === value) {
+          selected = row;
+        }
+        row.append(el).appendTo(this.$rows);
+      }, this);
+
+      this.$el.append(this.$selected).append(this.$rows);
+
+      this.$selected.on('click', this.onBaseClick);
+      this.$rows.on('click', this.onRowClick);
+      // trigger the above as a default
+      if (selected) {
+        selected.click();
+      }
+      return this;
+    },
+    close: function close() {
+      this.$el.removeClass('open');
+      $(document).off('click', this.onDocumentClick);
+    },
+    remove: function remove() {
+      this.$('dt, dd').off();
+      $(document).off('click', this.onDocumentClick);
+      this._super();
+    },
+    onBaseClick: function onBaseClick(e) {
+      var _this = this;
+
+      if (this.$el.hasClass('open')) {
+        this.close();
+      } else {
+        this.$el.addClass('open');
+        _.defer(function () {
+          $(document).on('click', _this.onDocumentClick);
+        });
+      }
+    },
+    onRowClick: function onRowClick(e) {
+      var row = $(e.target).closest('.row');
+      this.$('.row').removeClass('selected');
+      row.addClass('selected');
+      this.$el.removeClass('open');
+      this.$selectedValue.text(row.text());
+      this.trigger('select', row.data('value'));
+    },
+    onDocumentClick: function onDocumentClick(e) {
+      _.defer(this.close.bind(this));
+    }
+  });
+
+  module.exports = DropdownView;
+});
+
+
+define('extplug/views/users/settings/SliderView',['require','exports','module','backbone','jquery'],function (require, exports, module) {
+  var Backbone = require('backbone');
+  var $ = require('jquery');
+
+  function template(o) {
+    return '\n      <span class="title">' + o.label + '</span>\n      <span class="value"></span>\n      <div class="counts">\n        <span class="count">' + o.min + '</span>\n        <span class="count">' + o.max + '</span>\n        <span class="stretch"></span>\n      </div>\n      <div class="slider">\n        <div class="bar"></div>\n        <div class="circle"></div>\n        <div class="hit"></div>\n      </div>\n    ';
+  }
+
+  var SliderView = Backbone.View.extend({
+    className: 'extplug-slider cap',
+    initialize: function initialize() {
+      this.onStart = this.onStart.bind(this);
+      this.onMove = this.onMove.bind(this);
+      this.onStop = this.onStop.bind(this);
+      this._value = this.options.value || this.options.min;
+    },
+    render: function render() {
+      this.$el.append(template(this.options));
+      this.$bar = this.$('.bar');
+      this.$hit = this.$('.hit').on('mousedown', this.onStart);
+      this.$circle = this.$('.circle');
+      this.$value = this.$('.value');
+      _.delay((function () {
+        this.setValue(this._value, true);
+      }).bind(this));
+      return this;
+    },
+    onStart: function onStart() {
+      $(document).on('mousemove', this.onMove).on('mouseup', this.onStop);
+    },
+    onMove: function onMove(e) {
+      var offset = e.pageX - this.$hit.offset().left;
+      var percent = Math.max(0, Math.min(1, offset / (this.$hit.width() - this.$circle.width())));
+      var value = Math.round(this.options.min + percent * (this.options.max - this.options.min));
+      this.setValue(Math.max(this.options.min, value));
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    onStop: function onStop() {
+      $(document).off('mousemove', this.onMove).off('mouseup', this.onStop);
+    },
+    setValue: function setValue(value, force) {
+      if (value !== this._value || force) {
+        var percent = (value - this.options.min) / (this.options.max - this.options.min);
+        this.$circle.css('left', parseInt(this.$hit.css('left'), 10) + (this.$hit.width() - this.$circle.width()) * percent - this.$circle.width() / 2);
+        this.$value.text(value);
+        this.trigger('change', value);
+        this._value = value;
+      }
+    }
+  });
+
+  module.exports = SliderView;
+});
+
+
+define('extplug/views/users/settings/DefaultSettingsView',['require','exports','module','./ControlGroupView','./CheckboxView','./DropdownView','./SliderView','underscore'],function (require, exports, module) {
+
+  var ControlGroupView = require('./ControlGroupView');
+  var CheckboxView = require('./CheckboxView');
+  var DropdownView = require('./DropdownView');
+  var SliderView = require('./SliderView');
+
+  var _require = require('underscore');
+
+  var each = _require.each;
+  var has = _require.has;
+
+  var controlFactory = {
+    boolean: function boolean(setting, value) {
+      return new CheckboxView({
+        label: setting.label,
+        enabled: value
+      });
+    },
+    dropdown: function dropdown(setting, value) {
+      return new DropdownView({
+        label: setting.label,
+        options: setting.options,
+        selected: value
+      });
+    },
+    slider: function slider(setting, value) {
+      return new SliderView({
+        label: setting.label,
+        min: setting.min,
+        max: setting.max,
+        value: settings.get(name)
+      });
+    }
+  };
+
+  var DefaultSettingsView = ControlGroupView.extend({
+
+    render: function render() {
+      var _this = this;
+
+      this.controls = [];
+
+      var meta = this.model.meta();
+      var settings = this.model;
+      each(meta, function (setting, name) {
+        if (has(controlFactory, setting.type)) {
+          var control = controlFactory[setting.type](setting, settings.get(name));
+          control.on('change', function (value) {
+            return settings.set(name, value);
+          });
+          _this.addControl(control);
+        }
+      });
+
+      this._super();
+
+      return this;
+    },
+
+    remove: function remove() {
+      this.controls.forEach(function (control) {
+        return control.destroy();
+      });
+      this.controls = [];
+    }
+
+  });
+
+  module.exports = DefaultSettingsView;
+});
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define('debug',[],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.debug = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+
+/**
+ * This is the web browser implementation of `debug()`.
+ *
+ * Expose `debug()` as the module.
+ */
+
+exports = module.exports = require('./debug');
+exports.log = log;
+exports.formatArgs = formatArgs;
+exports.save = save;
+exports.load = load;
+exports.useColors = useColors;
+exports.storage = 'undefined' != typeof chrome
+               && 'undefined' != typeof chrome.storage
+                  ? chrome.storage.local
+                  : localstorage();
+
+/**
+ * Colors.
+ */
+
+exports.colors = [
+  'lightseagreen',
+  'forestgreen',
+  'goldenrod',
+  'dodgerblue',
+  'darkorchid',
+  'crimson'
+];
+
+/**
+ * Currently only WebKit-based Web Inspectors, Firefox >= v31,
+ * and the Firebug extension (any Firefox version) are known
+ * to support "%c" CSS customizations.
+ *
+ * TODO: add a `localStorage` variable to explicitly enable/disable colors
+ */
+
+function useColors() {
+  // is webkit? http://stackoverflow.com/a/16459606/376773
+  return ('WebkitAppearance' in document.documentElement.style) ||
+    // is firebug? http://stackoverflow.com/a/398120/376773
+    (window.console && (console.firebug || (console.exception && console.table))) ||
+    // is firefox >= v31?
+    // https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
+    (navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/) && parseInt(RegExp.$1, 10) >= 31);
+}
+
+/**
+ * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
+ */
+
+exports.formatters.j = function(v) {
+  return JSON.stringify(v);
+};
+
+
+/**
+ * Colorize log arguments if enabled.
+ *
+ * @api public
+ */
+
+function formatArgs() {
+  var args = arguments;
+  var useColors = this.useColors;
+
+  args[0] = (useColors ? '%c' : '')
+    + this.namespace
+    + (useColors ? ' %c' : ' ')
+    + args[0]
+    + (useColors ? '%c ' : ' ')
+    + '+' + exports.humanize(this.diff);
+
+  if (!useColors) return args;
+
+  var c = 'color: ' + this.color;
+  args = [args[0], c, 'color: inherit'].concat(Array.prototype.slice.call(args, 1));
+
+  // the final "%c" is somewhat tricky, because there could be other
+  // arguments passed either before or after the %c, so we need to
+  // figure out the correct index to insert the CSS into
+  var index = 0;
+  var lastC = 0;
+  args[0].replace(/%[a-z%]/g, function(match) {
+    if ('%%' === match) return;
+    index++;
+    if ('%c' === match) {
+      // we only are interested in the *last* %c
+      // (the user may have provided their own)
+      lastC = index;
+    }
+  });
+
+  args.splice(lastC, 0, c);
+  return args;
+}
+
+/**
+ * Invokes `console.log()` when available.
+ * No-op when `console.log` is not a "function".
+ *
+ * @api public
+ */
+
+function log() {
+  // this hackery is required for IE8/9, where
+  // the `console.log` function doesn't have 'apply'
+  return 'object' === typeof console
+    && console.log
+    && Function.prototype.apply.call(console.log, console, arguments);
+}
+
+/**
+ * Save `namespaces`.
+ *
+ * @param {String} namespaces
+ * @api private
+ */
+
+function save(namespaces) {
+  try {
+    if (null == namespaces) {
+      exports.storage.removeItem('debug');
+    } else {
+      exports.storage.debug = namespaces;
+    }
+  } catch(e) {}
+}
+
+/**
+ * Load `namespaces`.
+ *
+ * @return {String} returns the previously persisted debug modes
+ * @api private
+ */
+
+function load() {
+  var r;
+  try {
+    r = exports.storage.debug;
+  } catch(e) {}
+  return r;
+}
+
+/**
+ * Enable namespaces listed in `localStorage.debug` initially.
+ */
+
+exports.enable(load());
+
+/**
+ * Localstorage attempts to return the localstorage.
+ *
+ * This is necessary because safari throws
+ * when a user disables cookies/localstorage
+ * and you attempt to access it.
+ *
+ * @return {LocalStorage}
+ * @api private
+ */
+
+function localstorage(){
+  try {
+    return window.localStorage;
+  } catch (e) {}
+}
+
+},{"./debug":2}],2:[function(require,module,exports){
+
+/**
+ * This is the common logic for both the Node.js and web browser
+ * implementations of `debug()`.
+ *
+ * Expose `debug()` as the module.
+ */
+
+exports = module.exports = debug;
+exports.coerce = coerce;
+exports.disable = disable;
+exports.enable = enable;
+exports.enabled = enabled;
+exports.humanize = require('ms');
+
+/**
+ * The currently active debug mode names, and names to skip.
+ */
+
+exports.names = [];
+exports.skips = [];
+
+/**
+ * Map of special "%n" handling functions, for the debug "format" argument.
+ *
+ * Valid key names are a single, lowercased letter, i.e. "n".
+ */
+
+exports.formatters = {};
+
+/**
+ * Previously assigned color.
+ */
+
+var prevColor = 0;
+
+/**
+ * Previous log timestamp.
+ */
+
+var prevTime;
+
+/**
+ * Select a color.
+ *
+ * @return {Number}
+ * @api private
+ */
+
+function selectColor() {
+  return exports.colors[prevColor++ % exports.colors.length];
+}
+
+/**
+ * Create a debugger with the given `namespace`.
+ *
+ * @param {String} namespace
+ * @return {Function}
+ * @api public
+ */
+
+function debug(namespace) {
+
+  // define the `disabled` version
+  function disabled() {
+  }
+  disabled.enabled = false;
+
+  // define the `enabled` version
+  function enabled() {
+
+    var self = enabled;
+
+    // set `diff` timestamp
+    var curr = +new Date();
+    var ms = curr - (prevTime || curr);
+    self.diff = ms;
+    self.prev = prevTime;
+    self.curr = curr;
+    prevTime = curr;
+
+    // add the `color` if not set
+    if (null == self.useColors) self.useColors = exports.useColors();
+    if (null == self.color && self.useColors) self.color = selectColor();
+
+    var args = Array.prototype.slice.call(arguments);
+
+    args[0] = exports.coerce(args[0]);
+
+    if ('string' !== typeof args[0]) {
+      // anything else let's inspect with %o
+      args = ['%o'].concat(args);
+    }
+
+    // apply any `formatters` transformations
+    var index = 0;
+    args[0] = args[0].replace(/%([a-z%])/g, function(match, format) {
+      // if we encounter an escaped % then don't increase the array index
+      if (match === '%%') return match;
+      index++;
+      var formatter = exports.formatters[format];
+      if ('function' === typeof formatter) {
+        var val = args[index];
+        match = formatter.call(self, val);
+
+        // now we need to remove `args[index]` since it's inlined in the `format`
+        args.splice(index, 1);
+        index--;
+      }
+      return match;
+    });
+
+    if ('function' === typeof exports.formatArgs) {
+      args = exports.formatArgs.apply(self, args);
+    }
+    var logFn = enabled.log || exports.log || console.log.bind(console);
+    logFn.apply(self, args);
+  }
+  enabled.enabled = true;
+
+  var fn = exports.enabled(namespace) ? enabled : disabled;
+
+  fn.namespace = namespace;
+
+  return fn;
+}
+
+/**
+ * Enables a debug mode by namespaces. This can include modes
+ * separated by a colon and wildcards.
+ *
+ * @param {String} namespaces
+ * @api public
+ */
+
+function enable(namespaces) {
+  exports.save(namespaces);
+
+  var split = (namespaces || '').split(/[\s,]+/);
+  var len = split.length;
+
+  for (var i = 0; i < len; i++) {
+    if (!split[i]) continue; // ignore empty strings
+    namespaces = split[i].replace(/\*/g, '.*?');
+    if (namespaces[0] === '-') {
+      exports.skips.push(new RegExp('^' + namespaces.substr(1) + '$'));
+    } else {
+      exports.names.push(new RegExp('^' + namespaces + '$'));
+    }
+  }
+}
+
+/**
+ * Disable debug output.
+ *
+ * @api public
+ */
+
+function disable() {
+  exports.enable('');
+}
+
+/**
+ * Returns true if the given mode name is enabled, false otherwise.
+ *
+ * @param {String} name
+ * @return {Boolean}
+ * @api public
+ */
+
+function enabled(name) {
+  var i, len;
+  for (i = 0, len = exports.skips.length; i < len; i++) {
+    if (exports.skips[i].test(name)) {
+      return false;
+    }
+  }
+  for (i = 0, len = exports.names.length; i < len; i++) {
+    if (exports.names[i].test(name)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Coerce `val`.
+ *
+ * @param {Mixed} val
+ * @return {Mixed}
+ * @api private
+ */
+
+function coerce(val) {
+  if (val instanceof Error) return val.stack || val.message;
+  return val;
+}
+
+},{"ms":3}],3:[function(require,module,exports){
+/**
+ * Helpers.
+ */
+
+var s = 1000;
+var m = s * 60;
+var h = m * 60;
+var d = h * 24;
+var y = d * 365.25;
+
+/**
+ * Parse or format the given `val`.
+ *
+ * Options:
+ *
+ *  - `long` verbose formatting [false]
+ *
+ * @param {String|Number} val
+ * @param {Object} options
+ * @return {String|Number}
+ * @api public
+ */
+
+module.exports = function(val, options){
+  options = options || {};
+  if ('string' == typeof val) return parse(val);
+  return options.long
+    ? long(val)
+    : short(val);
+};
+
+/**
+ * Parse the given `str` and return milliseconds.
+ *
+ * @param {String} str
+ * @return {Number}
+ * @api private
+ */
+
+function parse(str) {
+  str = '' + str;
+  if (str.length > 10000) return;
+  var match = /^((?:\d+)?\.?\d+) *(milliseconds?|msecs?|ms|seconds?|secs?|s|minutes?|mins?|m|hours?|hrs?|h|days?|d|years?|yrs?|y)?$/i.exec(str);
+  if (!match) return;
+  var n = parseFloat(match[1]);
+  var type = (match[2] || 'ms').toLowerCase();
+  switch (type) {
+    case 'years':
+    case 'year':
+    case 'yrs':
+    case 'yr':
+    case 'y':
+      return n * y;
+    case 'days':
+    case 'day':
+    case 'd':
+      return n * d;
+    case 'hours':
+    case 'hour':
+    case 'hrs':
+    case 'hr':
+    case 'h':
+      return n * h;
+    case 'minutes':
+    case 'minute':
+    case 'mins':
+    case 'min':
+    case 'm':
+      return n * m;
+    case 'seconds':
+    case 'second':
+    case 'secs':
+    case 'sec':
+    case 's':
+      return n * s;
+    case 'milliseconds':
+    case 'millisecond':
+    case 'msecs':
+    case 'msec':
+    case 'ms':
+      return n;
+  }
+}
+
+/**
+ * Short format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function short(ms) {
+  if (ms >= d) return Math.round(ms / d) + 'd';
+  if (ms >= h) return Math.round(ms / h) + 'h';
+  if (ms >= m) return Math.round(ms / m) + 'm';
+  if (ms >= s) return Math.round(ms / s) + 's';
+  return ms + 'ms';
+}
+
+/**
+ * Long format for `ms`.
+ *
+ * @param {Number} ms
+ * @return {String}
+ * @api private
+ */
+
+function long(ms) {
+  return plural(ms, d, 'day')
+    || plural(ms, h, 'hour')
+    || plural(ms, m, 'minute')
+    || plural(ms, s, 'second')
+    || ms + ' ms';
+}
+
+/**
+ * Pluralization helper.
+ */
+
+function plural(ms, n, name) {
+  if (ms < n) return;
+  if (ms < n * 1.5) return Math.floor(ms / n) + ' ' + name;
+  return Math.ceil(ms / n) + ' ' + name + 's';
+}
+
+},{}]},{},[1])(1)
+});
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define('regexp-quote',[],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.regexpQuote = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+module.exports = function (string) {
+  return string.replace(/[-\\^$*+?.()|[\]{}]/g, "\\$&")
+}
+
+},{}]},{},[1])(1)
+});
+
+
+define('extplug/Plugin',['require','exports','module','jquery','underscore','backbone','plug/core/Class','./models/Settings','./util/Style','./views/users/settings/DefaultSettingsView','debug','regexp-quote'],function (require, exports, module) {
 
   var jQuery = require('jquery');
   var _ = require('underscore');
@@ -2181,6 +3402,9 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
   var Class = require('plug/core/Class');
   var Settings = require('./models/Settings');
   var Style = require('./util/Style');
+  var SettingsView = require('./views/users/settings/DefaultSettingsView');
+  var debug = require('debug');
+  var quote = require('regexp-quote');
 
   var stubHook = function stubHook() {};
 
@@ -2192,9 +3416,10 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
 
       this.id = id;
       this.ext = ext;
-      this._styles = [];
 
-      var settings = new Settings({});
+      this.debug = debug('extplug:plugin:' + id);
+
+      var settings = new Settings({}, { meta: this.settings });
       if (this.settings) {
         _.each(this.settings, function (setting, name) {
           settings.set(name, setting['default']);
@@ -2227,15 +3452,41 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
         },
         disable: {
           value: function value() {
-            _this.removeStyles();
             _this.trigger('disable');
             Plugin.trigger('disable', _this);
           }
         }
       });
+
+      // Styles API
+      this._styles = [];
+      if (this.style) {
+        // declarative `style: {}` API
+        this.on('enable', function () {
+          _this.createStyle(_this.style);
+        });
+      }
+      this.on('disable', function () {
+        _this.removeStyles();
+      });
+
+      // Chat Commands API
+      this._commands = [];
+      if (this.commands) {
+        // declarative `commands: {}` API
+        this.on('enable', function () {
+          _.each(_this.commands, function (method, name) {
+            _this.addCommand(name, _this[method].bind(_this));
+          });
+        });
+      }
+      this.on('disable', function () {
+        _this.removeCommands();
+      });
     },
 
     $: function $(sel) {
+      this.debug('Plugin#$ is deprecated. Use require(\'jquery\') instead.');
       return jQuery(sel || document);
     },
 
@@ -2248,27 +3499,48 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
       this.enable();
     },
 
-    Style: (function (_Style) {
-      function Style(_x) {
-        return _Style.apply(this, arguments);
-      }
+    // Styles API
+    createStyle: function createStyle() {
+      var defaults = arguments[0] === undefined ? {} : arguments[0];
 
-      Style.toString = function () {
-        return _Style.toString();
-      };
-
-      return Style;
-    })(function (o) {
-      var style = new Style(o);
+      var style = new Style(defaults);
       this._styles.push(style);
       return style;
-    }),
-
+    },
+    Style: function Style(defaults) {
+      this.debug('Plugin#Style is deprecated. Use Plugin#createStyle instead.');
+      return this.createStyle(defaults);
+    },
     removeStyles: function removeStyles() {
-      while (this._styles.length > 0) {
-        this._styles.pop().remove();
+      if (this._styles) {
+        this._styles.forEach(function (style) {
+          return style.remove();
+        });
       }
+      this._styles = [];
+    },
+
+    // Chat Commands API
+    addCommand: function addCommand(name, cb) {
+      var rx = new RegExp('^/' + quote(name) + '\\b');
+      var fn = function fn(text) {
+        if (rx.test(text)) {
+          cb(text.slice(name.length + 2));
+        }
+      };
+      this._commands.push(fn);
+      API.on(API.CHAT_COMMAND, fn);
+    },
+    removeCommands: function removeCommands() {
+      this._commands.forEach(_.partial(API.off, API.CHAT_COMMAND), API);
+      this._commands = [];
+    },
+
+    // Settings API
+    getSettingsView: function getSettingsView() {
+      return new SettingsView({ model: this.settings });
     }
+
   });
 
   _.extend(Plugin, Backbone.Events);
@@ -2279,9 +3551,10 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
 
 var _defineProperty = function (obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: key == null || typeof Symbol == 'undefined' || key.constructor !== Symbol, configurable: true, writable: true }); };
 
-define('extplug/load-plugin',['require','exports','module','./util/request'],function (require, exports, module) {
+define('extplug/pluginLoader',['require','exports','module','./util/request','./models/PluginMeta'],function (require, exports, module) {
 
   var request = require('./util/request');
+  var PluginMeta = require('./models/PluginMeta');
 
   function parse(name) {
     var parts = name.split(';');
@@ -2297,8 +3570,8 @@ define('extplug/load-plugin',['require','exports','module','./util/request'],fun
     return o;
   }
 
-  exports.load = function (name, req, cb, config) {
-    var o = parse(name);
+  exports.load = function (url, cb) {
+    var o = parse(url);
     if (o.name) {
       // add module name alias to the plugin URL
       // this way, when we require([ module name ]), the plugin URL
@@ -2311,23 +3584,32 @@ define('extplug/load-plugin',['require','exports','module','./util/request'],fun
     }
     var pluginId = o.name || o.url;
     var onLoad = function onLoad(Plugin) {
-      cb(new Plugin(pluginId, window.extp));
+      var instance = new Plugin(pluginId, window.extp);
+      var meta = new PluginMeta({
+        id: pluginId,
+        fullUrl: url,
+        name: instance.name,
+        description: instance.description,
+        instance: instance,
+        'class': Plugin
+      });
+      cb(null, meta);
     };
-    requirejs([pluginId], onLoad, function (err) {
-      cb.error(err);
-    });
+    requirejs([pluginId], onLoad, cb);
   };
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.13.3",
+  "version": "0.13.4",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
+    "es6-symbol": "^2.0.1",
     "meld": "1.x",
     "plug-modules": "^4.2.2",
+    "regexp-quote": "0.0.0",
     "semver-compare": "^1.0.0",
-    "sistyl": "^0.4.2"
+    "sistyl": "^1.0.0"
   },
   "devDependencies": {
     "browserify": "^10.2.4",
@@ -2335,6 +3617,7 @@ define('extplug/package',{
     "gulp": "^3.8.11",
     "gulp-babel": "^5.1.0",
     "gulp-concat": "^2.5.2",
+    "gulp-data": "^1.2.0",
     "gulp-rename": "^1.2.2",
     "gulp-template": "^3.0.0",
     "jscs": "^1.13.1",
@@ -2347,13 +3630,12 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1437063628114
+  "builtAt": 1438082585195
 });
 
 
 define('extplug/plugins/version',['require','exports','module','../Plugin','../package'],function (require, exports, module) {
   var Plugin = require('../Plugin');
-  var API = window.API;
   var _package = require('../package');
 
   var pad = function pad(x) {
@@ -2364,18 +3646,12 @@ define('extplug/plugins/version',['require','exports','module','../Plugin','../p
   var builtAt = ba.getUTCFullYear() + '-' + pad(ba.getUTCMonth() + 1) + '-' + pad(ba.getUTCDate() + 1) + ' ' + pad(ba.getUTCHours() + 1) + ':' + pad(ba.getUTCMinutes() + 1) + ':' + pad(ba.getUTCSeconds() + 1) + ' UTC';
 
   var VersionPlugin = Plugin.extend({
-    enable: function enable() {
-      this._onCommand = this.onCommand.bind(this);
-      API.on(API.CHAT_COMMAND, this._onCommand);
-    },
-    disable: function disable() {
-      API.off(API.CHAT_COMMAND, this._onCommand);
+    commands: {
+      version: 'showVersion'
     },
 
-    onCommand: function onCommand(str) {
-      if (/^\/version($|\s)/.test(str)) {
-        API.chatLog('' + _package.name + ' v' + _package.version + ' (' + builtAt + ')');
-      }
+    showVersion: function showVersion() {
+      API.chatLog('' + _package.name + ' v' + _package.version + ' (' + builtAt + ')');
     }
   });
 
@@ -3013,46 +4289,48 @@ define('extplug/views/users/settings/TabMenuView',['require','exports','module',
 });
 
 
-define('extplug/views/users/settings/ControlGroupView',['require','exports','module','jquery','backbone'],function (require, exports, module) {
-
-  var $ = require('jquery');
-
+define('extplug/views/users/settings/RemoveBoxView',['require','exports','module','backbone','jquery','plug/core/Events','plug/views/dialogs/ConfirmDialog','plug/events/ShowDialogEvent'],function (require, exports, module) {
   var _require = require('backbone');
 
   var View = _require.View;
 
-  var ControlGroupView = View.extend({
-    className: 'extplug control-group',
+  var $ = require('jquery');
+  var Events = require('plug/core/Events');
+  var ConfirmDialog = require('plug/views/dialogs/ConfirmDialog');
+  var ShowDialogEvent = require('plug/events/ShowDialogEvent');
 
-    initialize: function initialize(o) {
-      this.name = o.name;
-      this.controls = [];
+  /**
+   * A checkbox setting item.
+   */
+  var RemoveBoxView = View.extend({
+    className: 'item selected',
+    initialize: function initialize() {
+      this.onRemove = this.onRemove.bind(this);
     },
-
     render: function render() {
+      this.$icon = $('<i />').addClass('icon icon-delete');
+      this.$el.append(this.$icon).append($('<span />').text(this.model.get('name')));
+
+      this.$el.css('cursor', 'default');
+      this.$icon.css('cursor', 'pointer').css({ top: '-6px', left: '-4px' });
+
+      this.$icon.on('click', this.onRemove);
+      return this;
+    },
+    onRemove: function onRemove() {
       var _this = this;
 
-      this.$el.append($('<div>').addClass('header').append($('<span>').text(this.name)));
-
-      var switchAt = Math.ceil(this.controls.length / 2 - 1);
-      var current = $('<div />').addClass('left').appendTo(this.$el);
-      this.controls.forEach(function (item, i) {
-        current.append(item.$el);
-        item.render();
-        if (i === switchAt) {
-          current = $('<div />').addClass('right').appendTo(_this.$el);
+      Events.dispatch(new ShowDialogEvent(ShowDialogEvent.SHOW, new ConfirmDialog({
+        title: 'Remove Plugin',
+        message: 'Are you sure you want to uninstall this plugin?',
+        action: function action() {
+          extp.uninstall(_this.model.get('id'));
         }
-      });
-      return this;
-    },
-
-    add: function add(control) {
-      this.controls.push(control);
-      return this;
+      })));
     }
   });
 
-  module.exports = ControlGroupView;
+  module.exports = RemoveBoxView;
 });
 
 
@@ -3112,7 +4390,7 @@ define('extplug/views/dialogs/InstallPluginDialog',['require','exports','module'
 });
 
 
-define('extplug/views/users/settings/GroupFooterView',['require','exports','module','backbone'],function (require, exports, module) {
+define('extplug/views/users/settings/footers/GroupFooterView',['require','exports','module','backbone'],function (require, exports, module) {
   var _require = require('backbone');
 
   var View = _require.View;
@@ -3133,17 +4411,17 @@ define('extplug/views/users/settings/GroupFooterView',['require','exports','modu
 });
 
 
-define('extplug/views/users/settings/PluginsGroupView',['require','exports','module','plug/core/Events','plug/events/ShowDialogEvent','../../../util/Style','../../dialogs/InstallPluginDialog','./GroupFooterView','./ControlGroupView'],function (require, exports, module) {
+define('extplug/views/users/settings/footers/PluginsFooterView',['require','exports','module','plug/core/Events','plug/events/ShowDialogEvent','../../../dialogs/InstallPluginDialog','./GroupFooterView'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ShowDialogEvent = require('plug/events/ShowDialogEvent');
-  var Style = require('../../../util/Style');
-  var InstallPluginDialog = require('../../dialogs/InstallPluginDialog');
-  var FooterView = require('./GroupFooterView');
-  var ControlGroupView = require('./ControlGroupView');
+  var InstallPluginDialog = require('../../../dialogs/InstallPluginDialog');
+  var GroupFooterView = require('./GroupFooterView');
 
-  var PluginsFooterView = FooterView.extend({
+  var PluginsFooterView = GroupFooterView.extend({
     render: function render() {
+      var _this = this;
+
       this._super();
       this.$install = $('<button />').text('Install Plugin');
       this.$manage = $('<button />').text('Manage');
@@ -3152,7 +4430,7 @@ define('extplug/views/users/settings/PluginsGroupView',['require','exports','mod
         Events.dispatch(new ShowDialogEvent(ShowDialogEvent.SHOW, new InstallPluginDialog()));
       });
       this.$manage.on('click', function () {
-        Events.trigger('extplug:plugins:manage');
+        return _this.trigger('manage');
       });
 
       this.$left.append(this.$install);
@@ -3166,32 +4444,21 @@ define('extplug/views/users/settings/PluginsGroupView',['require','exports','mod
     }
   });
 
-  var PluginsGroupView = ControlGroupView.extend({
-    render: function render() {
-      this._super();
-      this.footer = new PluginsFooterView();
-      this.footer.render();
-      this.$el.append(this.footer.$el);
-      return this;
-    }
-  });
-
-  module.exports = PluginsGroupView;
+  module.exports = PluginsFooterView;
 });
 
 
-define('extplug/views/users/settings/ManagingGroupView',['require','exports','module','plug/core/Events','./GroupFooterView','./ControlGroupView'],function (require, exports, module) {
+define('extplug/views/users/settings/footers/ManagingFooterView',['require','exports','module','./GroupFooterView'],function (require, exports, module) {
 
-  var Events = require('plug/core/Events');
-  var FooterView = require('./GroupFooterView');
-  var ControlGroupView = require('./ControlGroupView');
+  var GroupFooterView = require('./GroupFooterView');
 
-  var ManagingFooterView = FooterView.extend({
+  var ManagingFooterView = GroupFooterView.extend({
     render: function render() {
+      var _this = this;
+
       this._super();
-      this.$done = $('<button />').text('Done');
-      this.$done.on('click', function () {
-        Events.trigger('extplug:plugins:unmanage');
+      this.$done = $('<button />').text('Done').on('click', function () {
+        return _this.trigger('unmanage');
       });
       this.$right.append(this.$done);
       return this;
@@ -3202,266 +4469,104 @@ define('extplug/views/users/settings/ManagingGroupView',['require','exports','mo
     }
   });
 
-  var ManagingGroupView = ControlGroupView.extend({
+  module.exports = ManagingFooterView;
+});
+
+
+define('extplug/views/users/settings/PluginsGroupView',['require','exports','module','./CheckboxView','./RemoveBoxView','./footers/PluginsFooterView','./footers/ManagingFooterView','./ControlGroupView'],function (require, exports, module) {
+
+  var CheckboxView = require('./CheckboxView');
+  var RemoveBoxView = require('./RemoveBoxView');
+  var PluginsFooterView = require('./footers/PluginsFooterView');
+  var ManagingFooterView = require('./footers/ManagingFooterView');
+  var ControlGroupView = require('./ControlGroupView');
+
+  var PluginsGroupView = ControlGroupView.extend({
+
+    initialize: function initialize() {
+      this.collection.on('reset add remove', this.onUpdate, this);
+      this.onUpdate();
+    },
+
     render: function render() {
+      this.$el.empty();
+
       this._super();
-      this.footer = new ManagingFooterView();
+      this.renderFooter();
+
+      return this;
+    },
+
+    renderFooter: function renderFooter() {
+      if (this.footer) {
+        this.footer.destroy();
+      }
+      this.footer = this.managing ? new ManagingFooterView() : new PluginsFooterView();
+      this.footer.on('unmanage', this.unmanage, this);
+      this.footer.on('manage', this.manage, this);
       this.footer.render();
       this.$el.append(this.footer.$el);
-      return this;
-    }
-  });
-
-  module.exports = ManagingGroupView;
-});
-
-
-define('extplug/views/users/settings/CheckboxView',['require','exports','module','backbone','jquery','plug/core/Events'],function (require, exports, module) {
-
-  var Backbone = require('backbone');
-  var $ = require('jquery');
-  var Events = require('plug/core/Events');
-
-  /**
-   * A checkbox setting item.
-   */
-  var CheckboxView = Backbone.View.extend({
-    className: 'item',
-    initialize: function initialize(o) {
-      this.label = o.label;
-      this.description = o.description;
-      this.enabled = o.enabled || false;
-      this.onChange = this.onChange.bind(this);
     },
-    render: function render() {
-      this.$el.append('<i class="icon icon-check-blue" />').append($('<span />').text(this.label));
 
-      if (this.description) {
-        this.$el.on('mouseenter', (function () {
-          Events.trigger('tooltip:show', this.description, this.$el);
-        }).bind(this)).on('mouseleave', function () {
-          Events.trigger('tooltip:hide');
-        });
-      }
-
-      if (this.enabled) {
-        this.$el.addClass('selected');
-      }
-
-      this.$el.on('click', this.onChange);
-      return this;
-    },
-    onChange: function onChange() {
-      this.$el.toggleClass('selected');
-      var enabled = this.enabled;
-      this.enabled = this.$el.hasClass('selected');
-      if (enabled !== this.enabled) {
-        this.trigger('change', this.enabled);
-      }
-    }
-  });
-
-  module.exports = CheckboxView;
-});
-
-
-define('extplug/views/users/settings/DropdownView',['require','exports','module','backbone','jquery','underscore'],function (require, exports, module) {
-
-  var Backbone = require('backbone');
-  var $ = require('jquery');
-  var _ = require('underscore');
-
-  var DropdownView = Backbone.View.extend({
-    className: 'dropdown',
-    tagName: 'dl',
-    initialize: function initialize() {
-      if (!this.options.selected) {
-        this.options.selected = Object.keys(this.options.options)[0];
-      }
-
-      this.onDocumentClick = this.onDocumentClick.bind(this);
-      this.onBaseClick = this.onBaseClick.bind(this);
-      this.onRowClick = this.onRowClick.bind(this);
-    },
-    render: function render() {
-      this.$selectedValue = $('<span />');
-      this.$selected = $('<dt />').append(this.$selectedValue).append($('<i />').addClass('icon icon-arrow-down-grey')).append($('<i />').addClass('icon icon-arrow-up-grey'));
-
-      this.$rows = $('<dd />');
-      var selected;
-      _.each(this.options.options, function (text, value) {
-        var row = $('<div />').addClass('row').data('value', value),
-            el = $('<span />').text(text);
-        if (this.options.selected === value) {
-          selected = row;
-        }
-        row.append(el).appendTo(this.$rows);
-      }, this);
-
-      this.$el.append(this.$selected).append(this.$rows);
-
-      this.$selected.on('click', this.onBaseClick);
-      this.$rows.on('click', this.onRowClick);
-      // trigger the above as a default
-      if (selected) {
-        selected.click();
-      }
-      return this;
-    },
-    close: function close() {
-      this.$el.removeClass('open');
-      $(document).off('click', this.onDocumentClick);
-    },
-    remove: function remove() {
-      this.$('dt, dd').off();
-      $(document).off('click', this.onDocumentClick);
-      this._super();
-    },
-    onBaseClick: function onBaseClick(e) {
+    onUpdate: function onUpdate() {
       var _this = this;
 
-      if (this.$el.hasClass('open')) {
-        this.close();
-      } else {
-        this.$el.addClass('open');
-        _.defer(function () {
-          $(document).on('click', _this.onDocumentClick);
-        });
-      }
-    },
-    onRowClick: function onRowClick(e) {
-      var row = $(e.target).closest('.row');
-      this.$('.row').removeClass('selected');
-      row.addClass('selected');
-      this.$el.removeClass('open');
-      this.$selectedValue.text(row.text());
-      this.trigger('select', row.data('value'));
-    },
-    onDocumentClick: function onDocumentClick(e) {
-      _.defer(this.close.bind(this));
-    }
-  });
-
-  module.exports = DropdownView;
-});
-
-
-define('extplug/views/users/settings/SliderView',['require','exports','module','backbone','jquery'],function (require, exports, module) {
-  var Backbone = require('backbone');
-  var $ = require('jquery');
-
-  function template(o) {
-    return '\n      <span class="title">' + o.label + '</span>\n      <span class="value"></span>\n      <div class="counts">\n        <span class="count">' + o.min + '</span>\n        <span class="count">' + o.max + '</span>\n        <span class="stretch"></span>\n      </div>\n      <div class="slider">\n        <div class="bar"></div>\n        <div class="circle"></div>\n        <div class="hit"></div>\n      </div>\n    ';
-  }
-
-  var SliderView = Backbone.View.extend({
-    className: 'extplug-slider cap',
-    initialize: function initialize() {
-      this.onStart = this.onStart.bind(this);
-      this.onMove = this.onMove.bind(this);
-      this.onStop = this.onStop.bind(this);
-      this._value = this.options.value || this.options.min;
-    },
-    render: function render() {
-      this.$el.append(template(this.options));
-      this.$bar = this.$('.bar');
-      this.$hit = this.$('.hit').on('mousedown', this.onStart);
-      this.$circle = this.$('.circle');
-      this.$value = this.$('.value');
-      _.delay((function () {
-        this.setValue(this._value, true);
-      }).bind(this));
-      return this;
-    },
-    onStart: function onStart() {
-      $(document).on('mousemove', this.onMove).on('mouseup', this.onStop);
-    },
-    onMove: function onMove(e) {
-      var offset = e.pageX - this.$hit.offset().left;
-      var percent = Math.max(0, Math.min(1, offset / (this.$hit.width() - this.$circle.width())));
-      var value = Math.round(this.options.min + percent * (this.options.max - this.options.min));
-      this.setValue(Math.max(this.options.min, value));
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    onStop: function onStop() {
-      $(document).off('mousemove', this.onMove).off('mouseup', this.onStop);
-    },
-    setValue: function setValue(value, force) {
-      if (value !== this._value || force) {
-        var percent = (value - this.options.min) / (this.options.max - this.options.min);
-        this.$circle.css('left', parseInt(this.$hit.css('left'), 10) + (this.$hit.width() - this.$circle.width()) * percent - this.$circle.width() / 2);
-        this.$value.text(value);
-        this.trigger('change', value);
-        this._value = value;
-      }
-    }
-  });
-
-  module.exports = SliderView;
-});
-
-
-define('extplug/views/users/settings/RemoveBoxView',['require','exports','module','backbone','jquery','plug/core/Events','plug/views/dialogs/ConfirmDialog','plug/events/ShowDialogEvent'],function (require, exports, module) {
-  var _require = require('backbone');
-
-  var View = _require.View;
-
-  var $ = require('jquery');
-  var Events = require('plug/core/Events');
-  var ConfirmDialog = require('plug/views/dialogs/ConfirmDialog');
-  var ShowDialogEvent = require('plug/events/ShowDialogEvent');
-
-  /**
-   * A checkbox setting item.
-   */
-  var RemoveBoxView = View.extend({
-    className: 'item selected',
-    initialize: function initialize() {
-      this.onRemove = this.onRemove.bind(this);
-    },
-    render: function render() {
-      this.$icon = $('<i />').addClass('icon icon-delete');
-      this.$el.append(this.$icon).append($('<span />').text(this.model.get('name')));
-
-      this.$el.css('cursor', 'default');
-      this.$icon.css('cursor', 'pointer').css({ top: '-6px', left: '-4px' });
-
-      this.$icon.on('click', this.onRemove);
-      return this;
-    },
-    onRemove: function onRemove() {
-      var _this = this;
-
-      Events.dispatch(new ShowDialogEvent(ShowDialogEvent.SHOW, new ConfirmDialog({
-        title: 'Remove Plugin',
-        message: 'Are you sure you want to uninstall this plugin?',
-        action: function action() {
-          extp.uninstall(_this.model.get('id'));
+      this.controls = this.collection.toArray().map(function (plugin) {
+        var box = null;
+        if (_this.managing) {
+          box = new RemoveBoxView({ model: plugin });
+        } else {
+          box = new CheckboxView({
+            label: plugin.get('name'),
+            description: plugin.get('instance').description || false,
+            enabled: plugin.get('enabled')
+          });
         }
-      })));
+        box.on('change', function (enabled) {
+          if (enabled) {
+            plugin.get('instance').enable();
+          } else {
+            plugin.get('instance').disable();
+          }
+        });
+        return box;
+      });
+    },
+
+    manage: function manage() {
+      this.managing = true;
+      this.onUpdate();
+      this.render();
+    },
+    unmanage: function unmanage() {
+      this.managing = false;
+      this.onUpdate();
+      this.render();
     }
+
   });
 
-  module.exports = RemoveBoxView;
+  module.exports = PluginsGroupView;
 });
 
 
-define('extplug/views/users/settings/SettingsView',['require','exports','module','backbone','./ControlGroupView','./PluginsGroupView','./ManagingGroupView','./CheckboxView','./DropdownView','./SliderView','./RemoveBoxView','../../../models/PluginMeta','plug/core/Events','underscore','jquery'],function (require, exports, module) {
+define('extplug/views/users/settings/SettingsView',['require','exports','module','backbone','./ControlGroupView','./PluginsGroupView','./CheckboxView','./RemoveBoxView','../../../models/PluginMeta','plug/core/Events','plug/util/window','underscore','jquery'],function (require, exports, module) {
   var _require = require('backbone');
 
   var View = _require.View;
 
   var ControlGroupView = require('./ControlGroupView');
   var PluginsGroupView = require('./PluginsGroupView');
-  var ManagingGroupView = require('./ManagingGroupView');
   var CheckboxView = require('./CheckboxView');
-  var DropdownView = require('./DropdownView');
-  var SliderView = require('./SliderView');
   var RemoveBoxView = require('./RemoveBoxView');
   var PluginMeta = require('../../../models/PluginMeta');
   var Events = require('plug/core/Events');
-  var _ = require('underscore');
+  var window = require('plug/util/window');
+
+  var _require2 = require('underscore');
+
+  var defer = _require2.defer;
+
   var $ = require('jquery');
 
   /**
@@ -3483,22 +4588,14 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
     initialize: function initialize(o) {
       this.plugins = o.plugins;
       this.ext = o.ext;
-      this.mode = 'normal';
 
       this.refresh();
-      this.onUpdate = this.onUpdate.bind(this);
-      this.manage = this.manage.bind(this);
-      this.unmanage = this.unmanage.bind(this);
 
-      this.plugins.on('reset add remove', this.onUpdate);
-      Events.on('extplug:plugins:manage', this.manage);
-      Events.on('extplug:plugins:unmanage', this.unmanage);
+      this.plugins.on('change:enabled', this.onEnabledChange, this).on('reset add remove', this.onUpdate, this);
     },
 
     remove: function remove() {
-      this.plugins.off('reset add remove', this.onUpdate);
-      Events.off('extplug:plugins:manage', this.manage);
-      Events.off('extplug:plugins:unmanage', this.unmanage);
+      this.plugins.on('change:enabled', this.onEnabledChange).off('reset add remove', this.onUpdate);
     },
 
     onUpdate: function onUpdate() {
@@ -3506,43 +4603,44 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
       this.render();
     },
 
+    onEnabledChange: function onEnabledChange() {
+      // TODO only add/remove changed groups
+      this.onUpdate();
+    },
+
     refresh: function refresh() {
       this.groups = [];
-      if (this.mode === 'manage') {
-        this.addGroup(this.createPluginsManageGroup(), 1000);
-      } else {
-        this.addGroup(this.createPluginsGroup(), 1000);
-      }
-      this.addGroup(this.createExtPlugGroup(), 999);
+      this.addGroup('Plugins', this.createPluginsGroup(), 1000);
+      this.addGroup('ExtPlug', this.createExtPlugGroup(), 999);
       this.plugins.forEach(function (plugin) {
         // add plugin settings group for stuff that was already enabled
         if (plugin.get('enabled')) {
           var pluginSettings = this.createSettingsGroup(plugin);
           if (pluginSettings) {
-            this.addGroup(pluginSettings);
+            this.addGroup(plugin.get('name'), pluginSettings);
           }
         }
       }, this);
     },
 
-    manage: function manage() {
-      this.mode = 'manage';
-      this.refresh();
-      this.render();
-    },
-    unmanage: function unmanage() {
-      this.mode = 'normal';
-      this.refresh();
-      this.render();
-    },
-
     render: function render() {
+      var _this = this;
+
+      if (this.scrollPane) {
+        this.scrollPane.destroy();
+        defer(function () {
+          var size = window.getSize();
+          _this.onResize(size.width, size.height);
+        });
+      }
       this.$container = $('<div>').addClass('container');
       this.$el.empty().append(this.$container);
 
       this.sort();
       this.groups.forEach(function (group) {
-        this.$container.append(group.items.render().$el);
+        var header = $('<div />').addClass('header').append($('<span>').text(group.name));
+        group.view.render();
+        this.$container.append(header).append(group.view.$el);
       }, this);
 
       this.$container.jScrollPane();
@@ -3552,55 +4650,13 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
     },
 
     createPluginsGroup: function createPluginsGroup() {
-      var _this = this;
-
-      var pluginsGroup = new PluginsGroupView({ name: 'Plugins' });
-      // generate plugin list
-      this.plugins.forEach(function (pluginMeta) {
-        var plugin = pluginMeta.get('instance');
-        var name = pluginMeta.get('name');
-        var box = new CheckboxView({
-          label: name,
-          description: plugin.description || false,
-          enabled: pluginMeta.get('enabled')
-        });
-        pluginsGroup.add(box);
-        box.on('change', function (value) {
-          // add / remove plugin settings group
-          if (value) {
-            plugin.enable();
-            var pluginSettings = _this.createSettingsGroup(pluginMeta);
-            if (pluginSettings) {
-              _this.addGroup(pluginSettings);
-              _this.$container.append(pluginSettings.render().$el);
-            }
-          } else {
-            plugin.disable();
-            var pluginSettings = _this.getGroup(name);
-            if (pluginSettings) {
-              _this.removeGroup(name);
-              pluginSettings.remove();
-            }
-          }
-        });
+      var pluginsGroup = new PluginsGroupView({
+        collection: this.plugins
       });
-
-      return pluginsGroup;
-    },
-    createPluginsManageGroup: function createPluginsManageGroup() {
-      var pluginsGroup = new ManagingGroupView({ name: 'Manage Plugins' });
-      // generate plugin list
-      this.plugins.forEach(function (plugin) {
-        pluginsGroup.add(new RemoveBoxView({ model: plugin }));
-      });
-
       return pluginsGroup;
     },
     createExtPlugGroup: function createExtPlugGroup() {
-      return this.createSettingsGroup(new PluginMeta({
-        instance: this.ext,
-        name: 'ExtPlug'
-      }));
+      return this.ext.getSettingsView();
     },
 
     createSettingsGroup: function createSettingsGroup(pluginMeta) {
@@ -3608,49 +4664,15 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
       if (!plugin._settings) {
         return;
       }
-      var group = new ControlGroupView({ name: pluginMeta.get('name') });
-      var meta = plugin._settings;
-      var settings = plugin.settings;
 
-      _.each(meta, function (setting, name) {
-        var control = undefined;
-        switch (setting.type) {
-          case 'boolean':
-            control = new CheckboxView({
-              label: setting.label,
-              enabled: settings.get(name)
-            });
-            break;
-          case 'dropdown':
-            control = new DropdownView({
-              label: setting.label,
-              options: setting.options,
-              selected: settings.get(name)
-            });
-            break;
-          case 'slider':
-            control = new SliderView({
-              label: setting.label,
-              min: setting.min,
-              max: setting.max,
-              value: settings.get(name)
-            });
-            break;
-        }
-        if (control) {
-          wireSettingToModel(control, settings, name);
-          group.add(control);
-        }
-      });
-
-      return group;
+      return plugin.getSettingsView();
     },
 
     sort: function sort() {
       this.groups.sort(function (a, b) {
         var c = b.priority - a.priority;
         if (c === 0) {
-          c = a.items.name > b.items.name ? 1 : a.items.name < b.items.name ? -1 : 0;
+          c = a.name > b.name ? 1 : a.name < b.name ? -1 : 0;
         }
         return c;
       });
@@ -3663,30 +4685,31 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
       }
     },
 
-    addGroup: function addGroup(items, priority) {
+    addGroup: function addGroup(name, view, priority) {
       this.groups.push({
-        items: items,
+        name: name,
+        view: view,
         priority: typeof priority === 'number' ? priority : 0
       });
     },
 
     getGroup: function getGroup(name) {
       for (var i = 0, l = this.groups.length; i < l; i++) {
-        if (this.groups[i].items.name === name) {
-          return this.groups[i].items;
+        if (this.groups[i].name === name) {
+          return this.groups[i].view;
         }
       }
     },
 
     hasGroup: function hasGroup(name) {
       return this.groups.some(function (group) {
-        return group.items.name === name;
+        return group.name === name;
       });
     },
 
     removeGroup: function removeGroup(name) {
       for (var i = 0, l = this.groups.length; i < l; i++) {
-        if (this.groups[i].items.name === name) {
+        if (this.groups[i].name === name) {
           return this.groups.splice(i, 1);
         }
       }
@@ -3892,6 +4915,9 @@ define('extplug/plugins/chat-classes',['require','exports','module','../Plugin',
           } else if (user.gRole >= r.BOUNCER) {
             classes.push('from-ambassador');
           }
+          if (user.friend) {
+            classes.push('from-friend');
+          }
           // normal user & staff roles
           classes.push(roleClasses[user.role]);
         }
@@ -3948,8 +4974,6 @@ define('extplug/hooks/waitlist',['require','exports','module','plug/models/booth
     var left = difference(oldList, newList);
     var entered = difference(newList, oldList);
 
-    extend(API, events);
-
     left.forEach(function (uid) {
       API.dispatch(API.WAIT_LIST_LEAVE, API.getUser(uid));
     });
@@ -3960,6 +4984,7 @@ define('extplug/hooks/waitlist',['require','exports','module','plug/models/booth
 
   exports.install = function () {
     booth.on('change:waitingDJs', onChange);
+    extend(API, events);
   };
 
   exports.uninstall = function () {
@@ -4269,7 +5294,7 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./load-plugin','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/chat-classes','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/chat-classes','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
@@ -4279,7 +5304,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var PluginMeta = require('./models/PluginMeta');
   var PluginsCollection = require('./collections/PluginsCollection');
   var Plugin = require('./Plugin');
-  var loadPlugin = require('./load-plugin');
+  var pluginLoader = require('./pluginLoader');
 
   var VersionPlugin = require('./plugins/version');
   var SettingsTabPlugin = require('./plugins/settings-tab');
@@ -4358,26 +5383,21 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
     registerPlugin: function registerPlugin(id, cb) {
       var _this = this;
 
-      require(['extplug/load-plugin!' + id], function (plugin) {
-        var meta = new PluginMeta({
-          id: plugin.id,
-          name: plugin.name,
-          instance: plugin
-        });
+      pluginLoader.load(id, function (e, meta) {
+        if (e) return cb && cb(e);
         _this._plugins.add(meta);
-        var settings = _this._getPluginSettings(plugin.id);
-        plugin.settings.set(settings.settings);
-        plugin.settings.on('change', function () {
-          _this._savePluginSettings(plugin.id);
+        var instance = meta.get('instance');
+        var state = _this._getPluginSettings(meta.get('id'));
+        instance.settings.set(state.settings);
+        instance.settings.on('change', function () {
+          _this._savePluginSettings(meta.get('id'));
         });
-        if (settings.enabled) {
+        if (state.enabled) {
           _.defer(function () {
             meta.enable();
           });
         }
         if (cb) cb(null);
-      }, function (err) {
-        if (cb) cb(err);
       });
       return this;
     },
@@ -4512,9 +5532,6 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
       settings.update();
       this.appView = getApplicationView();
 
-      // ExtPlug styles
-      this.Style().set(require('./styles/badge')).set(require('./styles/inline-chat')).set(require('./styles/settings-pane')).set(require('./styles/install-plugin-dialog'));
-
       // install extra events
       hooks.forEach(function (hook) {
         hook.install();
@@ -4523,6 +5540,9 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
       this._core.forEach(function (plugin) {
         plugin.enable();
       });
+
+      // ExtPlug styles
+      this.createStyle().set(require('./styles/badge')).set(require('./styles/inline-chat')).set(require('./styles/settings-pane')).set(require('./styles/install-plugin-dialog'));
 
       // room settings
       this.roomSettings = new RoomSettings(this);
@@ -4640,13 +5660,11 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   module.exports = ExtPlug;
 });
 
-'use strict';
+require(["extplug/main"]);
 
-;(function _initExtPlug() {
-
-  if (window.API) {
-    require(['extplug/boot']);
-  } else {
-    setTimeout(_initExtPlug, 20);
   }
-})();
+  else {
+    setTimeout(load, 20);
+  }
+
+}());
