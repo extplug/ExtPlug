@@ -3600,7 +3600,7 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.13.4",
+  "version": "0.14.0",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -3630,7 +3630,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1438082585195
+  "builtAt": 1438096998934
 });
 
 
@@ -4881,28 +4881,84 @@ define('extplug/plugins/custom-chat-type',['require','exports','module','meld','
 });
 
 
-define('extplug/plugins/chat-classes',['require','exports','module','../Plugin','plug/core/Events'],function (require, exporst, module) {
+var _toConsumableArray = function (arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } };
+
+define('extplug/plugins/user-classes',['require','exports','module','../Plugin','plug/core/Events','plug/views/rooms/users/RoomUserRowView','plug/views/rooms/users/WaitListRowView','plug/views/users/userRolloverView','meld'],function (require, exporst, module) {
 
   var Plugin = require('../Plugin');
   var Events = require('plug/core/Events');
+  var UserRowView = require('plug/views/rooms/users/RoomUserRowView');
+  var WaitListRowView = require('plug/views/rooms/users/WaitListRowView');
+  var userRolloverView = require('plug/views/users/userRolloverView');
 
-  var ChatClasses = Plugin.extend({
-    name: 'Chat Classes',
-    description: 'Adds some CSS classes for roles and IDs to chat messages.',
+  var _require = require('meld');
+
+  var after = _require.after;
+
+  var r = API.ROLE;
+  var roleClasses = ['user', 'dj', 'bouncer', 'manager', 'cohost', 'host'];
+  var gRoleClasses = ['none', '', '', 'ambassador', '', 'admin'];
+
+  var UserClasses = Plugin.extend({
+    name: 'User Classes',
+    description: 'Adds some CSS classes for roles and IDs to various places.',
 
     enable: function enable() {
-      Events.on('chat:beforereceive', this.onMessage, this);
+      Events.on('chat:beforereceive', this.onChat, this);
+
+      var plugin = this;
+      // common advice for user lists
+      var rowAdvice = function rowAdvice() {
+        // `this` is the row view
+        var id = this.model.get('id');
+        if (id) {
+          this.$el.addClass(plugin.classesForUser(id).join(' '));
+        }
+      };
+      this.rowClasses = after(UserRowView.prototype, 'draw', rowAdvice);
+      this.waitListClasses = after(WaitListRowView.prototype, 'render', rowAdvice);
+      this.rolloverClasses = after(userRolloverView, 'showSimple', function () {
+        // `this` is the rollover view
+        var id = this.user.get('id');
+        if (id) {
+          this.$el.addClass(plugin.classesForUser(id).join(' '));
+        }
+      });
     },
     disable: function disable() {
-      Events.off('chat:beforereceive', this.onMessage);
+      Events.off('chat:beforereceive', this.onChat);
+      this.rowClasses.remove();
+      this.waitListClasses.remove();
+      this.rolloverClasses.remove();
     },
 
-    onMessage: function onMessage(msg) {
-      var r = API.ROLE;
-      var roleClasses = ['from-user', 'from-dj', 'from-bouncer', 'from-manager', 'from-cohost', 'from-host'];
+    classesForUser: function classesForUser(uid) {
+      var classes = [];
+      var user = API.getUser(uid);
 
+      // RCS
+      classes.push('id-' + uid);
+      if (user) {
+        // role classes
+        classes.push('role-' + roleClasses[user.role || 0]);
+        classes.push('role-' + gRoleClasses[user.gRole || 0]);
+
+        // speeeecial classes :sparkles:
+        if (user.friend) classes.push('role-friend');
+        if (user.sub) classes.push('role-subscriber');
+        if (user.id === API.getUser().id) classes.push('role-you');
+      }
+
+      return classes;
+    },
+
+    onChat: function onChat(msg) {
       var classes = msg.classes ? [msg.classes] : [];
       if (msg.uid) {
+        classes.push.apply(classes, _toConsumableArray(this.classesForUser(msg.uid)));
+        // additional plugCubed chat-only classes
+        // PlugCubed's classes start with `from-` instead of `role-` so we can't
+        // just use _classes()
         classes.push('fromID-' + msg.uid);
 
         var user = API.getUser(msg.uid);
@@ -4919,7 +4975,7 @@ define('extplug/plugins/chat-classes',['require','exports','module','../Plugin',
             classes.push('from-friend');
           }
           // normal user & staff roles
-          classes.push(roleClasses[user.role]);
+          classes.push('from-' + roleClasses[user.role]);
         }
       }
 
@@ -4931,7 +4987,7 @@ define('extplug/plugins/chat-classes',['require','exports','module','../Plugin',
     }
   });
 
-  module.exports = ChatClasses;
+  module.exports = UserClasses;
 });
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define('semver-compare',[],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.semvercmp = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = function cmp (a, b) {
@@ -5294,7 +5350,7 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/chat-classes','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/user-classes','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
@@ -5309,7 +5365,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var VersionPlugin = require('./plugins/version');
   var SettingsTabPlugin = require('./plugins/settings-tab');
   var ChatTypePlugin = require('./plugins/custom-chat-type');
-  var ChatClassesPlugin = require('./plugins/chat-classes');
+  var UserClassesPlugin = require('./plugins/user-classes');
 
   var _package = require('./package');
 
@@ -5372,7 +5428,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
     init: function init() {
       this._super('extplug', this);
 
-      this._core = [new VersionPlugin('version', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this), new ChatClassesPlugin('chat-classes', this)];
+      this._core = [new VersionPlugin('version', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this), new UserClassesPlugin('user-classes', this)];
     },
 
     /**
