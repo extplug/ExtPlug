@@ -2,6 +2,8 @@ define(function (require, exporst, module) {
 
   const Plugin = require('../Plugin');
   const Events = require('plug/core/Events');
+  const UserRowView = require('plug/views/rooms/users/RoomUserRowView');
+  const { after } = require('meld');
 
   const r = API.ROLE;
   const roleClasses = [
@@ -26,10 +28,19 @@ define(function (require, exporst, module) {
     description: 'Adds some CSS classes for roles and IDs to various places.',
 
     enable() {
+      let plugin = this;
       Events.on('chat:beforereceive', this.onChat, this);
+      this.rowClasses = after(UserRowView.prototype, 'draw', function () {
+        // `this` is the row view
+        let id = this.model.get('id');
+        if (id) {
+          this.$el.addClass(plugin.classesForUser(id).join(' '));
+        }
+      });
     },
     disable() {
       Events.off('chat:beforereceive', this.onChat);
+      this.rowClasses.remove();
     },
 
     classesForUser(uid) {
