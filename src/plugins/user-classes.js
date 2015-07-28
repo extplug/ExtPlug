@@ -3,6 +3,7 @@ define(function (require, exporst, module) {
   const Plugin = require('../Plugin');
   const Events = require('plug/core/Events');
   const UserRowView = require('plug/views/rooms/users/RoomUserRowView');
+  const userRolloverView = require('plug/views/users/userRolloverView');
   const { after } = require('meld');
 
   const r = API.ROLE;
@@ -37,10 +38,18 @@ define(function (require, exporst, module) {
           this.$el.addClass(plugin.classesForUser(id).join(' '));
         }
       });
+      this.rolloverClasses = after(userRolloverView, 'showSimple', function () {
+        // `this` is the rollover view
+        let id = this.user.get('id');
+        if (id) {
+          this.$el.addClass(plugin.classesForUser(id).join(' '));
+        }
+      });
     },
     disable() {
       Events.off('chat:beforereceive', this.onChat);
       this.rowClasses.remove();
+      this.rolloverClasses.remove();
     },
 
     classesForUser(uid) {
