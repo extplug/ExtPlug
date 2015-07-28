@@ -5,6 +5,7 @@ var concat = require('gulp-concat')
 var del    = require('del')
 var rename = require('gulp-rename')
 var templ  = require('gulp-template')
+var data   = require('gulp-data')
 var runseq = require('run-sequence')
 var rjs    = require('requirejs')
 var mkdirp = require('mkdirp')
@@ -89,10 +90,23 @@ gulp.task('rjs', function (done) {
   })
 })
 
-gulp.task('build', function () {
+gulp.task('concat', function () {
   return gulp.src([ 'build/_deps/es6-symbol.js'
                   , 'build/build.rjs.js' ])
-    .pipe(concat('extplug.js'))
+    .pipe(concat('extplug.code.js'))
+    .pipe(gulp.dest('build/'))
+})
+
+gulp.task('build', [ 'concat' ], function () {
+  return gulp.src('src/loader.js.template')
+    .pipe(data(function (file, cb) {
+      fs.readFile('build/extplug.code.js', 'utf8', function (e, c) {
+        if (e) cb(e)
+        else cb(null, { code: c })
+      })
+    }))
+    .pipe(templ())
+    .pipe(rename('extplug.js'))
     .pipe(gulp.dest('build/'))
 })
 

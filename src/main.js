@@ -11,17 +11,15 @@ define(function () {
     }, 20);
   }
 
-  waitFor(() => window.API, () => {
-    plugModules.run();
-    plugModules.register();
+  plugModules.run();
+  plugModules.register();
 
-    require([ 'extplug/ExtPlug' ], function _loaded(ExtPlug) {
-      waitFor(appViewExists, () => {
-        let ext = new ExtPlug();
-        window.extp = ext;
+  require([ 'extplug/ExtPlug' ], function _loaded(ExtPlug) {
+    waitFor(appViewExists, () => {
+      let ext = new ExtPlug();
+      window.extp = ext;
 
-        ext.enable();
-      });
+      ext.enable();
     });
   });
 
