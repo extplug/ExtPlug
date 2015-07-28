@@ -42,9 +42,11 @@ gulp.task('lib-debug', nodelib('debug/browser.js', 'debug'))
 gulp.task('lib-semvercmp', nodelib('semver-compare/index.js', 'semvercmp'))
 gulp.task('lib-symbol', nodelib('es6-symbol/implement.js', false, 'es6-symbol.js'))
 gulp.task('lib-regexp-quote', nodelib('regexp-quote/regexp-quote.js', 'regexp-quote'))
+gulp.task('lib-sistyl', nodelib('sistyl/lib/sistyl.js', 'sistyl'))
 
 gulp.task('dependencies', [ 'lib-debug'
                           , 'lib-semvercmp'
+                          , 'lib-sistyl'
                           , 'lib-symbol'
                           , 'lib-regexp-quote' ])
 
@@ -66,7 +68,7 @@ gulp.task('rjs', function (done) {
       jquery: 'empty:',
       underscore: 'empty:',
       meld: npm + 'meld/meld',
-      sistyl: npm + 'sistyl/lib/sistyl',
+      sistyl: 'build/_deps/sistyl',
       extplug: 'lib',
       'plug-modules': npm + 'plug-modules/plug-modules',
       'debug': 'build/_deps/debug',
