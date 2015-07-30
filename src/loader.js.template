@@ -1,0 +1,19 @@
+/**
+ * ExtPlug loader. Waits for the necessary plug.dj code to load before running
+ * ExtPlug.
+ * This is necessary because plug.dj loads require.js lazily. Since ExtPlug uses
+ * require.js modules for everything, it can't run until require.js is loaded.
+ * This file waits for require.js to load, and also for plug.dj's own javascript
+ * to run (i.e. for the API variable to exist) while we're at it.
+ */
+
+;(function load() {
+
+  if (window.require && window.define && window.API) {
+    <%= code %>
+  }
+  else {
+    setTimeout(load, 20);
+  }
+
+}());
