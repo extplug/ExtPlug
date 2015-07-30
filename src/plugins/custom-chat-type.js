@@ -9,26 +9,22 @@ define(function (require, exports, module) {
   const Plugin = require('../Plugin');
 
   /**
-   * The ChatType Plugin adds a "custom" chat type. Any chat messages
-   * passed through the ChatView "onReceived" handler will be affected,
-   * so in particular all "chat:receive" events are handled properly.
-   *
-   * A chat message with "custom" in its type property can take a few
-   * additional options:
+   * The ChatType Plugin adds a bunch of useful options to chat message
+   * objects. Any chat messages passed through the ChatView "onReceived"
+   * handler will be affected, so in particular all "chat:receive" events
+   * are handled properly.
    *
    *  * the "badge" property can contain an emoji name (eg ":eyes:") or
    *    an icon class (eg "icon-plugdj") as well as the standard badge
-   *    names.
+   *    names. Only 30*30px icons will be aligned properly.
    *  * the "color" property takes a CSS colour, which will be used for
    *    the message text.
    *  * the "timestamp" property always defaults to the current time if
    *    it is left empty.
-   *
-   * This is especially useful for showing notifications in chat.
-   * The "type" property can be a list of CSS class names, if it contains
-   * "custom", (eg `{ type: "custom inline my-notification" }`) so you
-   * can use those classes to style your message as well. Note that you
-   * cannot add additional classes for the other message types.
+   *  * the "classes" property can contain a string of CSS classes. This
+   *    is preferable to adding multiple classes in the "type" property,
+   *    because other code might want to _check_ the "type" property and
+   *    won't expect to find more than one type.
    */
   const ChatTypePlugin = Plugin.extend({
     enable() {
