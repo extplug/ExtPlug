@@ -10,7 +10,7 @@ define(function (require, exports, module) {
   const Plugin = require('./Plugin');
   const pluginLoader = require('./pluginLoader');
 
-  const VersionPlugin = require('./plugins/version');
+  const CommandsPlugin = require('./plugins/commands');
   const SettingsTabPlugin = require('./plugins/settings-tab');
   const ChatTypePlugin = require('./plugins/custom-chat-type');
   const UserClassesPlugin = require('./plugins/user-classes');
@@ -81,7 +81,7 @@ define(function (require, exports, module) {
       this._super('extplug', this);
 
       this._core = [
-        new VersionPlugin('version', this),
+        new CommandsPlugin('chat-commands', this),
         new SettingsTabPlugin('settings-tab', this),
         new ChatTypePlugin('custom-chat-type', this),
         new UserClassesPlugin('user-classes', this)
