@@ -1,6 +1,7 @@
 define(function (require, exports, module) {
 
   const { around } = require('meld');
+  const { uniqueId } = require('underscore');
   const Events = require('plug/core/Events');
   const ChatView = require('plug/views/rooms/chat/ChatView');
   const util = require('plug/util/util');
@@ -61,6 +62,11 @@ define(function (require, exports, module) {
       }
       if (!message.timestamp) {
         message.timestamp = util.getChatTimestamp(settings.settings.chatTimestamps === 24);
+      }
+      // add cid if it doesn't exist, to prevent a `.cid-undefined` selector
+      // from catching everything
+      if (!message.cid) {
+        message.cid = uniqueId('extp-')
       }
       // insert the chat message element
       joinpoint.proceed();
