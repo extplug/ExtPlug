@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        ExtPlug
 // @description Highly flexible, modular userscript extension for plug.dj.
-// @version     0.14.0
+// @version     0.14.1
 // @match       https://plug.dj/*
 // @namespace   https://extplug.github.io/
 // @downloadURL https://extplug.github.io/ExtPlug/extplug.user.js
@@ -12,11 +12,13 @@
 /**
  * ExtPlug loader. Waits for the necessary plug.dj code to load before running
  * ExtPlug.
+ * This is necessary because plug.dj loads require.js lazily. Since ExtPlug uses
+ * require.js modules for everything, it can't run until require.js is loaded.
+ * This file waits for require.js to load, and also for plug.dj's own javascript
+ * to run (i.e. for the API variable to exist) while we're at it.
  */
 
 ;(function load() {
-
-  window._load = load
 
   if (window.require && window.define && window.API) {
     (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
@@ -2045,7 +2047,7 @@ return context;
 
 
 
-define('extplug/main',['plug-modules'],function () {
+define('extplug/main',['require','exports','module','plug-modules'],function (require, exports, module) {
 
   var plugModules = require('plug-modules');
 
@@ -3611,7 +3613,7 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.14.0",
+  "version": "0.14.1",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -3641,32 +3643,49 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1438096998934
+  "builtAt": 1438266297164
 });
 
 
-define('extplug/plugins/version',['require','exports','module','../Plugin','../package'],function (require, exports, module) {
+define('extplug/plugins/commands',['require','exports','module','../Plugin','../package'],function (require, exports, module) {
   var Plugin = require('../Plugin');
   var _package = require('../package');
 
+  // version info
   var pad = function pad(x) {
     return x < 10 ? '0' + x : x;
   };
-
   var ba = new Date(_package.builtAt);
   var builtAt = ba.getUTCFullYear() + '-' + pad(ba.getUTCMonth() + 1) + '-' + pad(ba.getUTCDate() + 1) + ' ' + pad(ba.getUTCHours() + 1) + ':' + pad(ba.getUTCMinutes() + 1) + ':' + pad(ba.getUTCSeconds() + 1) + ' UTC';
 
-  var VersionPlugin = Plugin.extend({
+  var CommandsPlugin = Plugin.extend({
+    name: 'Chat Commands',
+    description: 'Defines default ExtPlug chat commands.',
+
     commands: {
-      version: 'showVersion'
+      version: 'showVersion',
+      reloadsettings: 'reloadRoomSettings',
+      disable: 'disableExtPlug'
     },
 
     showVersion: function showVersion() {
       API.chatLog('' + _package.name + ' v' + _package.version + ' (' + builtAt + ')');
+    },
+
+    reloadRoomSettings: function reloadRoomSettings() {
+      API.chatLog('Reloading room settings...');
+      this.ext.roomSettings.once('load', function () {
+        return API.chatLog('...Done!');
+      }).reload();
+    },
+
+    disableExtPlug: function disableExtPlug() {
+      API.chatLog('Disabling ExtPlug! ' + 'You cannot re-enable ExtPlug until the next refresh.');
+      this.ext.disable();
     }
   });
 
-  module.exports = VersionPlugin;
+  module.exports = CommandsPlugin;
 });
 /** @license MIT License (c) copyright 2011-2013 original author or authors */
 
@@ -4789,10 +4808,14 @@ define('extplug/plugins/settings-tab',['require','exports','module','meld','plug
 });
 
 
-define('extplug/plugins/custom-chat-type',['require','exports','module','meld','plug/core/Events','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','plug/store/settings','../Plugin'],function (require, exports, module) {
+define('extplug/plugins/custom-chat-type',['require','exports','module','meld','underscore','plug/core/Events','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','plug/store/settings','../Plugin'],function (require, exports, module) {
   var _require = require('meld');
 
   var around = _require.around;
+
+  var _require2 = require('underscore');
+
+  var uniqueId = _require2.uniqueId;
 
   var Events = require('plug/core/Events');
   var ChatView = require('plug/views/rooms/chat/ChatView');
@@ -4802,26 +4825,22 @@ define('extplug/plugins/custom-chat-type',['require','exports','module','meld','
   var Plugin = require('../Plugin');
 
   /**
-   * The ChatType Plugin adds a "custom" chat type. Any chat messages
-   * passed through the ChatView "onReceived" handler will be affected,
-   * so in particular all "chat:receive" events are handled properly.
-   *
-   * A chat message with "custom" in its type property can take a few
-   * additional options:
+   * The ChatType Plugin adds a bunch of useful options to chat message
+   * objects. Any chat messages passed through the ChatView "onReceived"
+   * handler will be affected, so in particular all "chat:receive" events
+   * are handled properly.
    *
    *  * the "badge" property can contain an emoji name (eg ":eyes:") or
    *    an icon class (eg "icon-plugdj") as well as the standard badge
-   *    names.
+   *    names. Only 30*30px icons will be aligned properly.
    *  * the "color" property takes a CSS colour, which will be used for
    *    the message text.
    *  * the "timestamp" property always defaults to the current time if
    *    it is left empty.
-   *
-   * This is especially useful for showing notifications in chat.
-   * The "type" property can be a list of CSS class names, if it contains
-   * "custom", (eg `{ type: "custom inline my-notification" }`) so you
-   * can use those classes to style your message as well. Note that you
-   * cannot add additional classes for the other message types.
+   *  * the "classes" property can contain a string of CSS classes. This
+   *    is preferable to adding multiple classes in the "type" property,
+   *    because other code might want to _check_ the "type" property and
+   *    won't expect to find more than one type.
    */
   var ChatTypePlugin = Plugin.extend({
     enable: function enable() {
@@ -4858,6 +4877,11 @@ define('extplug/plugins/custom-chat-type',['require','exports','module','meld','
       }
       if (!message.timestamp) {
         message.timestamp = util.getChatTimestamp(settings.settings.chatTimestamps === 24);
+      }
+      // add cid if it doesn't exist, to prevent a `.cid-undefined` selector
+      // from catching everything
+      if (!message.cid) {
+        message.cid = uniqueId('extp-');
       }
       // insert the chat message element
       joinpoint.proceed();
@@ -5361,7 +5385,7 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/version','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/user-classes','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/commands','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/user-classes','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
@@ -5373,7 +5397,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var Plugin = require('./Plugin');
   var pluginLoader = require('./pluginLoader');
 
-  var VersionPlugin = require('./plugins/version');
+  var CommandsPlugin = require('./plugins/commands');
   var SettingsTabPlugin = require('./plugins/settings-tab');
   var ChatTypePlugin = require('./plugins/custom-chat-type');
   var UserClassesPlugin = require('./plugins/user-classes');
@@ -5439,7 +5463,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
     init: function init() {
       this._super('extplug', this);
 
-      this._core = [new VersionPlugin('version', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this), new UserClassesPlugin('user-classes', this)];
+      this._core = [new CommandsPlugin('chat-commands', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this), new UserClassesPlugin('user-classes', this)];
     },
 
     /**
