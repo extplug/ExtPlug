@@ -14,6 +14,7 @@ define(function (require, exports, module) {
   const SettingsTabPlugin = require('./plugins/settings-tab');
   const ChatTypePlugin = require('./plugins/custom-chat-type');
   const UserClassesPlugin = require('./plugins/user-classes');
+  const TooltipsPlugin = require('./plugins/tooltips');
 
   const _package = require('./package');
 
@@ -84,7 +85,8 @@ define(function (require, exports, module) {
         new CommandsPlugin('chat-commands', this),
         new SettingsTabPlugin('settings-tab', this),
         new ChatTypePlugin('custom-chat-type', this),
-        new UserClassesPlugin('user-classes', this)
+        new UserClassesPlugin('user-classes', this),
+        new TooltipsPlugin('tooltips', this)
       ];
 
     },
