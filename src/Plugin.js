@@ -54,6 +54,9 @@ define(function (require, exports, module) {
         },
         disable: {
           value: () => {
+            // auto-remove event handlers added by the plugin, if the plugin
+            // used `.listenTo()`
+            this.stopListening();
             this.trigger('disable');
             Plugin.trigger('disable', this);
           }
