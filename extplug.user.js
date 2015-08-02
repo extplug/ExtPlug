@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        ExtPlug
 // @description Highly flexible, modular userscript extension for plug.dj.
-// @version     0.14.1
+// @version     0.14.2
 // @match       https://plug.dj/*
 // @namespace   https://extplug.github.io/
 // @downloadURL https://extplug.github.io/ExtPlug/extplug.user.js
@@ -3465,6 +3465,9 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
         },
         disable: {
           value: function value() {
+            // auto-remove event handlers added by the plugin, if the plugin
+            // used `.listenTo()`
+            _this.stopListening();
             _this.trigger('disable');
             Plugin.trigger('disable', _this);
           }
@@ -3613,7 +3616,7 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.14.1",
+  "version": "0.14.2",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -3643,7 +3646,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1438266297164
+  "builtAt": 1438512337076
 });
 
 
@@ -5024,6 +5027,38 @@ define('extplug/plugins/user-classes',['require','exports','module','../Plugin',
 
   module.exports = UserClasses;
 });
+
+
+define('extplug/plugins/tooltips',['require','exports','module','../Plugin','plug/core/Events','jquery'],function (require, exports, module) {
+
+  var Plugin = require('../Plugin');
+  var Events = require('plug/core/Events');
+  var $ = require('jquery');
+
+  var TooltipsPlugin = Plugin.extend({
+    name: 'Tooltips',
+    description: 'Provides super easy tooltips using data attributes.',
+
+    enable: function enable() {
+      this._doc = $(document).on('mouseenter.extplug.core.tooltips', '[data-tooltip]', this.onEnter).on('mouseleave.extplug.core.tooltips', '[data-tooltip]', this.onLeave);
+    },
+
+    disable: function disable() {
+      this._doc.off('.extplug.tooltips');
+    },
+
+    onEnter: function onEnter(e) {
+      var target = $(e.target).closest('[data-tooltip]');
+      var dir = target.attr('data-tooltip-dir');
+      var alignLeft = dir && dir.toLowerCase() === 'left';
+      Events.trigger('tooltip:show', target.attr('data-tooltip'), target, alignLeft);
+    },
+    onLeave: function onLeave(e) {
+      Events.trigger('tooltip:hide');
+    } });
+
+  module.exports = TooltipsPlugin;
+});
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define('semver-compare',[],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.semvercmp = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = function cmp (a, b) {
     var pa = a.split('.');
@@ -5385,7 +5420,7 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/commands','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/user-classes','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/commands','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/user-classes','./plugins/tooltips','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
@@ -5401,6 +5436,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var SettingsTabPlugin = require('./plugins/settings-tab');
   var ChatTypePlugin = require('./plugins/custom-chat-type');
   var UserClassesPlugin = require('./plugins/user-classes');
+  var TooltipsPlugin = require('./plugins/tooltips');
 
   var _package = require('./package');
 
@@ -5463,7 +5499,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
     init: function init() {
       this._super('extplug', this);
 
-      this._core = [new CommandsPlugin('chat-commands', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this), new UserClassesPlugin('user-classes', this)];
+      this._core = [new CommandsPlugin('chat-commands', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this), new UserClassesPlugin('user-classes', this), new TooltipsPlugin('tooltips', this)];
     },
 
     /**
