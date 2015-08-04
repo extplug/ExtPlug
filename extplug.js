@@ -3605,7 +3605,7 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.14.2",
+  "version": "0.14.3",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -3635,11 +3635,11 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1438512337076
+  "builtAt": 1438713188176
 });
 
 
-define('extplug/plugins/commands',['require','exports','module','../Plugin','../package'],function (require, exports, module) {
+define('extplug/plugins/CommandsPlugin',['require','exports','module','../Plugin','../package'],function (require, exports, module) {
   var Plugin = require('../Plugin');
   var _package = require('../package');
 
@@ -4743,7 +4743,7 @@ define('extplug/views/users/settings/SettingsView',['require','exports','module'
 });
 
 
-define('extplug/plugins/settings-tab',['require','exports','module','meld','plug/core/Events','plug/views/users/UserView','plug/views/users/settings/SettingsView','../Plugin','../views/users/settings/TabMenuView','../views/users/settings/SettingsView'],function (require, exports, module) {
+define('extplug/plugins/SettingsTabPlugin',['require','exports','module','meld','plug/core/Events','plug/views/users/UserView','plug/views/users/settings/SettingsView','../Plugin','../views/users/settings/TabMenuView','../views/users/settings/SettingsView'],function (require, exports, module) {
   var _require = require('meld');
 
   var around = _require.around;
@@ -4800,7 +4800,7 @@ define('extplug/plugins/settings-tab',['require','exports','module','meld','plug
 });
 
 
-define('extplug/plugins/custom-chat-type',['require','exports','module','meld','underscore','plug/core/Events','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','plug/store/settings','../Plugin'],function (require, exports, module) {
+define('extplug/plugins/ChatTypePlugin',['require','exports','module','meld','underscore','plug/core/Events','plug/views/rooms/chat/ChatView','plug/util/util','plug/util/emoji','plug/store/settings','../Plugin'],function (require, exports, module) {
   var _require = require('meld');
 
   var around = _require.around;
@@ -4908,11 +4908,61 @@ define('extplug/plugins/custom-chat-type',['require','exports','module','meld','
 });
 
 
+define('extplug/util/getUserClasses',['require','exports','module'],function (require, exports, module) {
+
+  var API = window.API;
+
+  // CSS classes for room-specific roles
+  var roleClasses = ['user', 'dj', 'bouncer', 'manager', 'cohost', 'host'];
+  // CSS classes for global roles
+  var gRoleClasses = ['none', '', '', 'ambassador', '', 'admin'];
+
+  /**
+   * Gets RCS-style user CSS classes for the given user ID. Added classes are:
+   *
+   *   * "id-${USER_ID}" for the user ID;
+   *   * "role-host/cohost/manager/bouncer/user" for room-specific roles;
+   *   * "role-admin/ambassador/none" for global roles;
+   *   * "role-friend" for friends;
+   *   * "role-subscriber" for subscribers;
+   *   * "role-you" for the current user.
+   *
+   * All these classes are additive, so if you have a friend who is a manager
+   * in the current room, they will receive all of the following classes:
+   *
+   *     "id-${THEIR_ID} role-manager role-none role-friend"
+   */
+  function getUserClasses(uid) {
+    var classes = [];
+    var user = API.getUser(uid);
+
+    classes.push('id-' + uid);
+    if (user) {
+      // role classes
+      classes.push('role-' + roleClasses[user.role || 0]);
+      classes.push('role-' + gRoleClasses[user.gRole || 0]);
+
+      // speeeecial classes :sparkles:
+      if (user.friend) classes.push('role-friend');
+      if (user.sub) classes.push('role-subscriber');
+      if (user.id === API.getUser().id) classes.push('role-you');
+    }
+
+    return classes;
+  }
+
+  module.exports = getUserClasses;
+  getUserClasses.roleClasses = roleClasses;
+  getUserClasses.gRoleClasses = gRoleClasses;
+});
+
+
 var _toConsumableArray = function (arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } };
 
-define('extplug/plugins/user-classes',['require','exports','module','../Plugin','plug/core/Events','plug/views/rooms/users/RoomUserRowView','plug/views/rooms/users/WaitListRowView','plug/views/users/userRolloverView','meld'],function (require, exporst, module) {
+define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plugin','../util/getUserClasses','plug/core/Events','plug/views/rooms/users/RoomUserRowView','plug/views/rooms/users/WaitListRowView','plug/views/users/userRolloverView','meld'],function (require, exporst, module) {
 
   var Plugin = require('../Plugin');
+  var getUserClasses = require('../util/getUserClasses');
   var Events = require('plug/core/Events');
   var UserRowView = require('plug/views/rooms/users/RoomUserRowView');
   var WaitListRowView = require('plug/views/rooms/users/WaitListRowView');
@@ -4923,15 +4973,14 @@ define('extplug/plugins/user-classes',['require','exports','module','../Plugin',
   var after = _require.after;
 
   var r = API.ROLE;
-  var roleClasses = ['user', 'dj', 'bouncer', 'manager', 'cohost', 'host'];
-  var gRoleClasses = ['none', '', '', 'ambassador', '', 'admin'];
+  var roleClasses = getUserClasses.roleClasses;
 
   var UserClasses = Plugin.extend({
     name: 'User Classes',
     description: 'Adds some CSS classes for roles and IDs to various places.',
 
     enable: function enable() {
-      Events.on('chat:beforereceive', this.onChat, this);
+      this.listenTo(Events, 'chat:beforereceive', this.onChat);
 
       var plugin = this;
       // common advice for user lists
@@ -4939,7 +4988,7 @@ define('extplug/plugins/user-classes',['require','exports','module','../Plugin',
         // `this` is the row view
         var id = this.model.get('id');
         if (id) {
-          this.$el.addClass(plugin.classesForUser(id).join(' '));
+          this.$el.addClass(getUserClasses(id).join(' '));
         }
       };
       this.rowClasses = after(UserRowView.prototype, 'draw', rowAdvice);
@@ -4948,44 +4997,23 @@ define('extplug/plugins/user-classes',['require','exports','module','../Plugin',
         // `this` is the rollover view
         var id = this.user.get('id');
         if (id) {
-          this.$el.addClass(plugin.classesForUser(id).join(' '));
+          this.$el.addClass(getUserClasses(id).join(' '));
         }
       });
     },
     disable: function disable() {
-      Events.off('chat:beforereceive', this.onChat);
       this.rowClasses.remove();
       this.waitListClasses.remove();
       this.rolloverClasses.remove();
     },
 
-    classesForUser: function classesForUser(uid) {
-      var classes = [];
-      var user = API.getUser(uid);
-
-      // RCS
-      classes.push('id-' + uid);
-      if (user) {
-        // role classes
-        classes.push('role-' + roleClasses[user.role || 0]);
-        classes.push('role-' + gRoleClasses[user.gRole || 0]);
-
-        // speeeecial classes :sparkles:
-        if (user.friend) classes.push('role-friend');
-        if (user.sub) classes.push('role-subscriber');
-        if (user.id === API.getUser().id) classes.push('role-you');
-      }
-
-      return classes;
-    },
-
     onChat: function onChat(msg) {
       var classes = msg.classes ? [msg.classes] : [];
       if (msg.uid) {
-        classes.push.apply(classes, _toConsumableArray(this.classesForUser(msg.uid)));
+        classes.push.apply(classes, _toConsumableArray(getUserClasses(msg.uid)));
         // additional plugCubed chat-only classes
         // PlugCubed's classes start with `from-` instead of `role-` so we can't
-        // just use _classes()
+        // just use getUserClasses()
         classes.push('fromID-' + msg.uid);
 
         var user = API.getUser(msg.uid);
@@ -5018,7 +5046,7 @@ define('extplug/plugins/user-classes',['require','exports','module','../Plugin',
 });
 
 
-define('extplug/plugins/tooltips',['require','exports','module','../Plugin','plug/core/Events','jquery'],function (require, exports, module) {
+define('extplug/plugins/TooltipsPlugin',['require','exports','module','../Plugin','plug/core/Events','jquery'],function (require, exports, module) {
 
   var Plugin = require('../Plugin');
   var Events = require('plug/core/Events');
@@ -5409,7 +5437,7 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/commands','./plugins/settings-tab','./plugins/custom-chat-type','./plugins/user-classes','./plugins/tooltips','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/CommandsPlugin','./plugins/SettingsTabPlugin','./plugins/ChatTypePlugin','./plugins/UserClassesPlugin','./plugins/TooltipsPlugin','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
@@ -5421,11 +5449,11 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var Plugin = require('./Plugin');
   var pluginLoader = require('./pluginLoader');
 
-  var CommandsPlugin = require('./plugins/commands');
-  var SettingsTabPlugin = require('./plugins/settings-tab');
-  var ChatTypePlugin = require('./plugins/custom-chat-type');
-  var UserClassesPlugin = require('./plugins/user-classes');
-  var TooltipsPlugin = require('./plugins/tooltips');
+  var CommandsPlugin = require('./plugins/CommandsPlugin');
+  var SettingsTabPlugin = require('./plugins/SettingsTabPlugin');
+  var ChatTypePlugin = require('./plugins/ChatTypePlugin');
+  var UserClassesPlugin = require('./plugins/UserClassesPlugin');
+  var TooltipsPlugin = require('./plugins/TooltipsPlugin');
 
   var _package = require('./package');
 
