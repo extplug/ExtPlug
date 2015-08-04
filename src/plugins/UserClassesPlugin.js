@@ -16,7 +16,7 @@ define(function (require, exporst, module) {
     description: 'Adds some CSS classes for roles and IDs to various places.',
 
     enable() {
-      Events.on('chat:beforereceive', this.onChat, this);
+      this.listenTo(Events, 'chat:beforereceive', this.onChat);
 
       let plugin = this;
       // common advice for user lists
@@ -38,7 +38,6 @@ define(function (require, exporst, module) {
       });
     },
     disable() {
-      Events.off('chat:beforereceive', this.onChat);
       this.rowClasses.remove();
       this.waitListClasses.remove();
       this.rolloverClasses.remove();
