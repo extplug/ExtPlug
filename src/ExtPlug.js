@@ -10,11 +10,11 @@ define(function (require, exports, module) {
   const Plugin = require('./Plugin');
   const pluginLoader = require('./pluginLoader');
 
-  const CommandsPlugin = require('./plugins/commands');
-  const SettingsTabPlugin = require('./plugins/settings-tab');
-  const ChatTypePlugin = require('./plugins/custom-chat-type');
-  const UserClassesPlugin = require('./plugins/user-classes');
-  const TooltipsPlugin = require('./plugins/tooltips');
+  const CommandsPlugin = require('./plugins/CommandsPlugin');
+  const SettingsTabPlugin = require('./plugins/SettingsTabPlugin');
+  const ChatTypePlugin = require('./plugins/ChatTypePlugin');
+  const UserClassesPlugin = require('./plugins/UserClassesPlugin');
+  const TooltipsPlugin = require('./plugins/TooltipsPlugin');
 
   const _package = require('./package');
 
