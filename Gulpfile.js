@@ -8,14 +8,16 @@ var templ  = require('gulp-template');
 var data   = require('gulp-data');
 var runseq = require('run-sequence');
 var rjs    = require('requirejs');
+var merge  = require('merge-stream');
+var zip    = require('gulp-zip');
 var mkdirp = require('mkdirp');
 var source = require('vinyl-source-stream');
 var fs     = require('fs');
 var packg  = require('./package.json');
 
 gulp.task('babel', function () {
-  return gulp.src('src/**/*')
-    .pipe(babel({ only: '**/*.js', modules: 'ignore' }))
+  return gulp.src('src/**/*.js')
+    .pipe(babel({ modules: 'ignore' }))
     .pipe(gulp.dest('lib/'));
 });
 
@@ -119,23 +121,37 @@ gulp.task('clean-build', function (cb) {
   del('build', cb);
 });
 
-gulp.task('chrome', function () {
-  gulp.src([ 'extensions/chrome/main.js', 'extensions/chrome/manifest.json' ])
-    .pipe(templ(packg))
-    .pipe(gulp.dest('build/chrome/'));
+gulp.task('chrome-unpacked', function (cb) {
+  return merge(
+    gulp.src([ 'extensions/chrome/main.js', 'extensions/chrome/manifest.json' ])
+      .pipe(templ(packg))
+      .pipe(gulp.dest('build/chrome/')),
 
-  gulp.src([ 'build/extplug.js' ])
-    .pipe(concat('extplug.js'))
-    .pipe(gulp.dest('build/chrome/'));
+    gulp.src([ 'build/extplug.js' ])
+      .pipe(concat('extplug.js'))
+      .pipe(gulp.dest('build/chrome/'))
+  );
+});
+
+gulp.task('chrome-pack', function () {
+  return gulp.src('build/chrome/*')
+    .pipe(zip('extplug.chrome.zip'))
+    .pipe(gulp.dest('build/'));
+});
+
+gulp.task('chrome', function (cb) {
+  runseq('chrome-unpacked', 'chrome-pack', cb);
 });
 
 gulp.task('firefox', function () {
-  gulp.src([ 'extensions/firefox/*' ])
-    .pipe(templ(packg))
-    .pipe(gulp.dest('build/firefox/'));
+  return merge(
+    gulp.src([ 'extensions/firefox/*' ])
+      .pipe(templ(packg))
+      .pipe(gulp.dest('build/firefox/')),
 
-  gulp.src([ 'build/extplug.js' ])
-    .pipe(gulp.dest('build/firefox/data/'));
+    gulp.src([ 'build/extplug.js' ])
+      .pipe(gulp.dest('build/firefox/data/'))
+  );
 });
 
 gulp.task('userscript-meta', function () {
