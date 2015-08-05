@@ -1,19 +1,19 @@
+var babel = require('gulp-babel');
 var browserify = require('browserify');
-var gulp   = require('gulp');
-var babel  = require('gulp-babel');
 var concat = require('gulp-concat');
-var del    = require('del');
-var rename = require('gulp-rename');
-var templ  = require('gulp-template');
-var data   = require('gulp-data');
-var runseq = require('run-sequence');
-var rjs    = require('requirejs');
-var merge  = require('merge-stream');
-var zip    = require('gulp-zip');
+var data = require('gulp-data');
+var del = require('del');
+var fs = require('fs');
+var gulp = require('gulp');
+var merge = require('merge-stream');
 var mkdirp = require('mkdirp');
-var source = require('vinyl-source-stream');
-var fs     = require('fs');
 var packg  = require('./package.json');
+var rename = require('gulp-rename');
+var rjs = require('requirejs');
+var runseq = require('run-sequence');
+var source = require('vinyl-source-stream');
+var template = require('gulp-template');
+var zip = require('gulp-zip');
 
 gulp.task('babel', function () {
   return gulp.src('src/**/*.js')
@@ -112,7 +112,7 @@ gulp.task('build', [ 'concat' ], function () {
         else cb(null, { code: c });
       });
     }))
-    .pipe(templ())
+    .pipe(template())
     .pipe(rename('extplug.js'))
     .pipe(gulp.dest('build/'));
 });
@@ -124,7 +124,7 @@ gulp.task('clean-build', function (cb) {
 gulp.task('chrome-unpacked', function (cb) {
   return merge(
     gulp.src([ 'extensions/chrome/main.js', 'extensions/chrome/manifest.json' ])
-      .pipe(templ(packg))
+      .pipe(template(packg))
       .pipe(gulp.dest('build/chrome/')),
 
     gulp.src([ 'build/extplug.js' ])
@@ -146,7 +146,7 @@ gulp.task('chrome', function (cb) {
 gulp.task('firefox', function () {
   return merge(
     gulp.src([ 'extensions/firefox/*' ])
-      .pipe(templ(packg))
+      .pipe(template(packg))
       .pipe(gulp.dest('build/firefox/')),
 
     gulp.src([ 'build/extplug.js' ])
@@ -156,7 +156,7 @@ gulp.task('firefox', function () {
 
 gulp.task('userscript-meta', function () {
   return gulp.src([ 'extensions/userscript/extplug.user.js' ])
-    .pipe(templ(packg))
+    .pipe(template(packg))
     .pipe(rename('extplug.meta.user.js'))
     .pipe(gulp.dest('build/'));
 });
