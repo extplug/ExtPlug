@@ -124,6 +124,15 @@ gulp.task('chrome', function () {
     .pipe(gulp.dest('build/chrome/'))
 })
 
+gulp.task('firefox', function () {
+  gulp.src([ 'extensions/firefox/*' ])
+    .pipe(templ(packg))
+    .pipe(gulp.dest('build/firefox/'))
+
+  gulp.src([ 'build/extplug.js' ])
+    .pipe(gulp.dest('build/firefox/data/'))
+})
+
 gulp.task('userscript-meta', function () {
   return gulp.src([ 'extensions/userscript/extplug.user.js' ])
     .pipe(templ(packg))
@@ -145,7 +154,7 @@ gulp.task('default', function (cb) {
     [ 'babel', 'dependencies' ],
     'rjs',
     'build',
-    [ 'chrome', 'userscript' ],
+    [ 'chrome', 'firefox', 'userscript' ],
     cb
   )
 })
