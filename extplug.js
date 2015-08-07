@@ -1858,8 +1858,13 @@ var plugModules = {
   'plug/views/rooms/VotePanelView': function (m) {
     return isView(m) && m.prototype.id === 'vote';
   },
-  'plug/views/rooms/WalkthroughView': function () {
-    return isView(m) && m.prototype.id === 'walkthrough';
+  'plug/views/rooms/walkthrough/GuestWalkthroughView': function (m) {
+    return isView(m) && m.prototype.id === 'walkthrough' &&
+      _.isFunction(m.prototype.fadeIn);
+  },
+  'plug/views/rooms/walkthrough/UserWalkthroughView': function (m) {
+    return isView(m) && m.prototype.id === 'walkthrough' &&
+      !('fadeIn' in m.prototype);
   },
   'plug/views/rooms/header/HistoryPanelView': function (m) {
     return isView(m) && m.prototype.id === 'history-panel';
@@ -1990,13 +1995,13 @@ var plugModules = {
       'template' in m.prototype && m.prototype.template === undefined;
   },
 
-  'plug/views/welcome/LoginView': function () {
+  'plug/views/welcome/LoginView': function (m) {
     return isView(m) && m.prototype.className.indexOf('login-mode') !== -1;
   },
-  'plug/views/welcome/RegisterView': function () {
+  'plug/views/welcome/RegisterView': function (m) {
     return isView(m) && m.prototype.className.indexOf('register-mode') !== -1;
   },
-  'plug/views/welcome/SignupOverlayView': function () {
+  'plug/views/welcome/SignupOverlayView': function (m) {
     return isView(m) && m.prototype.className === 'sign-up-overlay';
   },
   'plug/views/welcome/UsernameView': function (m) {
@@ -2090,7 +2095,7 @@ define('extplug/models/Settings',['require','exports','module','backbone'],funct
   var Settings = Backbone.Model.extend({
 
     initialize: function initialize(attrs) {
-      var opts = arguments[1] === undefined ? {} : arguments[1];
+      var opts = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
       this._meta = opts.meta;
     },
@@ -2202,7 +2207,7 @@ define('extplug/models/RoomSettings',['require','exports','module','plug/models/
     load: function load() {
       var _this = this;
 
-      var unload = arguments[0] === undefined ? false : arguments[0];
+      var unload = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
 
       var description = currentRoom.get('description'),
           m = description.match(/(?:^|\n)@(?:p3|rcs)=(.*?)(?:\n|$)/);
@@ -3506,7 +3511,7 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
 
     // Styles API
     createStyle: function createStyle() {
-      var defaults = arguments[0] === undefined ? {} : arguments[0];
+      var defaults = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
       var style = new Style(defaults);
       this._styles.push(style);
@@ -3554,7 +3559,7 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
 });
 
 
-var _defineProperty = function (obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: key == null || typeof Symbol == 'undefined' || key.constructor !== Symbol, configurable: true, writable: true }); };
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 define('extplug/pluginLoader',['require','exports','module','./util/request','./models/PluginMeta'],function (require, exports, module) {
 
@@ -3605,7 +3610,7 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.14.3",
+  "version": "0.14.4",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -3625,7 +3630,9 @@ define('extplug/package',{
     "gulp-data": "^1.2.0",
     "gulp-rename": "^1.2.2",
     "gulp-template": "^3.0.0",
+    "gulp-zip": "^3.0.2",
     "jscs": "^1.13.1",
+    "merge-stream": "^0.1.8",
     "mkdirp": "^0.5.1",
     "requirejs": "^2.1.17",
     "run-sequence": "^1.1.0",
@@ -3635,7 +3642,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1438713188176
+  "builtAt": 1438946012483
 });
 
 
@@ -3661,7 +3668,7 @@ define('extplug/plugins/CommandsPlugin',['require','exports','module','../Plugin
     },
 
     showVersion: function showVersion() {
-      API.chatLog('' + _package.name + ' v' + _package.version + ' (' + builtAt + ')');
+      API.chatLog(_package.name + ' v' + _package.version + ' (' + builtAt + ')');
     },
 
     reloadRoomSettings: function reloadRoomSettings() {
@@ -4808,6 +4815,7 @@ define('extplug/plugins/ChatTypePlugin',['require','exports','module','meld','un
   var _require2 = require('underscore');
 
   var uniqueId = _require2.uniqueId;
+  var find = _require2.find;
 
   var Events = require('plug/core/Events');
   var ChatView = require('plug/views/rooms/chat/ChatView');
@@ -4836,28 +4844,22 @@ define('extplug/plugins/ChatTypePlugin',['require','exports','module','meld','un
    */
   var ChatTypePlugin = Plugin.extend({
     enable: function enable() {
+      var _this = this;
+
       // chatView.onReceived will still be the old method after adding advice
       // so the event listener should also be swapped out
-      var chatView = this.ext.appView.room.chat;
-      if (chatView) {
-        Events.off('chat:receive', chatView.onReceived);
-      }
-      this._chatTypeAdvice = around(ChatView.prototype, 'onReceived', this.onReceived);
-      if (chatView) {
-        Events.on('chat:receive', chatView.onReceived, chatView);
-      }
+      this.replaceEventHandler(function () {
+        _this._chatTypeAdvice = around(ChatView.prototype, 'onReceived', _this.onReceived);
+      });
     },
     disable: function disable() {
+      var _this2 = this;
+
       // remove custom chat type advice, and restore
       // the original event listener
-      var chatView = this.ext.appView.room.chat;
-      if (chatView) {
-        Events.off('chat:receive', chatView.onReceived);
-      }
-      this._chatTypeAdvice.remove();
-      if (chatView) {
-        Events.on('chat:receive', chatView.onReceived, chatView);
-      }
+      this.replaceEventHandler(function () {
+        _this2._chatTypeAdvice.remove();
+      });
     },
 
     // bound to the ChatView instance
@@ -4894,12 +4896,33 @@ define('extplug/plugins/ChatTypePlugin',['require','exports','module','meld','un
         }
         // icon badge
         else if (/^icon-(.*?)$/.test(message.badge)) {
-          var badgeBox = el.find('.badge-box');
-          badgeBox.find('i').removeClass().addClass('icon').addClass(message.badge);
-        }
+            var badgeBox = el.find('.badge-box');
+            badgeBox.find('i').removeClass().addClass('icon').addClass(message.badge);
+          }
       }
       if (message.color) {
         el.find('.msg .text').css('color', message.color);
+      }
+    },
+
+    // replace callback without affecting calling order
+    replaceEventHandler: function replaceEventHandler(fn) {
+      var chatView = this.ext.appView.room.chat;
+      var handler = undefined;
+      if (chatView) {
+        console.log(Events._events['chat:receive'].map(function (x) {
+          return x.callback;
+        }), chatView.onReceived);
+        handler = find(Events._events['chat:receive'], function (e) {
+          return e.callback === chatView.onReceived;
+        });
+      }
+      fn();
+      if (chatView) {
+        if (!handler) {
+          throw new Error('Could not replace chat handler');
+        }
+        handler.callback = chatView.onReceived;
       }
     }
   });
@@ -4957,7 +4980,7 @@ define('extplug/util/getUserClasses',['require','exports','module'],function (re
 });
 
 
-var _toConsumableArray = function (arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } };
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
 define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plugin','../util/getUserClasses','plug/core/Events','plug/views/rooms/users/RoomUserRowView','plug/views/rooms/users/WaitListRowView','plug/views/users/userRolloverView','meld'],function (require, exporst, module) {
 
@@ -5072,7 +5095,9 @@ define('extplug/plugins/TooltipsPlugin',['require','exports','module','../Plugin
     },
     onLeave: function onLeave(e) {
       Events.trigger('tooltip:hide');
-    } });
+    }
+
+  });
 
   module.exports = TooltipsPlugin;
 });
@@ -5139,9 +5164,9 @@ define('extplug/hooks/waitlist',['require','exports','module','plug/models/booth
 });
 
 
-var _toArray = function (arr) { return Array.isArray(arr) ? arr : Array.from(arr); };
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
-var _toConsumableArray = function (arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } };
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
 
 define('extplug/hooks/api-early',['require','exports','module','meld'],function (require, exports, module) {
 
@@ -5194,7 +5219,7 @@ define('extplug/hooks/api-early',['require','exports','module','meld'],function 
 });
 
 
-var _slicedToArray = function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i['return']) _i['return'](); } finally { if (_d) throw _e; } } return _arr; } else { throw new TypeError('Invalid attempt to destructure non-iterable instance'); } };
+var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i['return']) _i['return'](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError('Invalid attempt to destructure non-iterable instance'); } }; })();
 
 define('extplug/hooks/chat',['require','exports','module','plug/facades/chatFacade','plug/core/Events','meld'],function (require, exports, module) {
 
@@ -5325,16 +5350,16 @@ define('extplug/hooks/popout-style',['require','exports','module','jquery','plug
 define('extplug/styles/badge',{
   '#app-menu .button i:after': {
     // double quoted ):
-    content: '"EXT"',
-    color: '#fff',
-    background: '#f00',
+    'content': '"EXT"',
+    'color': '#fff',
+    'background': '#f00',
     'z-index': 10,
     'font-size': '70%',
     'border-radius': '10px',
-    padding: '1px 4px',
+    'padding': '1px 4px',
     'margin-top': '5px',
-    position: 'relative',
-    float: 'right'
+    'position': 'relative',
+    'float': 'right'
   }
 });
 // inline chat messages show the message contents immediately after
@@ -5347,39 +5372,39 @@ define('extplug/styles/inline-chat',{
 
     '.badge-box': {
       // remove badge background
-      margin: '5px 8px 6px',
-      height: '16px',
+      'margin': '5px 8px 6px',
+      'height': '16px',
       'border-radius': '0px',
-      background: 'transparent',
+      'background': 'transparent',
 
       // center badge icons
       '.icon': {
-        top: '50%',
+        'top': '50%',
         'margin-top': '-15px'
       },
 
       // center & resize actual user badges
       '.bdg': {
-        top: '-7px',
-        transform: 'scale(0.5)'
+        'top': '-7px',
+        'transform': 'scale(0.5)'
       },
 
       // emoji badges
       '.extplug-badji': {
-        left: '7px'
+        'left': '7px'
       }
     },
-    '.from': { display: 'inline' },
-    '.text': { display: 'inline', 'margin-left': '5px' }
+    '.from': { 'display': 'inline' },
+    '.text': { 'display': 'inline', 'margin-left': '5px' }
   },
   // remove the empty circle for badge-less users
   // (it doesn't fit in a 16px high message)
   '#chat-messages .cm .no-badge .icon': {
-    width: '30px',
-    height: '30px',
-    top: '0px',
-    left: '0px',
-    border: 'none',
+    'width': '30px',
+    'height': '30px',
+    'top': '0px',
+    'left': '0px',
+    'border': 'none',
     'border-radius': '0px'
   }
 });
@@ -5392,16 +5417,16 @@ define('extplug/styles/settings-pane',{
   // manual margins around the header to make things look somewhat
   // alike.
   '.extplug.control-group:not(:first-child) .header': {
-    margin: '35px 0 8px 0 !important'
+    'margin': '35px 0 8px 0 !important'
   },
 
   // footer below grouped plugin settings
   // with a disgusting specificity hack!
   '#user-view #user-settings .extplug-group-footer': {
-    clear: 'both',
-    button: {
-      top: 'auto',
-      position: 'relative'
+    'clear': 'both',
+    'button': {
+      'top': 'auto',
+      'position': 'relative'
     }
   },
 
@@ -5410,7 +5435,7 @@ define('extplug/styles/settings-pane',{
     // plug.dj has three labels on sliders, but ExtPlug sliders
     // just have two counter labels because it's easier
     '.counts .count:nth-child(2)': {
-      float: 'right'
+      'float': 'right'
     }
   }
 });
@@ -5419,18 +5444,18 @@ define('extplug/styles/settings-pane',{
 define('extplug/styles/install-plugin-dialog',{
   '#dialog-install-plugin': {
     // magic numbers! stolen from other plug.dj dialogs
-    '.dialog-body': { height: '137px' },
-    '.message': { top: '21px' },
+    '.dialog-body': { 'height': '137px' },
+    '.message': { 'top': '21px' },
     // centered spinner
-    '.spinner': { top: '50%', left: '50%' },
+    '.spinner': { 'top': '50%', 'left': '50%' },
     // Plugin URL input, center-aligned and wide
     '.dialog-input-background': {
-      top: '67px',
-      width: '460px',
-      height: '43px',
-      left: '25px',
-      input: {
-        width: '440px'
+      'top': '67px',
+      'width': '460px',
+      'height': '43px',
+      'left': '25px',
+      'input': {
+        'width': '440px'
       }
     }
   }
@@ -5792,7 +5817,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
       function replace(oldPlugin, url, name) {
         var i = stored.installed.indexOf(oldPlugin);
         if (i !== -1) {
-          stored.installed.splice(i, 1, '' + url + ';' + name);
+          stored.installed.splice(i, 1, url + ';' + name);
           // move settings
           stored.plugins[name] = stored.plugins[oldPlugin];
           delete stored.plugins[oldPlugin];
