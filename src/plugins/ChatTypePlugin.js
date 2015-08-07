@@ -1,7 +1,7 @@
 define(function (require, exports, module) {
 
   const { around } = require('meld');
-  const { uniqueId } = require('underscore');
+  const { uniqueId, find } = require('underscore');
   const Events = require('plug/core/Events');
   const ChatView = require('plug/views/rooms/chat/ChatView');
   const util = require('plug/util/util');
@@ -31,26 +31,16 @@ define(function (require, exports, module) {
     enable() {
       // chatView.onReceived will still be the old method after adding advice
       // so the event listener should also be swapped out
-      let chatView = this.ext.appView.room.chat;
-      if (chatView) {
-        Events.off('chat:receive', chatView.onReceived);
-      }
-      this._chatTypeAdvice = around(ChatView.prototype, 'onReceived', this.onReceived);
-      if (chatView) {
-        Events.on('chat:receive', chatView.onReceived, chatView);
-      }
+      this.replaceEventHandler(() => {
+        this._chatTypeAdvice = around(ChatView.prototype, 'onReceived', this.onReceived);
+      });
     },
     disable() {
       // remove custom chat type advice, and restore
       // the original event listener
-      let chatView = this.ext.appView.room.chat;
-      if (chatView) {
-        Events.off('chat:receive', chatView.onReceived);
-      }
-      this._chatTypeAdvice.remove();
-      if (chatView) {
-        Events.on('chat:receive', chatView.onReceived, chatView);
-      }
+      this.replaceEventHandler(() => {
+        this._chatTypeAdvice.remove();
+      });
     },
 
     // bound to the ChatView instance
@@ -99,6 +89,23 @@ define(function (require, exports, module) {
       }
       if (message.color) {
         el.find('.msg .text').css('color', message.color);
+      }
+    },
+
+    // replace callback without affecting calling order
+    replaceEventHandler(fn) {
+      let chatView = this.ext.appView.room.chat;
+      let handler;
+      if (chatView) {
+        console.log(Events._events['chat:receive'].map(x=>x.callback), chatView.onReceived)
+        handler = find(Events._events['chat:receive'], e => e.callback === chatView.onReceived)
+      }
+      fn();
+      if (chatView) {
+        if (!handler) {
+          throw new Error('Could not replace chat handler');
+        }
+        handler.callback = chatView.onReceived;
       }
     }
   });
