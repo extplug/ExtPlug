@@ -1,4 +1,5 @@
 var babel = require('gulp-babel');
+var babelHelpers = require('gulp-babel-external-helpers');
 var browserify = require('browserify');
 var concat = require('gulp-concat');
 var data = require('gulp-data');
@@ -17,7 +18,8 @@ var zip = require('gulp-zip');
 
 gulp.task('babel', function () {
   return gulp.src('src/**/*.js')
-    .pipe(babel({ modules: 'ignore' }))
+    .pipe(babel({ modules: 'ignore', externalHelpers: true }))
+    .pipe(babelHelpers('_babelHelpers.js', 'var'))
     .pipe(gulp.dest('lib/'));
 });
 
@@ -99,7 +101,9 @@ gulp.task('rjs', function (done) {
 });
 
 gulp.task('concat', function () {
-  return gulp.src([ 'build/_deps/es6-symbol.js', 'build/build.rjs.js' ])
+  return gulp.src([ 'build/_deps/es6-symbol.js'
+                  , 'lib/_babelHelpers.js'
+                  , 'build/build.rjs.js' ])
     .pipe(concat('extplug.code.js'))
     .pipe(gulp.dest('build/'));
 });
