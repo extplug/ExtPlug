@@ -51,6 +51,14 @@ define(function (require, exports, module) {
         },
         '#user-menu .item:not(.settings)': {
           'display': 'none'
+        },
+        '#room-bar': {
+          '.extplug-room-bar-overlay': {
+            'height': 'inherit',
+            'width': 'inherit',
+            'position': 'absolute',
+            'z-index': 10
+          }
         }
       }
     },
@@ -85,6 +93,17 @@ define(function (require, exports, module) {
         // do nothing \o/
       });
 
+      this.$roomBar = $('<div />').addClass('extplug-room-bar-overlay')
+        .appendTo('#room-bar')
+        .on('click', e => {
+          e.stopPropagation();
+          if ($('#room-settings').is(':visible')) {
+            Events.trigger('hide:settings');
+          } else {
+            Events.trigger('show:settings');
+          }
+        });
+
       this._enabled = true;
     },
 
@@ -92,6 +111,7 @@ define(function (require, exports, module) {
       if (this._enabled) {
         this.ssaAdvice.remove();
         this.$settings.remove();
+        this.$roomBar.remove();
         this.$login.remove();
         this.$signup.find('span').text(Lang.signup.signupFree);
         this.$settings = this.$login = this.$signup = null;
