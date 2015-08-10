@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        ExtPlug
 // @description Highly flexible, modular userscript extension for plug.dj.
-// @version     0.14.4
+// @version     0.15.0
 // @match       https://plug.dj/*
 // @namespace   https://extplug.github.io/
 // @downloadURL https://extplug.github.io/ExtPlug/extplug.user.js
@@ -346,6 +346,74 @@ module.exports = function (value) {
 
 },{"./is-symbol":3}]},{},[1]);
 
+var babelHelpers = {};
+
+babelHelpers.toArray = function (arr) {
+  return Array.isArray(arr) ? arr : Array.from(arr);
+};
+
+babelHelpers.toConsumableArray = function (arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
+};
+
+babelHelpers.slicedToArray = (function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+})();
+
+babelHelpers.defineProperty = function (obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+};
 ;(function (root, factory) {
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
@@ -398,21 +466,6 @@ var hasAttributes = function (m, attributes) {
   })
 };
 
-// Checks if a View template contains an element matching a given CSS selector.
-var viewHasElement = function (View, sel) {
-  var stubEl = $('<div>');
-  try {
-    var x = new View({ el: stubEl });
-    x.render();
-    var has = x.$(sel).length > 0;
-    x.remove();
-    return has;
-  }
-  catch (e) {
-    return false;
-  }
-};
-
 /**
  * The Context keeps track of the long names, and provides some convenience methods
  * for working with renamed modules.
@@ -433,7 +486,10 @@ function Context(target) {
 // adds a Detective to this context. these detectives will
 // be run by Context#run.
 Context.prototype.add = function (name, detective) {
-  this._detectives.push({ name: name, detective: detective });
+  this._detectives[name] = {
+    detective: detective,
+    ran: false
+  };
   return this;
 };
 // runs all known detectives.
@@ -441,35 +497,54 @@ Context.prototype.run = function () {
   if (this._ran) {
     return this;
   }
-  var detectives = this._detectives.slice();
-  // < 5000 to prevent an infinite loop if a detective's dependency was not found.
-  for (var i = 0; i < detectives.length && i < 5000; i++) {
-    var current = detectives[i];
-    if (current.detective.isReady(this)) {
-      current.detective.run(this, current.name);
-    }
-    else {
-      // revisit later.
-      detectives.push(current);
-    }
-  }
+
+  Object.keys(this._detectives).forEach(function (name) {
+    this.require(name);
+  }, this);
 
   this._ran = true;
   return this;
+};
+Context.prototype.findModule = function (name) {
+  var detective = this._detectives[name];
+  if (detective && !detective.ran) {
+    if (!detective.detective.isReady(this)) {
+      detective.detective.getDependencies().forEach(function (dep) {
+        this.require(dep);
+      }, this);
+    }
+    detective.detective.run(this, name);
+    detective.ran = true;
+    if (this.isDefined(name)) {
+      return this.require(name);
+    }
+  }
 };
 Context.prototype.resolveName = function (path) {
   return this._nameMapping[path] ? this.resolveName(this._nameMapping[path]) : path;
 };
 Context.prototype.require = function (path) {
-  var defined = this.target;
-  return defined[path] || (this._nameMapping[path] && this.require(this._nameMapping[path])) || undefined;
+  if (this.target[path]) {
+    return this.target[path];
+  }
+  // known module
+  if (this._nameMapping[path]) {
+    var mod = this.require(this._nameMapping[path])
+    if (mod) {
+      return mod;
+    }
+  }
+  return this.findModule(path);
 };
 Context.prototype.isDefined = function (path) {
   return typeof this.require(path) !== 'undefined';
 };
 Context.prototype.define = function (newPath, oldPath) {
   this._nameMapping[newPath] = oldPath;
-  this.require(oldPath).__plugModule = newPath
+  var mod = this.require(oldPath);
+  if (!mod.__plugModule) {
+    mod.__plugModule = newPath;
+  }
   return this;
 };
 Context.prototype.setNotFound = function (path) {
@@ -512,6 +587,9 @@ Detective.prototype.isReady = function (context) {
   return this._needs.every(function (name) {
     return context.isDefined(name);
   });
+};
+Detective.prototype.getDependencies = function () {
+  return this._needs;
 };
 Detective.prototype.resolve = function () {
   throw new Error('Engineer "resolve" method not implemented');
@@ -676,9 +754,11 @@ ActionMatcher.prototype.match = function (context, module, name) {
     }
     else if (this._regex) {
       module.prototype.init.apply(this._fakeInstance, this._params);
-      return typeof this._regex === 'string'
+      return this._fakeInstance.route && (
+        typeof this._regex === 'string'
         ? this._fakeInstance.route.indexOf(this._regex) === 0
-        : this._regex.test(this._fakeInstance.route);
+        : this._regex.test(this._fakeInstance.route)
+      );
     }
   }
   return false;
@@ -1137,32 +1217,10 @@ var plugModules = {
     var RoomHistoryHandler = this.require('plug/handlers/RoomHistoryHandler');
     return RoomHistoryHandler.prototype.collection;
   }).needs('plug/handlers/RoomHistoryHandler'),
-  'plug/collections/ignores': new StepwiseMatcher({
-    // The IgnoreAction puts the received data in the `ignores` collection in the
-    // `parse` method. So here we pretend to have a new ignore, add it to the collection,
-    // and then find which collection was changed.
-    setup: function () {
-      var IgnoreAction = this.require('plug/actions/ignores/IgnoreAction');
-      var User = this.require('plug/models/User')
-      IgnoreAction.prototype.parse.call(
-        // fake context with an empty trigger function to
-        // 1) prevent an error, and
-        // 2) not show the notification box that this would otherwise show.
-        { trigger: function () {} },
-        // fake "response"
-        { code: 200, data: [ { id: -1000, username: '__test__' } ] }
-      );
-    },
-    check: function (m) {
+  'plug/collections/ignores': new SimpleMatcher(function (m) {
       return isCollectionOf(m, this.require('plug/models/User')) &&
-        m.comparator === 'username' &&
-        m.length > 0 && m.last().get('id') === -1000;
-    },
-    cleanup: function (ignores) {
-      // get rid of the fake user
-      ignores.pop();
-    }
-  }).needs('plug/models/User', 'plug/actions/ignores/IgnoreAction'),
+        m.comparator === 'username';
+  }).needs('plug/models/User'),
   'plug/collections/mutes': new SimpleMatcher(function (m) {
     return isCollectionOf(m, this.require('plug/models/MutedUser'));
   }).needs('plug/models/MutedUser'),
@@ -1209,6 +1267,7 @@ var plugModules = {
     },
     check: function (m) {
       return isCollectionOf(m, this.require('plug/models/Media')) &&
+        m.length > 0 &&
         m.last().get('id') === -1000;
     },
     cleanup: function (searchResults) {
@@ -1217,10 +1276,24 @@ var plugModules = {
       // is a little expensive)
     }
   }).needs('plug/handlers/RestrictedSearchHandler', 'plug/models/Media'),
-  'plug/collections/relatedMedia': new SimpleMatcher(function (m) {
-    // TODO
-    return isCollectionOf(m, this.require('plug/models/Media')) && false;
-  }).needs('plug/models/Media'),
+  'plug/collections/relatedMedia': new SimpleFetcher(function (m) {
+    // this collection gets reset by the relatedMediaFacade, so we can
+    // overwrite the reset method on _all_ collections temporarily and
+    // trigger a reset. The reset won't actually do anything else but
+    // tell us which collection it was called on.
+    var facade = this.require('plug/facades/relatedMediaFacade');
+    var reset = Backbone.Collection.prototype.reset;
+    var relatedMedia;
+    Backbone.Collection.prototype.reset = function () {
+      relatedMedia = this;
+    };
+    // fake a facade object for facade.reset's `this`, so we don't
+    // reset anything that might be useful to the user
+    facade.reset.call({ data: [] });
+    // revert
+    Backbone.Collection.prototype.reset = reset;
+    return relatedMedia;
+  }).needs('plug/facades/relatedMediaFacade'),
   'plug/collections/soundCloudPlaylists': new SimpleMatcher(function (m) {
     return isCollectionOf(m, this.require('plug/models/SoundCloudPlaylist'));
   }).needs('plug/models/SoundCloudPlaylist'),
@@ -1343,7 +1416,10 @@ var plugModules = {
   },
   'plug/views/dashboard/header/DashboardHeaderView': function (m) {
     return isView(m) && m.prototype.className === 'app-header' &&
-      viewHasElement(m, '.event-calendar');
+      // the RoomHeader looks a lot like this, but does not have its own
+      // remove() method
+      m.prototype.hasOwnProperty('remove') &&
+      !m.prototype.hasOwnProperty('initialize');
   },
   'plug/views/dashboard/news/NewsView': function (m) {
     return isView(m) && m.prototype.id === 'news';
@@ -1468,9 +1544,9 @@ var plugModules = {
   'plug/views/dialogs/RoomCreateDialog': function (m) {
     return isDialog(m) && m.prototype.id === 'dialog-room-create';
   },
-  'plug/views/dialogs/StaffRoleDialog': function (m) {
-    return isDialog(m) && m.prototype.id === 'dialog-user-role';
-  },
+  'plug/views/dialogs/StaffRoleDialog': new SimpleFetcher(function () {
+    return this.require('plug/views/dialogs/UserRoleDialog');
+  }).needs('plug/views/dialogs/UserRoleDialog'),
   'plug/views/dialogs/TutorialDialog': function (m) {
     return isDialog(m) && m.prototype.id === 'dialog-preview' &&
       m.prototype.className.indexOf('tutorial') !== -1;
@@ -1493,7 +1569,7 @@ var plugModules = {
   'plug/views/playlists/help/PlaylistHelpView': function (m) {
     return isView(m) && m.prototype.className === 'media-list' &&
       _.isFunction(m.prototype.onResize) &&
-      viewHasElement(m, '.playlist-overlay-help');
+      !('clear' in m.prototype);
   },
   'plug/views/playlists/import/PlaylistImportPanelView': function (m) {
     return isView(m) && m.prototype.id === 'playlist-import-panel';
@@ -2045,6 +2121,16 @@ context.SimpleFetcher = SimpleFetcher;
 context.HandlerFetcher = HandlerFetcher;
 
 context.modules = plugModules;
+
+context.load = function (name, req, cb, config) {
+  var result = context.require(name);
+  if (result) {
+    cb(result);
+  }
+  else {
+    cb.error(new Error('module "' + name + '" not found'));
+  }
+};
 
 return context;
 
@@ -2697,6 +2783,142 @@ define('extplug/views/users/settings/CheckboxView',['require','exports','module'
 });
 
 
+define('extplug/views/users/settings/InputView',['require','exports','module','plug/core/Events','backbone','underscore','jquery'],function (require, exports, module) {
+
+  var Events = require('plug/core/Events');
+
+  var _require = require('backbone');
+
+  var View = _require.View;
+
+  var _require2 = require('underscore');
+
+  var omit = _require2.omit;
+
+  var $ = require('jquery');
+
+  var KEY_ENTER = 13;
+
+  var InputView = View.extend({
+    className: 'item extplug-input',
+
+    initialize: function initialize(o) {
+      this.label = o.label;
+      this.description = o.description;
+      this.value = o.value;
+
+      o.type = o.type || 'text';
+      this.attributes = omit(o, 'label', 'value', 'description');
+
+      this.onKeyUp = this.onKeyUp.bind(this);
+      this.onKeyDown = this.onKeyDown.bind(this);
+      this.onFocus = this.onFocus.bind(this);
+      this.onBlur = this.onBlur.bind(this);
+      this.focus = this.focus.bind(this);
+    },
+
+    render: function render() {
+      var _this = this;
+
+      this.$label = $('<label />').addClass('title').text(this.label);
+      this.$input = $('<input />').attr(this.attributes).val(this.value);
+      this.$wrapper = $('<div />').addClass('extplug-input-wrap');
+      this.$el.append(this.$label, this.$wrapper.append(this.$input));
+      if (this.description) {
+        this.$label.on('mouseenter', function () {
+          Events.trigger('tooltip:show', _this.description, _this.$el);
+        }).on('mouseleave', function () {
+          Events.trigger('tooltip:hide');
+        });
+      }
+
+      this.$input.on('keyup', this.onKeyUp);
+      this.$input.on('keydown', this.onKeyDown);
+      this.$input.on('focus', this.onFocus);
+      this.$input.on('blur', this.onBlur);
+
+      this.$el.on('mousedown', this.focus);
+    },
+
+    onKeyUp: function onKeyUp() {},
+
+    onKeyDown: function onKeyDown(e) {
+      if (e.keyCode === KEY_ENTER) {
+        this.onBlur();
+      }
+    },
+
+    focus: function focus() {
+      this.$input.focus();
+    },
+
+    onFocus: function onFocus() {
+      this.$wrapper.addClass('focused');
+    },
+    onBlur: function onBlur() {
+      this.$wrapper.removeClass('focused');
+      this.trigger('change', this.$input.val());
+    }
+  });
+
+  module.exports = InputView;
+});
+(function(e,t,n,r,i,s,o,u,a){function m(e){if(Object.prototype.toString.apply(e)==="[object Array]"){if(typeof e[0]=="string"&&typeof m[e[0]]=="function")return new m[e[0]](e.slice(1,e.length));if(e.length===4)return new m.RGB(e[0]/255,e[1]/255,e[2]/255,e[3]/255)}else if(typeof e=="string"){var i=e.toLowerCase();l[i]&&(e="#"+l[i]),i==="transparent"&&(e="rgba(0,0,0,0)");var s=e.match(v);if(s){var o=s[1].toUpperCase(),u=c(s[8])?s[8]:n(s[8]),a=o[0]==="H",f=s[3]?100:a?360:255,h=s[5]||a?100:255,d=s[7]||a?100:255;if(c(m[o]))throw new Error("one.color."+o+" is not installed.");return new m[o](n(s[2])/f,n(s[4])/h,n(s[6])/d,u)}e.length<6&&(e=e.replace(/^#?([0-9a-f])([0-9a-f])([0-9a-f])$/i,"$1$1$2$2$3$3"));var g=e.match(/^#?([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])$/i);if(g)return new m.RGB(r(g[1],16)/255,r(g[2],16)/255,r(g[3],16)/255);if(m.CMYK){var y=e.match(new t("^cmyk\\("+p.source+","+p.source+","+p.source+","+p.source+"\\)$","i"));if(y)return new m.CMYK(n(y[1])/100,n(y[2])/100,n(y[3])/100,n(y[4])/100)}}else if(typeof e=="object"&&e.isColor)return e;return!1}function g(t,n,r){function a(e,t){var n={};n[t.toLowerCase()]=new i("return this.rgb()."+t.toLowerCase()+"();"),m[t].propertyNames.forEach(function(e,r){n[e]=n[e==="black"?"k":e[0]]=new i("value","isDelta","return this."+t.toLowerCase()+"()."+e+"(value, isDelta);")});for(var r in n)n.hasOwnProperty(r)&&m[e].prototype[r]===undefined&&(m[e].prototype[r]=n[r])}m[t]=new i(n.join(","),"if (Object.prototype.toString.apply("+n[0]+") === '[object Array]') {"+n.map(function(e,t){return e+"="+n[0]+"["+t+"];"}).reverse().join("")+"}"+"if ("+n.filter(function(e){return e!=="alpha"}).map(function(e){return"isNaN("+e+")"}).join("||")+"){"+'throw new Error("['+t+']: Invalid color: ("+'+n.join('+","+')+'+")");}'+n.map(function(e){return e==="hue"?"this._hue=hue<0?hue-Math.floor(hue):hue%1":e==="alpha"?"this._alpha=(isNaN(alpha)||alpha>1)?1:(alpha<0?0:alpha);":"this._"+e+"="+e+"<0?0:("+e+">1?1:"+e+")"}).join(";")+";"),m[t].propertyNames=n;var s=m[t].prototype;["valueOf","hex","hexa","css","cssa"].forEach(function(e){s[e]=s[e]||(t==="RGB"?s.hex:new i("return this.rgb()."+e+"();"))}),s.isColor=!0,s.equals=function(r,i){c(i)&&(i=1e-10),r=r[t.toLowerCase()]();for(var s=0;s<n.length;s+=1)if(e.abs(this["_"+n[s]]-r["_"+n[s]])>i)return!1;return!0},s.toJSON=new i("return ['"+t+"', "+n.map(function(e){return"this._"+e},this).join(", ")+"];");for(var o in r)if(r.hasOwnProperty(o)){var u=o.match(/^from(.*)$/);u?m[u[1].toUpperCase()].prototype[t.toLowerCase()]=r[o]:s[o]=r[o]}s[t.toLowerCase()]=function(){return this},s.toString=new i('return "[one.color.'+t+':"+'+n.map(function(e,t){return'" '+n[t]+'="+this._'+e}).join("+")+'+"]";'),n.forEach(function(e,t){s[e]=s[e==="black"?"k":e[0]]=new i("value","isDelta","if (typeof value === 'undefined') {return this._"+e+";"+"}"+"if (isDelta) {"+"return new this.constructor("+n.map(function(t,n){return"this._"+t+(e===t?"+value":"")}).join(", ")+");"+"}"+"return new this.constructor("+n.map(function(t,n){return e===t?"value":"this._"+t}).join(", ")+");")}),f.forEach(function(e){a(t,e),a(e,t)}),f.push(t)}function y(){var e=this.rgb(),t=e._red*.3+e._green*.59+e._blue*.11;return new m.RGB(t,t,t,this._alpha)}var f=[],l={},c=function(e){return typeof e=="undefined"},h=/\s*(\.\d+|\d+(?:\.\d+)?)(%)?\s*/,p=/\s*(\.\d+|100|\d?\d(?:\.\d+)?)%\s*/,d=/\s*(\.\d+|\d+(?:\.\d+)?)\s*/,v=new t("^(rgb|hsl|hsv)a?\\("+h.source+","+h.source+","+h.source+"(?:,"+d.source+")?"+"\\)$","i");m.installMethod=function(e,t){f.forEach(function(n){m[n].prototype[e]=t})},g("RGB",["red","green","blue","alpha"],{hex:function(){var e=(o(255*this._red)*65536+o(255*this._green)*256+o(255*this._blue)).toString(16);return"#"+"00000".substr(0,6-e.length)+e},hexa:function(){var e=o(this._alpha*255).toString(16);return"#"+"00".substr(0,2-e.length)+e+this.hex().substr(1,6)},css:function(){return"rgb("+o(255*this._red)+","+o(255*this._green)+","+o(255*this._blue)+")"},cssa:function(){return"rgba("+o(255*this._red)+","+o(255*this._green)+","+o(255*this._blue)+","+this._alpha+")"}}),typeof define=="function"&&!c(define.amd)?define('onecolor',[],function(){return m}):typeof exports=="object"?module.exports=m:(one=window.one||{},one.color=m),typeof jQuery!="undefined"&&c(jQuery.color)&&(jQuery.color=m),l={aliceblue:"f0f8ff",antiquewhite:"faebd7",aqua:"0ff",aquamarine:"7fffd4",azure:"f0ffff",beige:"f5f5dc",bisque:"ffe4c4",black:"000",blanchedalmond:"ffebcd",blue:"00f",blueviolet:"8a2be2",brown:"a52a2a",burlywood:"deb887",cadetblue:"5f9ea0",chartreuse:"7fff00",chocolate:"d2691e",coral:"ff7f50",cornflowerblue:"6495ed",cornsilk:"fff8dc",crimson:"dc143c",cyan:"0ff",darkblue:"00008b",darkcyan:"008b8b",darkgoldenrod:"b8860b",darkgray:"a9a9a9",darkgrey:"a9a9a9",darkgreen:"006400",darkkhaki:"bdb76b",darkmagenta:"8b008b",darkolivegreen:"556b2f",darkorange:"ff8c00",darkorchid:"9932cc",darkred:"8b0000",darksalmon:"e9967a",darkseagreen:"8fbc8f",darkslateblue:"483d8b",darkslategray:"2f4f4f",darkslategrey:"2f4f4f",darkturquoise:"00ced1",darkviolet:"9400d3",deeppink:"ff1493",deepskyblue:"00bfff",dimgray:"696969",dimgrey:"696969",dodgerblue:"1e90ff",firebrick:"b22222",floralwhite:"fffaf0",forestgreen:"228b22",fuchsia:"f0f",gainsboro:"dcdcdc",ghostwhite:"f8f8ff",gold:"ffd700",goldenrod:"daa520",gray:"808080",grey:"808080",green:"008000",greenyellow:"adff2f",honeydew:"f0fff0",hotpink:"ff69b4",indianred:"cd5c5c",indigo:"4b0082",ivory:"fffff0",khaki:"f0e68c",lavender:"e6e6fa",lavenderblush:"fff0f5",lawngreen:"7cfc00",lemonchiffon:"fffacd",lightblue:"add8e6",lightcoral:"f08080",lightcyan:"e0ffff",lightgoldenrodyellow:"fafad2",lightgray:"d3d3d3",lightgrey:"d3d3d3",lightgreen:"90ee90",lightpink:"ffb6c1",lightsalmon:"ffa07a",lightseagreen:"20b2aa",lightskyblue:"87cefa",lightslategray:"789",lightslategrey:"789",lightsteelblue:"b0c4de",lightyellow:"ffffe0",lime:"0f0",limegreen:"32cd32",linen:"faf0e6",magenta:"f0f",maroon:"800000",mediumaquamarine:"66cdaa",mediumblue:"0000cd",mediumorchid:"ba55d3",mediumpurple:"9370d8",mediumseagreen:"3cb371",mediumslateblue:"7b68ee",mediumspringgreen:"00fa9a",mediumturquoise:"48d1cc",mediumvioletred:"c71585",midnightblue:"191970",mintcream:"f5fffa",mistyrose:"ffe4e1",moccasin:"ffe4b5",navajowhite:"ffdead",navy:"000080",oldlace:"fdf5e6",olive:"808000",olivedrab:"6b8e23",orange:"ffa500",orangered:"ff4500",orchid:"da70d6",palegoldenrod:"eee8aa",palegreen:"98fb98",paleturquoise:"afeeee",palevioletred:"d87093",papayawhip:"ffefd5",peachpuff:"ffdab9",peru:"cd853f",pink:"ffc0cb",plum:"dda0dd",powderblue:"b0e0e6",purple:"800080",rebeccapurple:"639",red:"f00",rosybrown:"bc8f8f",royalblue:"4169e1",saddlebrown:"8b4513",salmon:"fa8072",sandybrown:"f4a460",seagreen:"2e8b57",seashell:"fff5ee",sienna:"a0522d",silver:"c0c0c0",skyblue:"87ceeb",slateblue:"6a5acd",slategray:"708090",slategrey:"708090",snow:"fffafa",springgreen:"00ff7f",steelblue:"4682b4",tan:"d2b48c",teal:"008080",thistle:"d8bfd8",tomato:"ff6347",turquoise:"40e0d0",violet:"ee82ee",wheat:"f5deb3",white:"fff",whitesmoke:"f5f5f5",yellow:"ff0",yellowgreen:"9acd32"},g("XYZ",["x","y","z","alpha"],{fromRgb:function(){var e=function(e){return e>.04045?u((e+.055)/1.055,2.4):e/12.92},t=e(this._red),n=e(this._green),r=e(this._blue);return new m.XYZ(t*.4124564+n*.3575761+r*.1804375,t*.2126729+n*.7151522+r*.072175,t*.0193339+n*.119192+r*.9503041,this._alpha)},rgb:function(){var e=this._x,t=this._y,n=this._z,r=function(e){return e>.0031308?1.055*u(e,1/2.4)-.055:12.92*e};return new m.RGB(r(e*3.2404542+t*-1.5371385+n*-0.4985314),r(e*-0.969266+t*1.8760108+n*.041556),r(e*.0556434+t*-0.2040259+n*1.0572252),this._alpha)},lab:function(){var e=function(e){return e>.008856?u(e,1/3):7.787037*e+4/29},t=e(this._x/95.047),n=e(this._y/100),r=e(this._z/108.883);return new m.LAB(116*n-16,500*(t-n),200*(n-r),this._alpha)}}),g("LAB",["l","a","b","alpha"],{fromRgb:function(){return this.xyz().lab()},rgb:function(){return this.xyz().rgb()},xyz:function(){var e=function(e){var t=u(e,3);return t>.008856?t:(e-16/116)/7.87},t=(this._l+16)/116,n=this._a/500+t,r=t-this._b/200;return new m.XYZ(e(n)*95.047,e(t)*100,e(r)*108.883,this._alpha)}}),g("HSV",["hue","saturation","value","alpha"],{rgb:function(){var t=this._hue,n=this._saturation,r=this._value,i=a(5,e.floor(t*6)),s=t*6-i,o=r*(1-n),u=r*(1-s*n),f=r*(1-(1-s)*n),l,c,h;switch(i){case 0:l=r,c=f,h=o;break;case 1:l=u,c=r,h=o;break;case 2:l=o,c=r,h=f;break;case 3:l=o,c=u,h=r;break;case 4:l=f,c=o,h=r;break;case 5:l=r,c=o,h=u}return new m.RGB(l,c,h,this._alpha)},hsl:function(){var e=(2-this._saturation)*this._value,t=this._saturation*this._value,n=e<=1?e:2-e,r;return n<1e-9?r=0:r=t/n,new m.HSL(this._hue,r,e/2,this._alpha)},fromRgb:function(){var t=this._red,n=this._green,r=this._blue,i=e.max(t,n,r),s=a(t,n,r),o=i-s,u,f=i===0?0:o/i,l=i;if(o===0)u=0;else switch(i){case t:u=(n-r)/o/6+(n<r?1:0);break;case n:u=(r-t)/o/6+1/3;break;case r:u=(t-n)/o/6+2/3}return new m.HSV(u,f,l,this._alpha)}}),g("HSL",["hue","saturation","lightness","alpha"],{hsv:function(){var e=this._lightness*2,t=this._saturation*(e<=1?e:2-e),n;return e+t<1e-9?n=0:n=2*t/(e+t),new m.HSV(this._hue,n,(e+t)/2,this._alpha)},rgb:function(){return this.hsv().rgb()},fromRgb:function(){return this.hsv().hsl()}}),g("CMYK",["cyan","magenta","yellow","black","alpha"],{rgb:function(){return new m.RGB(1-this._cyan*(1-this._black)-this._black,1-this._magenta*(1-this._black)-this._black,1-this._yellow*(1-this._black)-this._black,this._alpha)},fromRgb:function(){var e=this._red,t=this._green,n=this._blue,r=1-e,i=1-t,s=1-n,o=1;return e||t||n?(o=a(r,a(i,s)),r=(r-o)/(1-o),i=(i-o)/(1-o),s=(s-o)/(1-o)):o=1,new m.CMYK(r,i,s,o,this._alpha)}}),m.installMethod("clearer",function(e){return this.alpha(s(e)?-0.1:-e,!0)}),m.installMethod("darken",function(e){return this.lightness(s(e)?-0.1:-e,!0)}),m.installMethod("desaturate",function(e){return this.saturation(s(e)?-0.1:-e,!0)}),m.installMethod("greyscale",y),m.installMethod("grayscale",y),m.installMethod("lighten",function(e){return this.lightness(s(e)?.1:e,!0)}),m.installMethod("mix",function(e,t){e=m(e).rgb(),t=1-(s(t)?.5:t);var n=t*2-1,r=this._alpha-e._alpha,i=((n*r===-1?n:(n+r)/(1+n*r))+1)/2,o=1-i,u=this.rgb();return new m.RGB(u._red*i+e._red*o,u._green*i+e._green*o,u._blue*i+e._blue*o,u._alpha*t+e._alpha*(1-t))}),m.installMethod("negate",function(){var e=this.rgb();return new m.RGB(1-e._red,1-e._green,1-e._blue,this._alpha)}),m.installMethod("opaquer",function(e){return this.alpha(s(e)?.1:e,!0)}),m.installMethod("rotate",function(e){return this.hue((e||0)/360,!0)}),m.installMethod("saturate",function(e){return this.saturation(s(e)?.1:e,!0)}),m.installMethod("toAlpha",function(e){var t=this.rgb(),n=m(e).rgb(),r=1e-10,i=new m.RGB(0,0,0,t._alpha),s=["_red","_green","_blue"];return s.forEach(function(e){t[e]<r?i[e]=t[e]:t[e]>n[e]?i[e]=(t[e]-n[e])/(1-n[e]):t[e]>n[e]?i[e]=(n[e]-t[e])/n[e]:i[e]=0}),i._red>i._green?i._red>i._blue?t._alpha=i._red:t._alpha=i._blue:i._green>i._blue?t._alpha=i._green:t._alpha=i._blue,t._alpha<r?t:(s.forEach(function(e){t[e]=(t[e]-n[e])/t._alpha+n[e]}),t._alpha*=i._alpha,t)})})(Math,RegExp,parseFloat,parseInt,Function,isNaN,Math.round,Math.pow,Math.min)
+;
+
+
+define('extplug/views/users/settings/ColorInputView',['require','exports','module','./InputView','onecolor'],function (require, exports, module) {
+
+  var InputView = require('./InputView');
+  var onecolor = require('onecolor');
+
+  var ColorInputView = InputView.extend({
+    className: 'item extplug-input extplug-color-input',
+
+    initialize: function initialize(o) {
+      this._super(o);
+      this.onUpdate = this.onUpdate.bind(this);
+    },
+
+    render: function render() {
+      this._super();
+      this.$color = $('<div />').addClass('extplug-color-swatch');
+      this.$wrapper.append(this.$color);
+
+      this.onUpdate();
+      this.on('change', this.onUpdate);
+      this.$input.on('keyup', this.onUpdate);
+
+      return this;
+    },
+
+    color: function color() {
+      try {
+        var c = onecolor(this.$input.val());
+        if (c) return c;
+      } catch (e) {}
+    },
+
+    onUpdate: function onUpdate() {
+      var color = this.color();
+      if (color) {
+        this.$color.css({ 'background-color': color.css() });
+        this.$wrapper.removeClass('error');
+      } else {
+        this.$wrapper.addClass('error');
+      }
+    },
+
+    value: function value() {
+      var color = this.color();
+      return color ? this.$input.val() : '';
+    }
+  });
+
+  module.exports = ColorInputView;
+});
+
+
 define('extplug/views/users/settings/DropdownView',['require','exports','module','backbone','jquery','underscore'],function (require, exports, module) {
 
   var Backbone = require('backbone');
@@ -2778,6 +3000,112 @@ define('extplug/views/users/settings/DropdownView',['require','exports','module'
 });
 
 
+define('extplug/views/users/settings/PlaylistSelectMenuView',['require','exports','module','plug/views/grabs/grabMenu','plug/models/Media'],function (require, exports, module) {
+
+  var GrabMenu = require('plug/views/grabs/grabMenu').constructor;
+  var Media = require('plug/models/Media');
+  var Lang = (0, require)('lang/Lang');
+
+  var fakeMedia = [new Media()];
+
+  var PlaylistSelectMenuView = GrabMenu.extend({
+    className: 'pop-menu extplug-playlist-select-menu',
+
+    // don't hide automatically on mouse leave
+    onMouseLeave: function onMouseLeave() {},
+
+    // hide immediately on hide() calls.
+    // plug has a little delay in here because it auto-hides the grab
+    // menu when the mouse leaves the area.
+    hide: function hide() {
+      this.$modal && this.$modal.remove();
+      if (this._hide) this._hide();else this._super();
+    },
+
+    onRowPress: function onRowPress(playlist) {
+      this.trigger('select', playlist);
+      this.hide();
+    },
+
+    show: function show(el, container) {
+      var _this = this;
+
+      this._super(el, fakeMedia, container);
+      this.$icon.removeClass('icon-add').addClass('icon-playlist');
+      this.$title.text(Lang.playlist.yourPlaylists);
+
+      // show the check mark in front of the selected playlist instead of the
+      // active one
+      this.rows.forEach(function (row) {
+        if (row.model) {
+          if (row.model.get('id') === _this.options.selected.get('id')) {
+            row.$el.append($('<i />').addClass('icon icon-check-purple'));
+          } else if (row.model.get('active')) {
+            row.$el.find('.icon-check-purple').remove();
+          }
+        }
+      });
+
+      this.$modal = $('<div />').addClass('user-rollover-modal').on('click', this.hide.bind(this)).appendTo('body');
+      this.$el.css('z-index', parseInt(this.$modal.css('z-index'), 10) + 1);
+
+      return this;
+    }
+  });
+
+  module.exports = PlaylistSelectMenuView;
+});
+
+
+define('extplug/views/users/settings/PlaylistSelectView',['require','exports','module','./PlaylistSelectMenuView','backbone','plug/collections/playlists'],function (require, exports, module) {
+
+  var PlaylistSelectMenuView = require('./PlaylistSelectMenuView');
+
+  var _require = require('backbone');
+
+  var View = _require.View;
+
+  var playlists = require('plug/collections/playlists');
+
+  var PlaylistSelectView = View.extend({
+    className: 'item extplug-playlist-select',
+
+    initialize: function initialize(o) {
+      this.label = o.label;
+      this.description = o.description;
+      this.value = o.value ? playlists.get(o.value) : playlists.at(0);
+    },
+
+    render: function render() {
+      var _this = this;
+
+      this.$label = $('<label />').addClass('title').text(this.label);
+      this.$selected = $('<div />').addClass('extplug-playlist-selected').text(this.value.get('name')).on('click', function () {
+        return _this.open();
+      });
+      this.$el.append(this.$label, this.$selected);
+      return this;
+    },
+
+    open: function open() {
+      var _this2 = this;
+
+      var menu = new PlaylistSelectMenuView({
+        selected: this.value
+      });
+      menu.show(this.$selected);
+      menu.on('select', function (playlist) {
+        _this2.value = playlist;
+        _this2.$selected.text(_this2.value.get('name'));
+        _this2.trigger('change', playlist.get('id'));
+      });
+    }
+  });
+
+  module.exports = PlaylistSelectView;
+});
+
+
 define('extplug/views/users/settings/SliderView',['require','exports','module','backbone','jquery'],function (require, exports, module) {
   var Backbone = require('backbone');
   var $ = require('jquery');
@@ -2834,11 +3162,14 @@ define('extplug/views/users/settings/SliderView',['require','exports','module','
 });
 
 
-define('extplug/views/users/settings/DefaultSettingsView',['require','exports','module','./ControlGroupView','./CheckboxView','./DropdownView','./SliderView','underscore'],function (require, exports, module) {
+define('extplug/views/users/settings/DefaultSettingsView',['require','exports','module','./ControlGroupView','./CheckboxView','./ColorInputView','./DropdownView','./InputView','./PlaylistSelectView','./SliderView','underscore'],function (require, exports, module) {
 
   var ControlGroupView = require('./ControlGroupView');
   var CheckboxView = require('./CheckboxView');
+  var ColorInputView = require('./ColorInputView');
   var DropdownView = require('./DropdownView');
+  var InputView = require('./InputView');
+  var PlaylistSelectView = require('./PlaylistSelectView');
   var SliderView = require('./SliderView');
 
   var _require = require('underscore');
@@ -2866,6 +3197,38 @@ define('extplug/views/users/settings/DefaultSettingsView',['require','exports','
         min: setting.min,
         max: setting.max,
         value: settings.get(name)
+      });
+    },
+    text: function text(setting, value) {
+      return new InputView({
+        label: setting.label,
+        description: setting.description,
+        value: value
+      });
+    },
+    number: function number(setting, value) {
+      return new InputView({
+        type: 'number',
+        label: setting.label,
+        description: setting.description,
+        value: value,
+        min: has(setting, 'min') ? setting.min : '',
+        max: has(setting, 'max') ? setting.max : '',
+        step: has(setting, 'step') ? setting.step : ''
+      });
+    },
+    color: function color(setting, value) {
+      return new ColorInputView({
+        label: setting.label,
+        description: setting.description,
+        value: value
+      });
+    },
+    playlist: function playlist(setting, value) {
+      return new PlaylistSelectView({
+        label: setting.label,
+        description: setting.description,
+        value: value
       });
     }
   };
@@ -3570,8 +3933,6 @@ define('extplug/Plugin',['require','exports','module','jquery','underscore','bac
 });
 
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 define('extplug/pluginLoader',['require','exports','module','./util/request','./models/PluginMeta'],function (require, exports, module) {
 
   var request = require('./util/request');
@@ -3601,7 +3962,7 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
       // and requirejs will figure everything out.
       // Chopping off the .js extension because require.js adds it
       // since we're actually requiring a module name and not a path.
-      requirejs({ paths: _defineProperty({}, o.name, o.url.replace(/\.js$/, '')) });
+      requirejs({ paths: babelHelpers.defineProperty({}, o.name, o.url.replace(/\.js$/, '')) });
     }
     var pluginId = o.name || o.url;
     var onLoad = function onLoad(Plugin) {
@@ -3621,12 +3982,13 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.14.4",
+  "version": "0.15.0",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
     "es6-symbol": "^2.0.1",
     "meld": "1.x",
+    "onecolor": "^2.5.0",
     "plug-modules": "^4.2.2",
     "regexp-quote": "0.0.0",
     "semver-compare": "^1.0.0",
@@ -3636,7 +3998,8 @@ define('extplug/package',{
     "browserify": "^10.2.4",
     "del": "^1.2.0",
     "gulp": "^3.8.11",
-    "gulp-babel": "^5.1.0",
+    "gulp-babel": "^5.2.0",
+    "gulp-babel-external-helpers": "^1.0.0",
     "gulp-concat": "^2.5.2",
     "gulp-data": "^1.2.0",
     "gulp-rename": "^1.2.2",
@@ -3653,7 +4016,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1438946012483
+  "builtAt": 1439245583930
 });
 
 
@@ -4991,8 +5354,6 @@ define('extplug/util/getUserClasses',['require','exports','module'],function (re
 });
 
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
-
 define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plugin','../util/getUserClasses','plug/core/Events','plug/views/rooms/users/RoomUserRowView','plug/views/rooms/users/WaitListRowView','plug/views/users/userRolloverView','meld'],function (require, exporst, module) {
 
   var Plugin = require('../Plugin');
@@ -5044,7 +5405,7 @@ define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plu
     onChat: function onChat(msg) {
       var classes = msg.classes ? [msg.classes] : [];
       if (msg.uid) {
-        classes.push.apply(classes, _toConsumableArray(getUserClasses(msg.uid)));
+        classes.push.apply(classes, babelHelpers.toConsumableArray(getUserClasses(msg.uid)));
         // additional plugCubed chat-only classes
         // PlugCubed's classes start with `from-` instead of `role-` so we can't
         // just use getUserClasses()
@@ -5112,6 +5473,142 @@ define('extplug/plugins/TooltipsPlugin',['require','exports','module','../Plugin
 
   module.exports = TooltipsPlugin;
 });
+
+
+define('extplug/plugins/GuestPlugin',['require','exports','module','jquery','meld','../Plugin','plug/core/Events','plug/actions/users/SaveSettingsAction','lang/Lang'],function (require, exports, module) {
+
+  var $ = require('jquery');
+
+  var _require = require('meld');
+
+  var around = _require.around;
+
+  var Plugin = require('../Plugin');
+  var Events = require('plug/core/Events');
+  var SaveSettingsAction = require('plug/actions/users/SaveSettingsAction');
+  var Lang = require('lang/Lang');
+
+  var GuestPlugin = Plugin.extend({
+    name: 'Guest UI',
+    description: 'Skips the guest walkthrough and adds login and settings ' + 'buttons to the plug.dj footer.',
+
+    style: {
+      '.is-guest': {
+        '#header-panel-bar': {
+          '#chat-button': {
+            'width': '33%',
+            'span': { 'display': 'none' }
+          },
+          '#users-button': {
+            'left': '33%',
+            'width': '34%'
+          },
+          '#waitlist-button': {
+            'left': '67%',
+            'width': '33%'
+          },
+          '#friends-button': { 'display': 'none' }
+        },
+        '#user-lists': {
+          // even the staff one doesn't work for guest users!
+          '.button.staff, .button.ignored': { 'display': 'none' }
+        },
+        '#footer-user': {
+          '.signup': { 'width': '40%' },
+          '.signup.login': {
+            'margin-left': 'calc(40% + 1px)',
+            'width': 'calc(40% - 1px)',
+            'background': '#555d70'
+          },
+          '.buttons': {
+            'display': 'block',
+            '.button': { 'display': 'none' },
+            '.button.extplug-guest-settings': {
+              'display': 'block',
+              'margin-left': '80%'
+            }
+          }
+        },
+        '#user-menu .item:not(.settings)': {
+          'display': 'none'
+        },
+        '#room-bar': {
+          '.extplug-room-bar-overlay': {
+            'height': 'inherit',
+            'width': 'inherit',
+            'position': 'absolute',
+            'z-index': 10
+          }
+        }
+      }
+    },
+
+    enable: function enable() {
+      // Presumably, this isn't the first time someone has used plug.dj.
+      this.skipWalkthrough();
+
+      // plug.dj API is disabled for guests, normally...
+      API.enabled = true;
+
+      this.$settings = $('<div />').addClass('button settings extplug-guest-settings').attr('data-tooltip', Lang.userMenu.settings).attr('data-tooltip-dir', 'left').append($('<i />').addClass('icon icon-settings-white')).appendTo('#footer-user .buttons').on('click', this.onSettings);
+
+      // add login button
+      this.$signup = $('#footer-user .signup').find('span').text(Lang.signup.signup).end();
+      this.$login = $('<div />').addClass('signup login').append($('<span />').text(Lang.signup.login)).insertAfter(this.$signup).on('click', this.login.bind(this));
+
+      // disable saving settings to the server when not logged in
+      this.ssaAdvice = around(SaveSettingsAction.prototype, 'execute', function () {
+        // do nothing \o/
+      });
+
+      this.$roomBar = $('<div />').addClass('extplug-room-bar-overlay').appendTo('#room-bar').on('click', function (e) {
+        e.stopPropagation();
+        if ($('#room-settings').is(':visible')) {
+          Events.trigger('hide:settings');
+        } else {
+          Events.trigger('show:settings');
+        }
+      });
+
+      this._enabled = true;
+    },
+
+    disable: function disable() {
+      if (this._enabled) {
+        this.ssaAdvice.remove();
+        this.$settings.remove();
+        this.$roomBar.remove();
+        this.$login.remove();
+        this.$signup.find('span').text(Lang.signup.signupFree);
+        this.$settings = this.$login = this.$signup = null;
+      }
+
+      this._enabled = false;
+    },
+
+    skipWalkthrough: function skipWalkthrough() {
+      var roomView = this.ext.appView.room;
+      roomView.onWTFinish();
+    },
+
+    login: function login() {
+      var app = this.ext.appView;
+      app.showSignUp();
+      app.signup.swap('login');
+      // show email login by default
+      $('.sign-up-overlay .box').addClass('show-email');
+      $('.email-login input.email').focus();
+    },
+
+    onSettings: function onSettings(e) {
+      e.stopPropagation();
+      Events.trigger('tooltip:hide').trigger('show:user', 'settings', 'extplug');
+    }
+
+  });
+
+  module.exports = GuestPlugin;
+});
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define('semver-compare',[],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.semvercmp = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 module.exports = function cmp (a, b) {
     var pa = a.split('.');
@@ -5175,16 +5672,12 @@ define('extplug/hooks/waitlist',['require','exports','module','plug/models/booth
 });
 
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
-
-function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
-
 define('extplug/hooks/api-early',['require','exports','module','meld'],function (require, exports, module) {
 
   var meld = require('meld');
 
   function intercept(joinpoint) {
-    var _joinpoint$args = _toArray(joinpoint.args);
+    var _joinpoint$args = babelHelpers.toArray(joinpoint.args);
 
     var eventName = _joinpoint$args[0];
 
@@ -5192,7 +5685,7 @@ define('extplug/hooks/api-early',['require','exports','module','meld'],function 
 
     API.trigger.apply(API,
     // userLeave → beforeUserLeave
-    ['before' + eventName.charAt(0).toUpperCase() + eventName.slice(1)].concat(_toConsumableArray(params)));
+    ['before' + eventName.charAt(0).toUpperCase() + eventName.slice(1)].concat(babelHelpers.toConsumableArray(params)));
 
     return joinpoint.proceed();
   }
@@ -5230,8 +5723,6 @@ define('extplug/hooks/api-early',['require','exports','module','meld'],function 
 });
 
 
-var _slicedToArray = (function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i['return']) _i['return'](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError('Invalid attempt to destructure non-iterable instance'); } }; })();
-
 define('extplug/hooks/chat',['require','exports','module','plug/facades/chatFacade','plug/core/Events','meld'],function (require, exports, module) {
 
   // Adds a bunch of new chat events.
@@ -5251,7 +5742,7 @@ define('extplug/hooks/chat',['require','exports','module','plug/facades/chatFaca
   var meld = require('meld');
 
   var onChatReceived = function onChatReceived(joinpoint) {
-    var _joinpoint$args = _slicedToArray(joinpoint.args, 3);
+    var _joinpoint$args = babelHelpers.slicedToArray(joinpoint.args, 3);
 
     var message = _joinpoint$args[0];
     var isSystemMessage = _joinpoint$args[1];
@@ -5422,31 +5913,106 @@ define('extplug/styles/inline-chat',{
 
 
 define('extplug/styles/settings-pane',{
-  // unlike plug.dj's own settings, ExtPlug settings are grouped
-  // in separate DOM elements (separate backbone views, even)
-  // plug.dj's styling doesn't quite work for this so we add some
-  // manual margins around the header to make things look somewhat
-  // alike.
-  '.extplug.control-group:not(:first-child) .header': {
-    'margin': '35px 0 8px 0 !important'
-  },
+  '#user-view #user-settings': {
+    // unlike plug.dj's own settings, ExtPlug settings are grouped
+    // in separate DOM elements (separate backbone views, even)
+    // plug.dj's styling doesn't quite work for this so we add some
+    // manual margins around the header to make things look somewhat
+    // alike.
+    '.extplug.control-group:not(:first-child) .header': {
+      'margin': '35px 0 8px 0 !important'
+    },
 
-  // footer below grouped plugin settings
-  // with a disgusting specificity hack!
-  '#user-view #user-settings .extplug-group-footer': {
-    'clear': 'both',
-    'button': {
-      'top': 'auto',
-      'position': 'relative'
+    // footer below grouped plugin settings
+    '.extplug-group-footer': {
+      'clear': 'both',
+      'button': {
+        'top': 'auto',
+        'position': 'relative'
+      }
+    },
+
+    // numeric range slider
+    '.extplug-slider': {
+      // plug.dj has three labels on sliders, but ExtPlug sliders
+      // just have two counter labels because it's easier
+      '.counts .count:nth-child(2)': {
+        'float': 'right'
+      }
+    },
+
+    'label.title': {
+      'top': '0px',
+      'font-size': '14px',
+      'width': '50%'
+    },
+
+    '.extplug-input': {
+      '.extplug-input-wrap': {
+        'position': 'absolute',
+        'background': '#212328',
+        'box-shadow': 'inset 0 0 0 1px #444a59',
+        'box-sizing': 'border-box',
+        'height': '31px',
+        'padding': '1px',
+        'width': '47%',
+        'left': '50%',
+        'top': '-6px'
+      },
+      'input': {
+        'padding': '1px 1px 1px 5px',
+        'height': '29px',
+        'width': '100%',
+        'box-sizing': 'border-box',
+        'font': '14px "Open Sans", sans-serif',
+        'color': '#ccc',
+        'background': 'transparent',
+        'border': 'none'
+      },
+      '.error': {
+        // someone decided to !important the default .focused style ):
+        'box-shadow': 'inset 0 0 0 1px #f04f30 !important'
+      }
+    },
+
+    // colour inputs
+    '.extplug-color-input': {
+      '.extplug-color-swatch': {
+        'height': '23px',
+        'width': '23px',
+        'top': '4px',
+        'left': '4px',
+        'position': 'absolute'
+      },
+      'input': {
+        'width': 'calc(100% - 29px)',
+        'margin-left': '29px'
+      }
+    },
+
+    // playlist select
+    '.extplug-playlist-select': {
+      '.extplug-playlist-selected': {
+        'background': '#282c35',
+        // positioning
+        'margin-left': '50%',
+        'width': '50%',
+        'padding': '7px',
+        'margin': '-7px 0 -7px 50%',
+        'position': 'absolute',
+        'box-sizing': 'border-box',
+        // cut off long playlist names
+        'white-space': 'nowrap',
+        'text-overflow': 'ellipsis',
+        'overflow': 'hidden'
+      }
     }
   },
 
-  // numeric range slider
-  '.extplug-slider': {
-    // plug.dj has three labels on sliders, but ExtPlug sliders
-    // just have two counter labels because it's easier
-    '.counts .count:nth-child(2)': {
-      'float': 'right'
+  '.extplug-playlist-select-menu': {
+    '.icon-playlist': {
+      'top': '9px',
+      'left': '9px'
     }
   }
 });
@@ -5473,10 +6039,11 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/CommandsPlugin','./plugins/SettingsTabPlugin','./plugins/ChatTypePlugin','./plugins/UserClassesPlugin','./plugins/TooltipsPlugin','./package','jquery','underscore','backbone','meld','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','plug/models/currentUser','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/CommandsPlugin','./plugins/SettingsTabPlugin','./plugins/ChatTypePlugin','./plugins/UserClassesPlugin','./plugins/TooltipsPlugin','./plugins/GuestPlugin','./package','underscore','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
+  var currentUser = require('plug/models/currentUser');
 
   var settings = require('./store/settings');
   var RoomSettings = require('./models/RoomSettings');
@@ -5490,13 +6057,11 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var ChatTypePlugin = require('./plugins/ChatTypePlugin');
   var UserClassesPlugin = require('./plugins/UserClassesPlugin');
   var TooltipsPlugin = require('./plugins/TooltipsPlugin');
+  var GuestPlugin = require('./plugins/GuestPlugin');
 
   var _package = require('./package');
 
-  var $ = require('jquery');
   var _ = require('underscore');
-  var Backbone = require('backbone');
-  var meld = require('meld');
   var semvercmp = require('semver-compare');
 
   var hooks = [require('./hooks/waitlist'), require('./hooks/api-early'), require('./hooks/chat'), require('./hooks/playback'), require('./hooks/settings'), require('./hooks/popout-style')];
@@ -5553,6 +6118,8 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
       this._super('extplug', this);
 
       this._core = [new CommandsPlugin('chat-commands', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this), new UserClassesPlugin('user-classes', this), new TooltipsPlugin('tooltips', this)];
+
+      this._guest = new GuestPlugin('guest', this);
     },
 
     /**
@@ -5730,6 +6297,13 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
       this._loadInstalled();
       Events.trigger('notify', 'icon-plug-dj', 'ExtPlug v' + _package.version + ' loaded');
 
+      if (currentUser.get('guest')) {
+        this._guest.enable();
+        currentUser.once('change:guest', function () {
+          _this3._guest.disable();
+        });
+      }
+
       return this;
     },
 
@@ -5748,6 +6322,8 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
       hooks.forEach(function (hook) {
         hook.uninstall();
       });
+
+      this._guest.disable();
 
       // remove room settings handling
       this.roomSettings.dispose();
