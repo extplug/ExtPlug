@@ -14,6 +14,25 @@ define(function (require, exports, module) {
 
     style: {
       '.is-guest': {
+        '#header-panel-bar': {
+          '#chat-button': {
+            'width': '33%',
+            'span': { 'display': 'none' }
+          },
+          '#users-button': {
+            'left': '33%',
+            'width': '34%'
+          },
+          '#waitlist-button': {
+            'left': '67%',
+            'width': '33%'
+          },
+          '#friends-button': { 'display': 'none' }
+        },
+        '#user-lists': {
+          // even the staff one doesn't work for guest users!
+          '.button.staff, .button.ignored': { 'display': 'none' }
+        },
         '#footer-user': {
           '.signup': { 'width': '40%' },
           '.signup.login': {
