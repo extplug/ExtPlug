@@ -73,6 +73,7 @@ define(function (require, exports, module) {
       this.$settings = $('<div />')
         .addClass('button settings extplug-guest-settings')
         .attr('data-tooltip', Lang.userMenu.settings)
+        .attr('data-tooltip-dir', 'left')
         .append($('<i />').addClass('icon icon-settings-white'))
         .appendTo('#footer-user .buttons')
         .on('click', this.onSettings);
