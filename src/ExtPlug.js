@@ -2,6 +2,7 @@ define(function (require, exports, module) {
 
   const Events = require('plug/core/Events');
   const ApplicationView = require('plug/views/app/ApplicationView');
+  const currentUser = require('plug/models/currentUser');
 
   const settings = require('./store/settings');
   const RoomSettings = require('./models/RoomSettings');
@@ -15,6 +16,7 @@ define(function (require, exports, module) {
   const ChatTypePlugin = require('./plugins/ChatTypePlugin');
   const UserClassesPlugin = require('./plugins/UserClassesPlugin');
   const TooltipsPlugin = require('./plugins/TooltipsPlugin');
+  const GuestPlugin = require('./plugins/GuestPlugin');
 
   const _package = require('./package');
 
@@ -89,6 +91,7 @@ define(function (require, exports, module) {
         new TooltipsPlugin('tooltips', this)
       ];
 
+      this._guest = new GuestPlugin('guest', this);
     },
 
     /**
@@ -270,6 +273,13 @@ define(function (require, exports, module) {
       this._loadInstalled();
       Events.trigger('notify', 'icon-plug-dj', `ExtPlug v${_package.version} loaded`);
 
+      if (currentUser.get('guest')) {
+        this._guest.enable();
+        currentUser.once('change:guest', () => {
+          this._guest.disable();
+        });
+      }
+
       return this;
     },
 
@@ -288,6 +298,8 @@ define(function (require, exports, module) {
       hooks.forEach(hook => {
         hook.uninstall();
       });
+
+      this._guest.disable();
 
       // remove room settings handling
       this.roomSettings.dispose();
