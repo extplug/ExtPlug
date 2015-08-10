@@ -1,8 +1,10 @@
 define(function (require, exports, module) {
 
   const $ = require('jquery');
+  const { around } = require('meld');
   const Plugin = require('../Plugin');
   const Events = require('plug/core/Events');
+  const SaveSettingsAction = require('plug/actions/users/SaveSettingsAction');
   const Lang = require('lang/Lang');
 
   const GuestPlugin = Plugin.extend({
@@ -59,11 +61,17 @@ define(function (require, exports, module) {
         .insertAfter(this.$signup)
         .on('click', this.login.bind(this));
 
+      // disable saving settings to the server when not logged in
+      this.ssaAdvice = around(SaveSettingsAction.prototype, 'execute', () => {
+        // do nothing \o/
+      });
+
       this._enabled = true;
     },
 
     disable() {
       if (this._enabled) {
+        this.ssaAdvice.remove();
         this.$settings.remove();
         this.$login.remove();
         this.$signup.find('span').text(Lang.signup.signupFree);
