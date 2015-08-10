@@ -2,7 +2,10 @@ define(function (require, exports, module) {
 
   const ControlGroupView = require('./ControlGroupView');
   const CheckboxView = require('./CheckboxView');
+  const ColorInputView = require('./ColorInputView');
   const DropdownView = require('./DropdownView');
+  const InputView = require('./InputView');
+  const PlaylistSelectView = require('./PlaylistSelectView');
   const SliderView = require('./SliderView');
   const { each, has } = require('underscore');
 
@@ -27,6 +30,38 @@ define(function (require, exports, module) {
         max: setting.max,
         value: settings.get(name)
       });
+    },
+    text(setting, value) {
+      return new InputView({
+        label: setting.label,
+        description: setting.description,
+        value: value
+      });
+    },
+    number(setting, value) {
+      return new InputView({
+        type: 'number',
+        label: setting.label,
+        description: setting.description,
+        value: value,
+        min:  has(setting, 'min')  ? setting.min  : '',
+        max:  has(setting, 'max')  ? setting.max  : '',
+        step: has(setting, 'step') ? setting.step : ''
+      })
+    },
+    color(setting, value) {
+      return new ColorInputView({
+        label: setting.label,
+        description: setting.description,
+        value: value
+      });
+    },
+    playlist(setting, value) {
+      return new PlaylistSelectView({
+        label: setting.label,
+        description: setting.description,
+        value: value
+      })
     }
   };
 
