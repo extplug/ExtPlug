@@ -10,6 +10,11 @@
 ;(function load() {
 
   if (window.require && window.define && window.API) {
+    // Tampermonkey doesn't appear to find some of the global functions by
+    // default, so we redefine them here as local vars.
+    var requirejs = window.requirejs;
+    var require = window.requirejs;
+    var define = window.define;
     (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
@@ -3971,7 +3976,7 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -4005,7 +4010,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1439245583930
+  "builtAt": 1439402644584
 });
 
 
