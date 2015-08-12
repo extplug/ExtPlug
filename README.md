@@ -1,6 +1,10 @@
 # ExtPlug
 
-[![Join the chat at https://gitter.im/ExtPlug/ExtPlug](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/ExtPlug/ExtPlug?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+![MIT Licensed](https://img.shields.io/github/license/extplug/extplug.svg?style=flat-square)
+![Version](https://img.shields.io/github/tag/extplug/extplug.svg?style=flat-square)
+[![David dependencies](https://img.shields.io/david/extplug/extplug.svg?style=flat-square)](https://david-dm.org/extplug/extplug)
+[![David devDependencies](https://img.shields.io/david/dev/extplug/extplug.svg?style=flat-square)](https://david-dm.org/extplug/extplug#info=devDependencies)
+[![Gitter](https://img.shields.io/badge/gitter-join_chat-ff69b7.svg?style=flat-square)](https://gitter.im/ExtPlug/ExtPlug)
 
 ExtPlug is a flexible, modular extension framework for plug.dj.
 
