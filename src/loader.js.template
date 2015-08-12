@@ -10,6 +10,11 @@
 ;(function load() {
 
   if (window.require && window.define && window.API) {
+    // Tampermonkey doesn't appear to find some of the global functions by
+    // default, so we redefine them here as local vars.
+    var requirejs = window.requirejs;
+    var require = window.requirejs;
+    var define = window.define;
     <%= code %>
   }
   else {
