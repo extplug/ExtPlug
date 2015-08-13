@@ -14,6 +14,7 @@ define(function (require, exports, module) {
   const CommandsPlugin = require('./plugins/CommandsPlugin');
   const SettingsTabPlugin = require('./plugins/SettingsTabPlugin');
   const ChatTypePlugin = require('./plugins/ChatTypePlugin');
+  const MoreChatEventsPlugin = require('./plugins/MoreChatEventsPlugin');
   const UserClassesPlugin = require('./plugins/UserClassesPlugin');
   const TooltipsPlugin = require('./plugins/TooltipsPlugin');
   const GuestPlugin = require('./plugins/GuestPlugin');
@@ -26,7 +27,6 @@ define(function (require, exports, module) {
   let hooks = [
     require('./hooks/waitlist'),
     require('./hooks/api-early'),
-    require('./hooks/chat'),
     require('./hooks/playback'),
     require('./hooks/settings'),
     require('./hooks/popout-style')
@@ -83,6 +83,7 @@ define(function (require, exports, module) {
       this._core = [
         new CommandsPlugin('chat-commands', this),
         new SettingsTabPlugin('settings-tab', this),
+        new MoreChatEventsPlugin('more-chat-events', this),
         new ChatTypePlugin('custom-chat-type', this),
         new UserClassesPlugin('user-classes', this),
         new TooltipsPlugin('tooltips', this)
