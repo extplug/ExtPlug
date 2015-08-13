@@ -97,8 +97,7 @@ define(function (require, exports, module) {
       let chatView = this.ext.appView.room.chat;
       let handler;
       if (chatView) {
-        console.log(Events._events['chat:receive'].map(x=>x.callback), chatView.onReceived)
-        handler = find(Events._events['chat:receive'], e => e.callback === chatView.onReceived)
+        handler = find(Events._events['chat:receive'], e => e.callback === chatView.onReceived);
       }
       fn();
       if (chatView) {
