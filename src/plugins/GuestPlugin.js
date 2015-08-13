@@ -97,7 +97,8 @@ define(function (require, exports, module) {
           e.stopPropagation();
           if ($('#room-settings').is(':visible')) {
             Events.trigger('hide:settings');
-          } else {
+          }
+          else {
             Events.trigger('show:settings');
           }
         });

@@ -15,7 +15,7 @@ define(function (require, exports, module) {
     },
 
     disable() {
-      this._doc.off('.extplug.tooltips')
+      this._doc.off('.extplug.tooltips');
     },
 
     onEnter(e) {

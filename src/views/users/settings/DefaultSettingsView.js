@@ -47,7 +47,7 @@ define(function (require, exports, module) {
         min:  has(setting, 'min')  ? setting.min  : '',
         max:  has(setting, 'max')  ? setting.max  : '',
         step: has(setting, 'step') ? setting.step : ''
-      })
+      });
     },
     color(setting, value) {
       return new ColorInputView({
@@ -61,7 +61,7 @@ define(function (require, exports, module) {
         label: setting.label,
         description: setting.description,
         value: value
-      })
+      });
     }
   };
 

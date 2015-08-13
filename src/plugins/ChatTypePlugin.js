@@ -56,7 +56,7 @@ define(function (require, exports, module) {
       // add cid if it doesn't exist, to prevent a `.cid-undefined` selector
       // from catching everything
       if (!message.cid) {
-        message.cid = uniqueId('extp-')
+        message.cid = uniqueId('extp-');
       }
       // insert the chat message element
       joinpoint.proceed();

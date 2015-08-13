@@ -10,7 +10,8 @@ define(function (require, exports, module) {
     className: 'pop-menu extplug-playlist-select-menu',
 
     // don't hide automatically on mouse leave
-    onMouseLeave() {},
+    onMouseLeave() {
+    },
 
     // hide immediately on hide() calls.
     // plug has a little delay in here because it auto-hides the grab

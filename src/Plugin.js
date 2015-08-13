@@ -91,7 +91,7 @@ define(function (require, exports, module) {
     },
 
     $(sel) {
-      this.debug(`Plugin#$ is deprecated. Use require('jquery') instead.`)
+      this.debug(`Plugin#$ is deprecated. Use require('jquery') instead.`);
       return jQuery(sel || document);
     },
 
@@ -123,7 +123,7 @@ define(function (require, exports, module) {
 
     // Chat Commands API
     addCommand(name, cb) {
-      const rx = new RegExp(`^/${quote(name)}\\b`)
+      const rx = new RegExp(`^/${quote(name)}\\b`);
       const fn = text => {
         if (rx.test(text)) {
           cb(text.slice(name.length + 2));
