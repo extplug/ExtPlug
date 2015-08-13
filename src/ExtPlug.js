@@ -231,7 +231,7 @@ define(function (require, exports, module) {
      * @return {ExtPlug} `this`.
      */
     enable() {
-      this._super();
+      API.enabled = true;
 
       /**
        * Internal map of registered plugins.

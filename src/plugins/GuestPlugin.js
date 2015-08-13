@@ -67,9 +67,6 @@ define(function (require, exports, module) {
       // Presumably, this isn't the first time someone has used plug.dj.
       this.skipWalkthrough();
 
-      // plug.dj API is disabled for guests, normally...
-      API.enabled = true;
-
       this.$settings = $('<div />')
         .addClass('button settings extplug-guest-settings')
         .attr('data-tooltip', Lang.userMenu.settings)
