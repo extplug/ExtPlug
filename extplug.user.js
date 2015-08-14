@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        ExtPlug
 // @description Highly flexible, modular userscript extension for plug.dj.
-// @version     0.15.1
+// @version     0.15.2
 // @match       https://plug.dj/*
 // @namespace   https://extplug.github.io/
 // @downloadURL https://extplug.github.io/ExtPlug/extplug.user.js
@@ -20,7 +20,7 @@
 
 ;(function load() {
 
-  if (window.require && window.define && window.API) {
+  if (isReady()) {
     // Tampermonkey doesn't appear to find some of the global functions by
     // default, so we redefine them here as local vars.
     var requirejs = window.requirejs;
@@ -366,44 +366,6 @@ babelHelpers.toConsumableArray = function (arr) {
     return Array.from(arr);
   }
 };
-
-babelHelpers.slicedToArray = (function () {
-  function sliceIterator(arr, i) {
-    var _arr = [];
-    var _n = true;
-    var _d = false;
-    var _e = undefined;
-
-    try {
-      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
-        _arr.push(_s.value);
-
-        if (i && _arr.length === i) break;
-      }
-    } catch (err) {
-      _d = true;
-      _e = err;
-    } finally {
-      try {
-        if (!_n && _i["return"]) _i["return"]();
-      } finally {
-        if (_d) throw _e;
-      }
-    }
-
-    return _arr;
-  }
-
-  return function (arr, i) {
-    if (Array.isArray(arr)) {
-      return arr;
-    } else if (Symbol.iterator in Object(arr)) {
-      return sliceIterator(arr, i);
-    } else {
-      throw new TypeError("Invalid attempt to destructure non-iterable instance");
-    }
-  };
-})();
 
 babelHelpers.defineProperty = function (obj, key, value) {
   if (key in obj) {
@@ -3987,7 +3949,7 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.15.1",
+  "version": "0.15.2",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -4021,7 +3983,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1439402644584
+  "builtAt": 1439547748231
 });
 
 
@@ -5289,9 +5251,6 @@ define('extplug/plugins/ChatTypePlugin',['require','exports','module','meld','un
       var chatView = this.ext.appView.room.chat;
       var handler = undefined;
       if (chatView) {
-        console.log(Events._events['chat:receive'].map(function (x) {
-          return x.callback;
-        }), chatView.onReceived);
         handler = find(Events._events['chat:receive'], function (e) {
           return e.callback === chatView.onReceived;
         });
@@ -5307,6 +5266,104 @@ define('extplug/plugins/ChatTypePlugin',['require','exports','module','meld','un
   });
 
   module.exports = ChatTypePlugin;
+});
+
+
+define('extplug/plugins/MoreChatEventsPlugin',['require','exports','module','../Plugin','plug/facades/chatFacade','plug/models/currentUser','plug/models/currentRoom','plug/views/rooms/chat/ChatView','plug/core/Events','underscore','meld','jquery'],function (require, exports, module) {
+
+  var Plugin = require('../Plugin');
+  var chatFacade = require('plug/facades/chatFacade');
+  var currentUser = require('plug/models/currentUser');
+  var currentRoom = require('plug/models/currentRoom');
+  var ChatView = require('plug/views/rooms/chat/ChatView');
+  var Events = require('plug/core/Events');
+
+  var _require = require('underscore');
+
+  var find = _require.find;
+
+  var _require2 = require('meld');
+
+  var before = _require2.before;
+  var after = _require2.after;
+  var joinpoint = _require2.joinpoint;
+
+  var $ = require('jquery');
+
+  // Adds a bunch of new chat events.
+  // "chat:incoming" is fired as soon as a new message is received from the socket.
+  //   It gets three arguments: The Message object, a boolean `isSystemMessage`, and
+  //   a boolean `isMine` (true if the current user sent the message.)
+  function fireIncoming(message, isSystemMessage, isMine) {
+    Events.trigger('chat:incoming', message, isSystemMessage, isMine);
+  }
+  // "chat:beforereceive" is fired after some initial processing, but before the message
+  // is passed to the plug.dj view layer. This is where you probably want to do your
+  // modifications to the Message object.
+  function fireBeforeReceive(message, isSystemMessage) {
+    Events.trigger('chat:beforereceive', message, isSystemMessage);
+  }
+  // "chat:afterreceive" is fired after the message has been rendered. It gets two arguments:
+  //   The Message object, and a jQuery object containing the message DOM element.
+  function fireAfterReceive(message) {
+    var element = $('#chat-messages .cm:last-child');
+    Events.trigger('chat:afterreceive', message, element);
+  }
+  // "chat:send" is fired when the user sends a message. It takes a single argument: A string
+  //   with the text content of the message.
+  function fireSend(message) {
+    // ensure that the user is allowed to send a message.
+    // this does _not_ check for mutes. Plug will pretend that your message
+    // went through if you're muted--so we do the same.
+    if (currentUser.get('guest') || !currentRoom.get('joined') || currentUser.get('level') < currentRoom.get('minChatLevel') || message[0] === '/') {
+      return;
+    }
+    Events.trigger('chat:send', message);
+  }
+
+  var MoreChatEvents = Plugin.extend({
+    name: 'More Chat Events',
+    description: 'Adds more chat events for plugins to hook into.',
+
+    enable: function enable() {
+      var _this = this;
+
+      Events.on('chat:receive', fireBeforeReceive);
+      // ensure fireBeforeReceive is the first event handler to be called
+      Events._events['chat:receive'].unshift(Events._events['chat:receive'].pop());
+      this.incomingAdvice = before(chatFacade, 'onChatReceived', fireIncoming);
+      this.replaceEventHandler(function () {
+        _this.afterReceiveAdvice = after(ChatView.prototype, 'onReceived', function () {
+          fireAfterReceive.apply(undefined, babelHelpers.toConsumableArray(joinpoint().args));
+        });
+      });
+      this.sendAdvice = before(chatFacade, 'sendChat', fireSend);
+    },
+
+    disable: function disable() {
+      this.incomingAdvice.remove();
+      this.afterReceiveAdvice.remove();
+      this.sendAdvice.remove();
+      Events.off('chat:receive', fireBeforeReceive);
+    },
+
+    // replace callback without affecting calling order
+    replaceEventHandler: function replaceEventHandler(fn) {
+      var chatView = this.ext.appView.room.chat;
+      var handler = undefined;
+      if (chatView) {
+        handler = find(Events._events['chat:receive'], function (e) {
+          return e.callback === chatView.onReceived;
+        });
+      }
+      fn();
+      if (chatView && handler) {
+        handler.callback = chatView.onReceived;
+      }
+    }
+  });
+
+  module.exports = MoreChatEvents;
 });
 
 
@@ -5359,11 +5416,13 @@ define('extplug/util/getUserClasses',['require','exports','module'],function (re
 });
 
 
-define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plugin','../util/getUserClasses','plug/core/Events','plug/views/rooms/users/RoomUserRowView','plug/views/rooms/users/WaitListRowView','plug/views/users/userRolloverView','meld'],function (require, exporst, module) {
+define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plugin','../util/getUserClasses','plug/core/Events','plug/models/currentUser','plug/views/users/UserView','plug/views/rooms/users/RoomUserRowView','plug/views/rooms/users/WaitListRowView','plug/views/users/userRolloverView','meld','underscore'],function (require, exporst, module) {
 
   var Plugin = require('../Plugin');
   var getUserClasses = require('../util/getUserClasses');
   var Events = require('plug/core/Events');
+  var currentUser = require('plug/models/currentUser');
+  var UserView = require('plug/views/users/UserView');
   var UserRowView = require('plug/views/rooms/users/RoomUserRowView');
   var WaitListRowView = require('plug/views/rooms/users/WaitListRowView');
   var userRolloverView = require('plug/views/users/userRolloverView');
@@ -5371,6 +5430,10 @@ define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plu
   var _require = require('meld');
 
   var after = _require.after;
+
+  var _require2 = require('underscore');
+
+  var defer = _require2.defer;
 
   var r = API.ROLE;
   var roleClasses = getUserClasses.roleClasses;
@@ -5400,11 +5463,19 @@ define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plu
           this.$el.addClass(getUserClasses(id).join(' '));
         }
       });
+      this.userViewClasses = after(UserView.prototype, 'render', function () {
+        // `this` is the user view
+        this.$el.addClass(getUserClasses(API.getUser().id));
+      });
+      this.setUserViewClass();
+      // guest change, mostly
+      this.listenTo(currentUser, 'change:id change:role change:gRole', this.setUserViewClass);
     },
     disable: function disable() {
       this.rowClasses.remove();
       this.waitListClasses.remove();
       this.rolloverClasses.remove();
+      this.userViewClasses.remove();
     },
 
     onChat: function onChat(msg) {
@@ -5439,6 +5510,12 @@ define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plu
       }
 
       msg.classes = classes.join(' ');
+    },
+
+    setUserViewClass: function setUserViewClass() {
+      defer(function () {
+        $('#user-view').removeClass().addClass('app-left').addClass(getUserClasses(API.getUser().id).join(' '));
+      });
     }
   });
 
@@ -5551,9 +5628,6 @@ define('extplug/plugins/GuestPlugin',['require','exports','module','jquery','mel
     enable: function enable() {
       // Presumably, this isn't the first time someone has used plug.dj.
       this.skipWalkthrough();
-
-      // plug.dj API is disabled for guests, normally...
-      API.enabled = true;
 
       this.$settings = $('<div />').addClass('button settings extplug-guest-settings').attr('data-tooltip', Lang.userMenu.settings).attr('data-tooltip-dir', 'left').append($('<i />').addClass('icon icon-settings-white')).appendTo('#footer-user .buttons').on('click', this.onSettings);
 
@@ -5724,57 +5798,6 @@ define('extplug/hooks/api-early',['require','exports','module','meld'],function 
       API.off(key, nop);
     });
     advice.remove();
-  };
-});
-
-
-define('extplug/hooks/chat',['require','exports','module','plug/facades/chatFacade','plug/core/Events','meld'],function (require, exports, module) {
-
-  // Adds a bunch of new chat events.
-  // "chat:incoming" is fired as soon as a new message is received from the socket.
-  //   It gets three arguments: The Message object, a boolean `isSystemMessage`, and
-  //   a boolean `isMine` (true if the current user sent the message.)
-  // "chat:beforereceive" is fired after some initial processing, but before the message
-  // is passed to the plug.dj view layer. This is where you probably want to do your
-  // modifications to the Message object.
-  // "chat:afterreceive" is fired after the message has been rendered. It gets two arguments:
-  //   The Message object, and a jQuery object containing the message DOM element.
-  // "chat:send" is fired when the user sends a message. It takes a single argument: A string
-  //   with the text content of the message.
-
-  var chatFacade = require('plug/facades/chatFacade');
-  var Events = require('plug/core/Events');
-  var meld = require('meld');
-
-  var onChatReceived = function onChatReceived(joinpoint) {
-    var _joinpoint$args = babelHelpers.slicedToArray(joinpoint.args, 3);
-
-    var message = _joinpoint$args[0];
-    var isSystemMessage = _joinpoint$args[1];
-    var isMine = _joinpoint$args[2];
-
-    Events.trigger('chat:incoming', message, isSystemMessage, isMine);
-    var result = joinpoint.proceed(message, isSystemMessage, isMine);
-    var element = $('#chat-messages .cm:last-child');
-    Events.trigger('chat:afterreceive', message, element);
-    return result;
-  };
-
-  var fireBeforeReceive = function fireBeforeReceive(param1, param2) {
-    Events.trigger('chat:beforereceive', param1, param2);
-  };
-
-  var ocradvice = undefined;
-  exports.install = function () {
-    Events.on('chat:receive', fireBeforeReceive);
-    // ensure fireBeforeReceive is the first event handler to be called
-    Events._events['chat:receive'].unshift(Events._events['chat:receive'].pop());
-    ocradvice = meld.around(chatFacade, 'onChatReceived', onChatReceived);
-  };
-
-  exports.uninstall = function () {
-    Events.off('chat:receive', fireBeforeReceive);
-    ocradvice.remove();
   };
 });
 
@@ -6044,7 +6067,7 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','plug/models/currentUser','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/CommandsPlugin','./plugins/SettingsTabPlugin','./plugins/ChatTypePlugin','./plugins/UserClassesPlugin','./plugins/TooltipsPlugin','./plugins/GuestPlugin','./package','underscore','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/chat','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','plug/models/currentUser','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/CommandsPlugin','./plugins/SettingsTabPlugin','./plugins/ChatTypePlugin','./plugins/MoreChatEventsPlugin','./plugins/UserClassesPlugin','./plugins/TooltipsPlugin','./plugins/GuestPlugin','./package','underscore','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
@@ -6060,6 +6083,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var CommandsPlugin = require('./plugins/CommandsPlugin');
   var SettingsTabPlugin = require('./plugins/SettingsTabPlugin');
   var ChatTypePlugin = require('./plugins/ChatTypePlugin');
+  var MoreChatEventsPlugin = require('./plugins/MoreChatEventsPlugin');
   var UserClassesPlugin = require('./plugins/UserClassesPlugin');
   var TooltipsPlugin = require('./plugins/TooltipsPlugin');
   var GuestPlugin = require('./plugins/GuestPlugin');
@@ -6069,7 +6093,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var _ = require('underscore');
   var semvercmp = require('semver-compare');
 
-  var hooks = [require('./hooks/waitlist'), require('./hooks/api-early'), require('./hooks/chat'), require('./hooks/playback'), require('./hooks/settings'), require('./hooks/popout-style')];
+  var hooks = [require('./hooks/waitlist'), require('./hooks/api-early'), require('./hooks/playback'), require('./hooks/settings'), require('./hooks/popout-style')];
 
   // LocalStorage key name for extplug
   var LS_NAME = 'extPlugins';
@@ -6122,7 +6146,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
     init: function init() {
       this._super('extplug', this);
 
-      this._core = [new CommandsPlugin('chat-commands', this), new SettingsTabPlugin('settings-tab', this), new ChatTypePlugin('custom-chat-type', this), new UserClassesPlugin('user-classes', this), new TooltipsPlugin('tooltips', this)];
+      this._core = [new CommandsPlugin('chat-commands', this), new SettingsTabPlugin('settings-tab', this), new MoreChatEventsPlugin('more-chat-events', this), new ChatTypePlugin('custom-chat-type', this), new UserClassesPlugin('user-classes', this), new TooltipsPlugin('tooltips', this)];
 
       this._guest = new GuestPlugin('guest', this);
     },
@@ -6267,7 +6291,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
     enable: function enable() {
       var _this3 = this;
 
-      this._super();
+      API.enabled = true;
 
       /**
        * Internal map of registered plugins.
@@ -6426,6 +6450,17 @@ require(["extplug/main"]);
   }
   else {
     setTimeout(load, 20);
+  }
+
+  function isReady() {
+    return window.require &&
+      window.define &&
+      window.API &&
+      // wait for plug.dj to finish rendering
+      // the previous checks are not enough: the AppView can take a long time to
+      // load because of external twitter & fb dependencies, whereas the API
+      // modules load quickly
+      window.jQuery && window.jQuery('#room').length > 0;
   }
 
 }());
