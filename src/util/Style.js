@@ -7,9 +7,9 @@ define(function (require, exports, module) {
   const popoutView = require('plug/views/rooms/popout/PopoutView');
 
   // hack to get plug.dj-like Class inheritance on a not-plug.dj-like Class
-  const Style = Class.extend.call(Sistyl, {
+  const Style = Class.extend({
     init(defaults) {
-      Sistyl.call(this, defaults);
+      this._sistyl = new Sistyl(defaults);
       this._timeout = null;
 
       this.refresh = this.refresh.bind(this);
@@ -34,12 +34,21 @@ define(function (require, exports, module) {
     },
 
     set(sel, props) {
-      this._super(sel, props);
+      this._sistyl.set(sel, props);
 
       // throttle updates
       clearTimeout(this._timeout);
       this._timeout = setTimeout(this.refresh, 1);
       return this;
+    },
+
+    unset(sel, prop) {
+      this._sistyl.unset(sel, prop);
+      return this;
+    },
+
+    rulesets() {
+      return this._sistyl.rulesets();
     },
 
     refresh() {
@@ -48,6 +57,10 @@ define(function (require, exports, module) {
 
     remove() {
       this.$().remove();
+    },
+
+    toString() {
+      return this._sistyl.toString();
     }
 
   });
