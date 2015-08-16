@@ -4,7 +4,6 @@ define(function (require, exporst, module) {
   const getUserClasses = require('../util/getUserClasses');
   const Events = require('plug/core/Events');
   const currentUser = require('plug/models/currentUser');
-  const UserView = require('plug/views/users/UserView');
   const UserRowView = require('plug/views/rooms/users/RoomUserRowView');
   const WaitListRowView = require('plug/views/rooms/users/WaitListRowView');
   const userRolloverView = require('plug/views/users/userRolloverView');
@@ -39,19 +38,14 @@ define(function (require, exporst, module) {
           this.$el.addClass(getUserClasses(id).join(' '));
         }
       });
-      this.userViewClasses = after(UserView.prototype, 'render', function () {
-        // `this` is the user view
-        this.$el.addClass(getUserClasses(API.getUser().id));
-      });
-      this.setUserViewClass();
+      this.onUserChange();
       // guest change, mostly
-      this.listenTo(currentUser, 'change:id change:role change:gRole', this.setUserViewClass);
+      this.listenTo(currentUser, 'change:id change:role change:gRole', this.onUserChange);
     },
     disable() {
       this.rowClasses.remove();
       this.waitListClasses.remove();
       this.rolloverClasses.remove();
-      this.userViewClasses.remove();
     },
 
     onChat(msg) {
@@ -89,11 +83,29 @@ define(function (require, exporst, module) {
       msg.classes = classes.join(' ');
     },
 
+    onUserChange() {
+      this.setUserViewClass();
+      this.setUserFooterClass();
+    },
+
     setUserViewClass() {
       defer(() => {
         $('#user-view')
           .removeClass()
           .addClass('app-left')
+          .addClass(getUserClasses(API.getUser().id).join(' '));
+      });
+    },
+
+    setUserFooterClass() {
+      defer(() => {
+        let footer = $('#footer-user');
+        let online = footer.hasClass('online');
+        let showing = footer.hasClass('showing');
+        footer
+          .removeClass()
+          .toggleClass('online', online)
+          .toggleClass('showing', showing)
           .addClass(getUserClasses(API.getUser().id).join(' '));
       });
     }
