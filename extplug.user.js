@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        ExtPlug
 // @description Highly flexible, modular userscript extension for plug.dj.
-// @version     0.15.2
+// @version     0.15.3
 // @match       https://plug.dj/*
 // @namespace   https://extplug.github.io/
 // @downloadURL https://extplug.github.io/ExtPlug/extplug.user.js
@@ -2615,9 +2615,9 @@ define('extplug/util/Style',['require','exports','module','jquery','underscore',
   var popoutView = require('plug/views/rooms/popout/PopoutView');
 
   // hack to get plug.dj-like Class inheritance on a not-plug.dj-like Class
-  var Style = Class.extend.call(Sistyl, {
+  var Style = Class.extend({
     init: function init(defaults) {
-      Sistyl.call(this, defaults);
+      this._sistyl = new Sistyl(defaults);
       this._timeout = null;
 
       this.refresh = this.refresh.bind(this);
@@ -2639,12 +2639,21 @@ define('extplug/util/Style',['require','exports','module','jquery','underscore',
     },
 
     set: function set(sel, props) {
-      this._super(sel, props);
+      this._sistyl.set(sel, props);
 
       // throttle updates
       clearTimeout(this._timeout);
       this._timeout = setTimeout(this.refresh, 1);
       return this;
+    },
+
+    unset: function unset(sel, prop) {
+      this._sistyl.unset(sel, prop);
+      return this;
+    },
+
+    rulesets: function rulesets() {
+      return this._sistyl.rulesets();
     },
 
     refresh: function refresh() {
@@ -2653,6 +2662,10 @@ define('extplug/util/Style',['require','exports','module','jquery','underscore',
 
     remove: function remove() {
       this.$().remove();
+    },
+
+    toString: function toString() {
+      return this._sistyl.toString();
     }
 
   });
@@ -3949,7 +3962,7 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.15.2",
+  "version": "0.15.3",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -3983,7 +3996,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1439547748231
+  "builtAt": 1439819090961
 });
 
 
@@ -5416,13 +5429,12 @@ define('extplug/util/getUserClasses',['require','exports','module'],function (re
 });
 
 
-define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plugin','../util/getUserClasses','plug/core/Events','plug/models/currentUser','plug/views/users/UserView','plug/views/rooms/users/RoomUserRowView','plug/views/rooms/users/WaitListRowView','plug/views/users/userRolloverView','meld','underscore'],function (require, exporst, module) {
+define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plugin','../util/getUserClasses','plug/core/Events','plug/models/currentUser','plug/views/rooms/users/RoomUserRowView','plug/views/rooms/users/WaitListRowView','plug/views/users/userRolloverView','meld','underscore'],function (require, exporst, module) {
 
   var Plugin = require('../Plugin');
   var getUserClasses = require('../util/getUserClasses');
   var Events = require('plug/core/Events');
   var currentUser = require('plug/models/currentUser');
-  var UserView = require('plug/views/users/UserView');
   var UserRowView = require('plug/views/rooms/users/RoomUserRowView');
   var WaitListRowView = require('plug/views/rooms/users/WaitListRowView');
   var userRolloverView = require('plug/views/users/userRolloverView');
@@ -5463,19 +5475,14 @@ define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plu
           this.$el.addClass(getUserClasses(id).join(' '));
         }
       });
-      this.userViewClasses = after(UserView.prototype, 'render', function () {
-        // `this` is the user view
-        this.$el.addClass(getUserClasses(API.getUser().id));
-      });
-      this.setUserViewClass();
+      this.onUserChange();
       // guest change, mostly
-      this.listenTo(currentUser, 'change:id change:role change:gRole', this.setUserViewClass);
+      this.listenTo(currentUser, 'change:id change:role change:gRole', this.onUserChange);
     },
     disable: function disable() {
       this.rowClasses.remove();
       this.waitListClasses.remove();
       this.rolloverClasses.remove();
-      this.userViewClasses.remove();
     },
 
     onChat: function onChat(msg) {
@@ -5512,9 +5519,23 @@ define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plu
       msg.classes = classes.join(' ');
     },
 
+    onUserChange: function onUserChange() {
+      this.setUserViewClass();
+      this.setUserFooterClass();
+    },
+
     setUserViewClass: function setUserViewClass() {
       defer(function () {
         $('#user-view').removeClass().addClass('app-left').addClass(getUserClasses(API.getUser().id).join(' '));
+      });
+    },
+
+    setUserFooterClass: function setUserFooterClass() {
+      defer(function () {
+        var footer = $('#footer-user');
+        var online = footer.hasClass('online');
+        var showing = footer.hasClass('showing');
+        footer.removeClass().toggleClass('online', online).toggleClass('showing', showing).addClass(getUserClasses(API.getUser().id).join(' '));
       });
     }
   });
