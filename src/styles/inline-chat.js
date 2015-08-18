@@ -29,7 +29,11 @@ define({
       }
     },
     '.from': { 'display': 'inline' },
-    '.text': { 'display': 'inline', 'margin-left': '5px' }
+    '.text': { 'display': 'inline', 'margin-left': '5px' },
+    '.delete-button': {
+      'padding': '3px 10px',
+      'top': '3px'
+    }
   },
   // remove the empty circle for badge-less users
   // (it doesn't fit in a 16px high message)
