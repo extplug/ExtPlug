@@ -16,6 +16,7 @@ define(function (require, exports, module) {
   const ChatTypePlugin = require('./plugins/ChatTypePlugin');
   const MoreChatEventsPlugin = require('./plugins/MoreChatEventsPlugin');
   const UserClassesPlugin = require('./plugins/UserClassesPlugin');
+  const EmojiDataPlugin = require('./plugins/EmojiDataPlugin');
   const TooltipsPlugin = require('./plugins/TooltipsPlugin');
   const GuestPlugin = require('./plugins/GuestPlugin');
 
@@ -86,6 +87,7 @@ define(function (require, exports, module) {
         new MoreChatEventsPlugin('more-chat-events', this),
         new ChatTypePlugin('custom-chat-type', this),
         new UserClassesPlugin('user-classes', this),
+        new EmojiDataPlugin('emoji-data', this),
         new TooltipsPlugin('tooltips', this)
       ];
 
