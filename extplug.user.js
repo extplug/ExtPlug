@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        ExtPlug
 // @description Highly flexible, modular userscript extension for plug.dj.
-// @version     0.15.4
+// @version     0.15.5
 // @match       https://plug.dj/*
 // @namespace   https://extplug.github.io/
 // @downloadURL https://extplug.github.io/ExtPlug/extplug.user.js
@@ -3970,7 +3970,7 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.15.4",
+  "version": "0.15.5",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -4004,7 +4004,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1440232963374
+  "builtAt": 1440258335009
 });
 
 
@@ -5552,6 +5552,47 @@ define('extplug/plugins/UserClassesPlugin',['require','exports','module','../Plu
 });
 
 
+define('extplug/plugins/EmojiDataPlugin',['require','exports','module','../Plugin','plug/core/Events','plug/util/emoji','meld'],function (require, exports, module) {
+
+  var Plugin = require('../Plugin');
+  var Events = require('plug/core/Events');
+  var emoji = require('plug/util/emoji');
+
+  var _require = require('meld');
+
+  var around = _require.around;
+
+  var EmojiDataPlugin = Plugin.extend({
+    name: 'Emoji Data',
+    description: 'Adds CSS classes and HTML5 data attributes to emoji images.',
+
+    enable: function enable() {
+      this.advice = around(emoji, 'replacement', function (joinpoint) {
+        var name = joinpoint.args[2];
+        var html = joinpoint.proceed();
+        return html.replace(' class="emoji-inner', ' data-emoji-name="' + name + '" class="emoji-inner extplug-emoji-' + name);
+      });
+
+      this.listenTo(Events, 'chat:afterreceive', function (msg, el) {
+        el.find('.gemoji-plug').each(function () {
+          var inner = $(this);
+          var emojiName = inner.attr('class').match(/gemoji-plug-(\S+)/);
+          if (emojiName) {
+            inner.attr('data-emoji-name', emojiName[1]).addClass('extplug-emoji-' + name);
+          }
+        });
+      });
+    },
+
+    disable: function disable() {
+      this.advice.remove();
+    }
+  });
+
+  module.exports = EmojiDataPlugin;
+});
+
+
 define('extplug/plugins/TooltipsPlugin',['require','exports','module','../Plugin','plug/core/Events','jquery'],function (require, exports, module) {
 
   var Plugin = require('../Plugin');
@@ -6100,7 +6141,7 @@ define('extplug/styles/install-plugin-dialog',{
 });
 
 
-define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','plug/models/currentUser','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/CommandsPlugin','./plugins/SettingsTabPlugin','./plugins/ChatTypePlugin','./plugins/MoreChatEventsPlugin','./plugins/UserClassesPlugin','./plugins/TooltipsPlugin','./plugins/GuestPlugin','./package','underscore','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
+define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/views/app/ApplicationView','plug/models/currentUser','./store/settings','./models/RoomSettings','./models/PluginMeta','./collections/PluginsCollection','./Plugin','./pluginLoader','./plugins/CommandsPlugin','./plugins/SettingsTabPlugin','./plugins/ChatTypePlugin','./plugins/MoreChatEventsPlugin','./plugins/UserClassesPlugin','./plugins/EmojiDataPlugin','./plugins/TooltipsPlugin','./plugins/GuestPlugin','./package','underscore','semver-compare','./hooks/waitlist','./hooks/api-early','./hooks/playback','./hooks/settings','./hooks/popout-style','./styles/badge','./styles/inline-chat','./styles/settings-pane','./styles/install-plugin-dialog'],function (require, exports, module) {
 
   var Events = require('plug/core/Events');
   var ApplicationView = require('plug/views/app/ApplicationView');
@@ -6118,6 +6159,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
   var ChatTypePlugin = require('./plugins/ChatTypePlugin');
   var MoreChatEventsPlugin = require('./plugins/MoreChatEventsPlugin');
   var UserClassesPlugin = require('./plugins/UserClassesPlugin');
+  var EmojiDataPlugin = require('./plugins/EmojiDataPlugin');
   var TooltipsPlugin = require('./plugins/TooltipsPlugin');
   var GuestPlugin = require('./plugins/GuestPlugin');
 
@@ -6179,7 +6221,7 @@ define('extplug/ExtPlug',['require','exports','module','plug/core/Events','plug/
     init: function init() {
       this._super('extplug', this);
 
-      this._core = [new CommandsPlugin('chat-commands', this), new SettingsTabPlugin('settings-tab', this), new MoreChatEventsPlugin('more-chat-events', this), new ChatTypePlugin('custom-chat-type', this), new UserClassesPlugin('user-classes', this), new TooltipsPlugin('tooltips', this)];
+      this._core = [new CommandsPlugin('chat-commands', this), new SettingsTabPlugin('settings-tab', this), new MoreChatEventsPlugin('more-chat-events', this), new ChatTypePlugin('custom-chat-type', this), new UserClassesPlugin('user-classes', this), new EmojiDataPlugin('emoji-data', this), new TooltipsPlugin('tooltips', this)];
 
       this._guest = new GuestPlugin('guest', this);
     },
