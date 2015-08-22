@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        ExtPlug
 // @description Highly flexible, modular userscript extension for plug.dj.
-// @version     0.15.3
+// @version     0.15.4
 // @match       https://plug.dj/*
 // @namespace   https://extplug.github.io/
 // @downloadURL https://extplug.github.io/ExtPlug/extplug.user.js
@@ -397,12 +397,16 @@ babelHelpers.defineProperty = function (obj, key, value) {
 
 // Tests if an object is a Backbone collection of a certain type of Model.
 var isCollectionOf = function (m, Model) {
-  return Model && m instanceof Backbone.Collection && m.model === Model;
+  return Model &&
+    m instanceof Backbone.Collection &&
+    m.model === Model;
 };
 
 // Checks if the given module is a plug.dj Dialog view class.
 var isDialog = function (m) {
-  return m.prototype && m.prototype.className && m.prototype.className.indexOf('dialog') !== -1;
+  return m.prototype &&
+    m.prototype.className &&
+    typeof m.prototype.onContainerClick === 'function';
 };
 
 // Checks if two functions are "kind of similar" by comparing their source.
@@ -418,7 +422,7 @@ var functionContains = function (fn, match) {
 
 // Checks if a given object looks like a Backbone View class.
 var isView = function (m) {
-  return m.prototype && _.isFunction(m.prototype.render) && _.isFunction(m.prototype.$);
+  return m.prototype && 'render' in m.prototype && '$' in m.prototype;
 };
 
 // Checks if a given Backbone Model class has a defaults property (plug.dj models).
@@ -874,14 +878,18 @@ var plugModules = {
   'plug/actions/users/SaveSettingsAction': new ActionMatcher('PUT', 'users/settings'),
   'plug/actions/users/SignupAction': new ActionMatcher('POST', 'users/signup'),
   'plug/actions/youtube/YouTubePlaylistService': function (m) {
-    return _.isFunction(m) && _.isFunction(m.prototype.sortByName) && _.isFunction(m.prototype.next);
+    return _.isFunction(m) && _.isFunction(m.prototype.onChannel) &&
+      _.isFunction(m.prototype.loadLists);
   },
   'plug/actions/youtube/YouTubeImportService': function (m) {
-    return _.isFunction(m) && _.isFunction(m.prototype.getURL) && _.isFunction(m.prototype.next);
+    return _.isFunction(m) && _.isFunction(m.prototype.onList) &&
+      _.isFunction(m.prototype.onVideos) &&
+      _.isFunction(m.prototype.loadNext);
   },
   'plug/actions/youtube/YouTubeSearchService': function (m) {
     return _.isFunction(m) && _.isFunction(m.prototype.onList) &&
-      _.isFunction(m.prototype.onVideos);
+      _.isFunction(m.prototype.onVideos) &&
+      _.isFunction(m.prototype.loadRelated);
   },
   'plug/actions/youtube/YouTubeSuggestService': function (m) {
     return _.isFunction(m) && functionContains(m.prototype.load, 'google.com/complete/search');
@@ -945,7 +953,7 @@ var plugModules = {
     return m.prototype && m.prototype._map === null && _.isFunction(m.prototype.adopt);
   },
   'plug/util/emoji': function (m) {
-    return _.isFunction(m.emojify) && m.map && 'shipit' in m.map;
+    return _.isFunction(m.replace_emoticons);
   },
   'plug/util/Environment': function (m) {
     return 'isChrome' in m && 'isAndroid' in m;
@@ -3962,14 +3970,14 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.15.3",
+  "version": "0.15.4",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
     "es6-symbol": "^2.0.1",
     "meld": "1.x",
     "onecolor": "^2.5.0",
-    "plug-modules": "^4.2.2",
+    "plug-modules": "^4.3.3",
     "regexp-quote": "0.0.0",
     "semver-compare": "^1.0.0",
     "sistyl": "^1.0.0"
@@ -3996,7 +4004,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1439819090961
+  "builtAt": 1440232963374
 });
 
 
@@ -5243,9 +5251,9 @@ define('extplug/plugins/ChatTypePlugin',['require','exports','module','meld','un
         if (/^:(.*?):$/.test(message.badge)) {
           var badgeBox = el.find('.badge-box');
           var emojiName = message.badge.slice(1, -1);
-          if (emoji.map[emojiName]) {
+          if (emoji.map.colons[emojiName]) {
             badgeBox.find('i').remove();
-            badgeBox.append($('<span />').addClass('emoji-glow extplug-badji').append($('<span />').addClass('emoji emoji-' + emoji.map[emojiName])));
+            badgeBox.append($('<span />').addClass('emoji-glow extplug-badji').append($('<span />').addClass('emoji emoji-' + emoji.map.colons[emojiName])));
           }
         }
         // icon badge
@@ -5946,7 +5954,11 @@ define('extplug/styles/inline-chat',{
       }
     },
     '.from': { 'display': 'inline' },
-    '.text': { 'display': 'inline', 'margin-left': '5px' }
+    '.text': { 'display': 'inline', 'margin-left': '5px' },
+    '.delete-button': {
+      'padding': '3px 10px',
+      'top': '3px'
+    }
   },
   // remove the empty circle for badge-less users
   // (it doesn't fit in a 16px high message)
