@@ -70,11 +70,11 @@ define(function (require, exports, module) {
         if (/^:(.*?):$/.test(message.badge)) {
           let badgeBox = el.find('.badge-box');
           let emojiName = message.badge.slice(1, -1);
-          if (emoji.map[emojiName]) {
+          if (emoji.map.colons[emojiName]) {
             badgeBox.find('i').remove();
             badgeBox.append(
               $('<span />').addClass('emoji-glow extplug-badji').append(
-                $('<span />').addClass('emoji emoji-' + emoji.map[emojiName])
+                $('<span />').addClass('emoji emoji-' + emoji.map.colons[emojiName])
               )
             );
           }
