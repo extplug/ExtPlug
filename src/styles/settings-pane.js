@@ -27,6 +27,17 @@ define({
       }
     },
 
+    '.extplug-dropdown': {
+      '.title': {
+        'top': '6px'
+      },
+      '.dropdown': {
+        'width': '50%',
+        'top': '-5px',
+        'margin-left': '50%'
+      }
+    },
+
     'label.title': {
       'top': '0px',
       'font-size': '14px',

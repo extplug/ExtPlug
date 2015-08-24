@@ -5,8 +5,8 @@ define(function (require, exports, module) {
   const _ = require('underscore');
 
   const DropdownView = Backbone.View.extend({
-    className: 'dropdown',
-    tagName: 'dl',
+    className: 'extplug-dropdown',
+    tagName: 'div',
     initialize() {
       if (!this.options.selected) {
         this.options.selected = Object.keys(this.options.options)[0];
@@ -17,6 +17,8 @@ define(function (require, exports, module) {
       this.onRowClick = this.onRowClick.bind(this);
     },
     render() {
+      this.$label = $('<label />').addClass('title').text(this.options.label);
+      this.$dl = $('<dl />').addClass('dropdown');
       this.$selectedValue = $('<span />');
       this.$selected = $('<dt />')
         .append(this.$selectedValue)
@@ -24,19 +26,23 @@ define(function (require, exports, module) {
         .append($('<i />').addClass('icon icon-arrow-up-grey'));
 
       this.$rows = $('<dd />');
-      var selected;
+      let selected;
       _.each(this.options.options, function (text, value) {
-        var row = $('<div />').addClass('row').data('value', value),
-          el = $('<span />').text(text);
+        let row = $('<div />').addClass('row').data('value', value);
+        let el = $('<span />').text(text);
         if (this.options.selected === value) {
           selected = row;
         }
         row.append(el).appendTo(this.$rows);
       }, this);
 
-      this.$el
+      this.$dl
         .append(this.$selected)
         .append(this.$rows);
+
+      this.$el
+        .append(this.$label)
+        .append(this.$dl);
 
       this.$selected.on('click', this.onBaseClick);
       this.$rows.on('click', this.onRowClick);
@@ -47,7 +53,7 @@ define(function (require, exports, module) {
       return this;
     },
     close() {
-      this.$el.removeClass('open');
+      this.$dl.removeClass('open');
       $(document).off('click', this.onDocumentClick);
     },
     remove() {
@@ -56,11 +62,11 @@ define(function (require, exports, module) {
       this._super();
     },
     onBaseClick(e) {
-      if (this.$el.hasClass('open')) {
+      if (this.$dl.hasClass('open')) {
         this.close();
       }
       else {
-        this.$el.addClass('open');
+        this.$dl.addClass('open');
         _.defer(() => {
           $(document).on('click', this.onDocumentClick);
         });
@@ -68,11 +74,11 @@ define(function (require, exports, module) {
     },
     onRowClick(e) {
       let row = $(e.target).closest('.row');
-      this.$('.row').removeClass('selected');
+      this.$dl.find('.row').removeClass('selected');
       row.addClass('selected');
-      this.$el.removeClass('open');
+      this.$dl.removeClass('open');
       this.$selectedValue.text(row.text());
-      this.trigger('select', row.data('value'));
+      this.trigger('change', row.data('value'));
     },
     onDocumentClick(e) {
       _.defer(this.close.bind(this));
