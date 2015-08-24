@@ -12,11 +12,20 @@ define(function (require, exports, module) {
     enable() {
       this.advice = around(emoji, 'replacement', joinpoint => {
         let name = joinpoint.args[2]
+        if (!name) {
+          // attempt to find the name in the emoji-data map
+          let id = joinpoint.args[0]
+          let data = emoji.data[id]
+          if (data) name = data[3][0]
+        }
         let html = joinpoint.proceed()
-        return html.replace(
-          ' class="emoji-inner',
-          ` data-emoji-name="${name}" class="emoji-inner extplug-emoji-${name}`
-        )
+        if (name) {
+          return html.replace(
+            ' class="emoji-inner',
+            ` data-emoji-name="${name}" class="emoji-inner extplug-emoji-${name}`
+          )
+        }
+        return html
       })
 
       this.listenTo(Events, 'chat:afterreceive', (msg, el) => {
