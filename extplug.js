@@ -2903,8 +2903,8 @@ define('extplug/views/users/settings/DropdownView',['require','exports','module'
   var _ = require('underscore');
 
   var DropdownView = Backbone.View.extend({
-    className: 'dropdown',
-    tagName: 'dl',
+    className: 'extplug-dropdown',
+    tagName: 'div',
     initialize: function initialize() {
       if (!this.options.selected) {
         this.options.selected = Object.keys(this.options.options)[0];
@@ -2915,21 +2915,25 @@ define('extplug/views/users/settings/DropdownView',['require','exports','module'
       this.onRowClick = this.onRowClick.bind(this);
     },
     render: function render() {
+      this.$label = $('<label />').addClass('title').text(this.options.label);
+      this.$dl = $('<dl />').addClass('dropdown');
       this.$selectedValue = $('<span />');
       this.$selected = $('<dt />').append(this.$selectedValue).append($('<i />').addClass('icon icon-arrow-down-grey')).append($('<i />').addClass('icon icon-arrow-up-grey'));
 
       this.$rows = $('<dd />');
-      var selected;
+      var selected = undefined;
       _.each(this.options.options, function (text, value) {
-        var row = $('<div />').addClass('row').data('value', value),
-            el = $('<span />').text(text);
+        var row = $('<div />').addClass('row').data('value', value);
+        var el = $('<span />').text(text);
         if (this.options.selected === value) {
           selected = row;
         }
         row.append(el).appendTo(this.$rows);
       }, this);
 
-      this.$el.append(this.$selected).append(this.$rows);
+      this.$dl.append(this.$selected).append(this.$rows);
+
+      this.$el.append(this.$label).append(this.$dl);
 
       this.$selected.on('click', this.onBaseClick);
       this.$rows.on('click', this.onRowClick);
@@ -2940,7 +2944,7 @@ define('extplug/views/users/settings/DropdownView',['require','exports','module'
       return this;
     },
     close: function close() {
-      this.$el.removeClass('open');
+      this.$dl.removeClass('open');
       $(document).off('click', this.onDocumentClick);
     },
     remove: function remove() {
@@ -2951,10 +2955,10 @@ define('extplug/views/users/settings/DropdownView',['require','exports','module'
     onBaseClick: function onBaseClick(e) {
       var _this = this;
 
-      if (this.$el.hasClass('open')) {
+      if (this.$dl.hasClass('open')) {
         this.close();
       } else {
-        this.$el.addClass('open');
+        this.$dl.addClass('open');
         _.defer(function () {
           $(document).on('click', _this.onDocumentClick);
         });
@@ -2962,11 +2966,11 @@ define('extplug/views/users/settings/DropdownView',['require','exports','module'
     },
     onRowClick: function onRowClick(e) {
       var row = $(e.target).closest('.row');
-      this.$('.row').removeClass('selected');
+      this.$dl.find('.row').removeClass('selected');
       row.addClass('selected');
-      this.$el.removeClass('open');
+      this.$dl.removeClass('open');
       this.$selectedValue.text(row.text());
-      this.trigger('select', row.data('value'));
+      this.trigger('change', row.data('value'));
     },
     onDocumentClick: function onDocumentClick(e) {
       _.defer(this.close.bind(this));
@@ -3959,7 +3963,7 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.15.5",
+  "version": "0.15.6",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
@@ -3993,7 +3997,7 @@ define('extplug/package',{
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1440258335009
+  "builtAt": 1440458434878
 });
 
 
@@ -5558,8 +5562,17 @@ define('extplug/plugins/EmojiDataPlugin',['require','exports','module','../Plugi
     enable: function enable() {
       this.advice = around(emoji, 'replacement', function (joinpoint) {
         var name = joinpoint.args[2];
+        if (!name) {
+          // attempt to find the name in the emoji-data map
+          var id = joinpoint.args[0];
+          var data = emoji.data[id];
+          if (data) name = data[3][0];
+        }
         var html = joinpoint.proceed();
-        return html.replace(' class="emoji-inner', ' data-emoji-name="' + name + '" class="emoji-inner extplug-emoji-' + name);
+        if (name) {
+          return html.replace(' class="emoji-inner', ' data-emoji-name="' + name + '" class="emoji-inner extplug-emoji-' + name);
+        }
+        return html;
       });
 
       this.listenTo(Events, 'chat:afterreceive', function (msg, el) {
@@ -6029,6 +6042,17 @@ define('extplug/styles/settings-pane',{
       // just have two counter labels because it's easier
       '.counts .count:nth-child(2)': {
         'float': 'right'
+      }
+    },
+
+    '.extplug-dropdown': {
+      '.title': {
+        'top': '6px'
+      },
+      '.dropdown': {
+        'width': '50%',
+        'top': '-5px',
+        'margin-left': '50%'
       }
     },
 
