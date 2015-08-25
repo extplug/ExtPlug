@@ -2900,21 +2900,26 @@ define('extplug/views/users/settings/DropdownView',['require','exports','module'
 
   var Backbone = require('backbone');
   var $ = require('jquery');
-  var _ = require('underscore');
+
+  var _require = require('underscore');
+
+  var each = _require.each;
+  var defer = _require.defer;
 
   var DropdownView = Backbone.View.extend({
     className: 'extplug-dropdown',
-    tagName: 'div',
+
     initialize: function initialize() {
       if (!this.options.selected) {
         this.options.selected = Object.keys(this.options.options)[0];
       }
 
       this.onDocumentClick = this.onDocumentClick.bind(this);
-      this.onBaseClick = this.onBaseClick.bind(this);
-      this.onRowClick = this.onRowClick.bind(this);
     },
+
     render: function render() {
+      var _this = this;
+
       this.$label = $('<label />').addClass('title').text(this.options.label);
       this.$dl = $('<dl />').addClass('dropdown');
       this.$selectedValue = $('<span />');
@@ -2922,58 +2927,79 @@ define('extplug/views/users/settings/DropdownView',['require','exports','module'
 
       this.$rows = $('<dd />');
       var selected = undefined;
-      _.each(this.options.options, function (text, value) {
+      each(this.options.options, function (text, value) {
         var row = $('<div />').addClass('row').data('value', value);
         var el = $('<span />').text(text);
-        if (this.options.selected === value) {
+        if (_this.options.selected === value) {
           selected = row;
         }
-        row.append(el).appendTo(this.$rows);
-      }, this);
+        row.append(el).appendTo(_this.$rows);
+      });
 
       this.$dl.append(this.$selected).append(this.$rows);
 
       this.$el.append(this.$label).append(this.$dl);
 
-      this.$selected.on('click', this.onBaseClick);
-      this.$rows.on('click', this.onRowClick);
+      this.$selected.on('click', this.onBaseClick.bind(this));
+      this.$rows.on('click', this.onRowClick.bind(this));
       // trigger the above as a default
       if (selected) {
         selected.click();
       }
       return this;
     },
-    close: function close() {
-      this.$dl.removeClass('open');
-      $(document).off('click', this.onDocumentClick);
-    },
+
     remove: function remove() {
       this.$('dt, dd').off();
       $(document).off('click', this.onDocumentClick);
       this._super();
     },
+
+    close: function close() {
+      this.$dl.removeClass('open extplug-dropdown-up');
+      $(document).off('click', this.onDocumentClick);
+    },
+
     onBaseClick: function onBaseClick(e) {
-      var _this = this;
+      var _this2 = this;
 
       if (this.$dl.hasClass('open')) {
         this.close();
       } else {
-        this.$dl.addClass('open');
-        _.defer(function () {
-          $(document).on('click', _this.onDocumentClick);
+        if (this.canExpandDownward()) {
+          this.$dl.addClass('open');
+        } else {
+          this.$dl.addClass('open extplug-dropdown-up');
+        }
+        defer(function () {
+          $(document).on('click', _this2.onDocumentClick);
         });
       }
     },
+
     onRowClick: function onRowClick(e) {
       var row = $(e.target).closest('.row');
-      this.$dl.find('.row').removeClass('selected');
+
+      this.$rows.children().removeClass('selected');
       row.addClass('selected');
-      this.$dl.removeClass('open');
       this.$selectedValue.text(row.text());
       this.trigger('change', row.data('value'));
+
+      // will be closed by onDocumentClick()
     },
+
     onDocumentClick: function onDocumentClick(e) {
-      _.defer(this.close.bind(this));
+      var _this3 = this;
+
+      defer(function () {
+        _this3.close();
+      });
+    },
+
+    canExpandDownward: function canExpandDownward() {
+      var top = this.$dl.offset().top;
+      var bottom = top + this.$rows.height();
+      return bottom < $(document).height();
     }
   });
 
@@ -3963,12 +3989,12 @@ define('extplug/pluginLoader',['require','exports','module','./util/request','./
 });
 define('extplug/package',{
   "name": "extplug",
-  "version": "0.15.6",
+  "version": "0.15.7",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "debug": "^2.2.0",
     "es6-symbol": "^2.0.1",
-    "meld": "1.x",
+    "meld": "^1.3.2",
     "onecolor": "^2.5.0",
     "plug-modules": "^4.3.3",
     "regexp-quote": "0.0.0",
@@ -3976,28 +4002,28 @@ define('extplug/package',{
     "sistyl": "^1.0.0"
   },
   "devDependencies": {
-    "browserify": "^10.2.4",
-    "del": "^1.2.0",
-    "gulp": "^3.8.11",
-    "gulp-babel": "^5.2.0",
+    "browserify": "^11.0.1",
+    "del": "^1.2.1",
+    "gulp": "^3.9.0",
+    "gulp-babel": "^5.2.1",
     "gulp-babel-external-helpers": "^1.0.0",
-    "gulp-concat": "^2.5.2",
+    "gulp-concat": "^2.6.0",
     "gulp-data": "^1.2.0",
     "gulp-rename": "^1.2.2",
     "gulp-template": "^3.0.0",
     "gulp-zip": "^3.0.2",
     "jscs": "^1.13.1",
-    "merge-stream": "^0.1.8",
+    "merge-stream": "^1.0.0",
     "mkdirp": "^0.5.1",
-    "requirejs": "^2.1.17",
-    "run-sequence": "^1.1.0",
+    "requirejs": "^2.1.20",
+    "run-sequence": "^1.1.2",
     "vinyl-source-stream": "^1.1.0"
   },
   "scripts": {
     "build": "gulp build",
     "test": "jscs src"
   },
-  "builtAt": 1440458434878
+  "builtAt": 1440494553454
 });
 
 
@@ -6053,6 +6079,13 @@ define('extplug/styles/settings-pane',{
         'width': '50%',
         'top': '-5px',
         'margin-left': '50%'
+      },
+      '.extplug-dropdown-up': {
+        'dd': {
+          'position': 'absolute',
+          'bottom': '39px',
+          'width': '100%'
+        }
       }
     },
 
