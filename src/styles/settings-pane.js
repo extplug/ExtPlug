@@ -35,6 +35,13 @@ define({
         'width': '50%',
         'top': '-5px',
         'margin-left': '50%'
+      },
+      '.extplug-dropdown-up': {
+        'dd': {
+          'position': 'absolute',
+          'bottom': '39px',
+          'width': '100%'
+        }
       }
     },
 

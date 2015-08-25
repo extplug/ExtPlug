@@ -53,7 +53,7 @@ define(function (require, exports, module) {
       return this;
     },
     close() {
-      this.$dl.removeClass('open');
+      this.$dl.removeClass('open extplug-dropdown-up');
       $(document).off('click', this.onDocumentClick);
     },
     remove() {
@@ -66,7 +66,12 @@ define(function (require, exports, module) {
         this.close();
       }
       else {
-        this.$dl.addClass('open');
+        if (this.canExpandDownward()) {
+          this.$dl.addClass('open');
+        }
+        else {
+          this.$dl.addClass('open extplug-dropdown-up');
+        }
         _.defer(() => {
           $(document).on('click', this.onDocumentClick);
         });
@@ -82,6 +87,12 @@ define(function (require, exports, module) {
     },
     onDocumentClick(e) {
       _.defer(this.close.bind(this));
+    },
+
+    canExpandDownward() {
+      let top = this.$dl.offset().top;
+      let bottom = top + this.$rows.height();
+      return bottom < $(document).height();
     }
   });
 
