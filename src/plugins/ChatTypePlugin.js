@@ -28,6 +28,15 @@ define(function (require, exports, module) {
    *    won't expect to find more than one type.
    */
   const ChatTypePlugin = Plugin.extend({
+    style: {
+      '.badge-box .emoji-outer': {
+        'margin': '7px'
+      },
+      '.inline .badge-box .emoji-outer': {
+        'margin': '0 7px'
+      }
+    },
+
     enable() {
       // chatView.onReceived will still be the old method after adding advice
       // so the event listener should also be swapped out
@@ -72,11 +81,10 @@ define(function (require, exports, module) {
           let emojiName = message.badge.slice(1, -1);
           if (emoji.map.colons[emojiName]) {
             badgeBox.find('i').remove();
-            badgeBox.append(
-              $('<span />').addClass('emoji-glow extplug-badji').append(
-                $('<span />').addClass('emoji emoji-' + emoji.map.colons[emojiName])
-              )
-            );
+            badgeBox
+              .append(emoji.replace_colons(message.badge))
+              // compatibility class
+              .find('.emoji-outer').addClass('extplug-badji');
           }
         }
         // icon badge
