@@ -11,6 +11,7 @@ define(function (require, exports, module) {
   const quote = require('regexp-quote');
 
   const stubHook = function () {};
+  const hooks = [ 'enable', 'disable' ];
 
   const Plugin = Class.extend({
     init(id, ext) {
@@ -36,32 +37,23 @@ define(function (require, exports, module) {
       // dis/enable hooks used to require _super() calls which were easy to
       // forget. now, we attach events if the methods have been defined.
       // it's all a bit ugly but...
-      if (this.enable !== stubHook) {
-        this.on('enable', this.enable, this);
-      }
-      if (this.disable !== stubHook) {
-        this.on('disable', this.disable, this);
-      }
-
-      // prevent overwriting dis/enable hooks later
-      // use the events if you need to do additional work
-      Object.defineProperties(this, {
-        enable: {
-          value: () => {
-            this.trigger('enable');
-            Plugin.trigger('enable', this);
-          }
-        },
-        disable: {
-          value: () => {
-            // auto-remove event handlers added by the plugin, if the plugin
-            // used `.listenTo()`
-            this.stopListening();
-            this.trigger('disable');
-            Plugin.trigger('disable', this);
-          }
+      hooks.forEach(hookName => {
+        if (this[hookName] !== stubHook) {
+          this.on(hookName, this[hookName], this);
+          // prevent overwriting dis/enable hooks later
+          // use the events if you need to do additional work
+          Object.defineProperty(this, hookName, {
+            value: () => {
+              this.trigger(hookName);
+              Plugin.trigger(hookName, this);
+            }
+          });
         }
       });
+
+      // auto-remove event handlers added by the plugin, if the plugin
+      // used `.listenTo()`
+      this.on('disable', this.stopListening);
 
       // Styles API
       this._styles = [];
