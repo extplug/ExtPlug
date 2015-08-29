@@ -1,41 +1,47 @@
-var babel = require('gulp-babel');
-var babelHelpers = require('gulp-babel-external-helpers');
-var browserify = require('browserify');
-var concat = require('gulp-concat');
-var data = require('gulp-data');
-var del = require('del');
-var fs = require('fs');
-var gulp = require('gulp');
-var merge = require('merge-stream');
-var mkdirp = require('mkdirp');
-var packg  = require('./package.json');
-var rename = require('gulp-rename');
-var rjs = require('requirejs');
-var runseq = require('run-sequence');
-var source = require('vinyl-source-stream');
-var template = require('gulp-template');
-var zip = require('gulp-zip');
+import babel from 'gulp-babel';
+import babelHelpers from 'gulp-babel-external-helpers';
+import browserify from 'browserify';
+import concat from 'gulp-concat';
+import data from 'gulp-data';
+import del from 'del';
+import fs from 'fs';
+import gulp from 'gulp';
+import merge from 'merge-stream';
+import mkdirp from 'mkdirp';
+import packg  from './package.json';
+import rename from 'gulp-rename';
+import rjs from 'requirejs';
+import runseq from 'run-sequence';
+import source from 'vinyl-source-stream';
+import template from 'gulp-template';
+import zip from 'gulp-zip';
 
-gulp.task('babel', function () {
+gulp.task('clean-lib', cb => {
+  del('lib', cb);
+});
+
+gulp.task('clean-build', cb => {
+  del('build', cb);
+});
+
+gulp.task('clean', [ 'clean-lib', 'clean-build' ]);
+
+gulp.task('babel', () => {
   return gulp.src('src/**/*.js')
     .pipe(babel({ modules: 'ignore', externalHelpers: true }))
     .pipe(babelHelpers('_babelHelpers.js', 'var'))
     .pipe(gulp.dest('lib/'));
 });
 
-gulp.task('clean-lib', function (cb) {
-  del('lib', cb);
-});
+const nodelib = (entry, standalone, name) => {
+  name = name || `${standalone}.js`;
 
-var nodelib = function (entry, standalone, name) {
-  name = name || standalone + '.js';
-
-  var opts = {
-    entries: './node_modules/' + entry
+  let opts = {
+    entries: `./node_modules/${entry}`
   };
   if (standalone) opts.standalone = standalone;
 
-  return function () {
+  return () => {
     return browserify(opts)
       .bundle()
       .pipe(source(name))
@@ -57,10 +63,10 @@ gulp.task('dependencies', [
   'lib-regexp-quote'
 ]);
 
-gulp.task('rjs', function (done) {
-  var npm = 'node_modules/';
+gulp.task('rjs', done => {
+  let npm = 'node_modules/';
   packg.builtAt = Date.now();
-  var packgString = JSON.stringify(packg, null, 2);
+  let packgString = JSON.stringify(packg, null, 2);
   delete packg.builtAt;
   rjs.optimize({
     baseUrl: './',
@@ -77,19 +83,19 @@ gulp.task('rjs', function (done) {
       meld: npm + 'meld/meld',
       sistyl: 'build/_deps/sistyl',
       extplug: 'lib',
-      'plug-modules': npm + 'plug-modules/plug-modules',
+      'plug-modules': `${npm}plug-modules/plug-modules`,
       'debug': 'build/_deps/debug',
-      'onecolor': npm + 'onecolor/one-color-all',
+      'onecolor': `${npm}onecolor/one-color-all`,
       'regexp-quote': 'build/_deps/regexp-quote',
       'semver-compare': 'build/_deps/semvercmp'
     },
     rawText: {
-      'extplug/package': 'define(' + packgString + ')'
+      'extplug/package': `define(${packgString})`
     },
     insertRequire: [ 'extplug/main' ],
     optimize: 'none',
-    out: function (text) {
-      mkdirp('build', function (e) {
+    out(text) {
+      mkdirp('build', e => {
         if (e) {
           done(e);
         }
@@ -101,7 +107,7 @@ gulp.task('rjs', function (done) {
   });
 });
 
-gulp.task('concat', function () {
+gulp.task('concat', () => {
   return gulp.src([ 'build/_deps/es6-symbol.js'
                   , 'lib/_babelHelpers.js'
                   , 'build/build.rjs.js' ])
@@ -109,10 +115,10 @@ gulp.task('concat', function () {
     .pipe(gulp.dest('build/'));
 });
 
-gulp.task('build', [ 'concat' ], function () {
+gulp.task('build', [ 'concat' ], () => {
   return gulp.src('src/loader.js.template')
-    .pipe(data(function (file, cb) {
-      fs.readFile('build/extplug.code.js', 'utf8', function (e, c) {
+    .pipe(data((file, cb) => {
+      fs.readFile('build/extplug.code.js', 'utf8', (e, c) => {
         if (e) cb(e);
         else cb(null, { code: c });
       });
@@ -122,11 +128,7 @@ gulp.task('build', [ 'concat' ], function () {
     .pipe(gulp.dest('build/'));
 });
 
-gulp.task('clean-build', function (cb) {
-  del('build', cb);
-});
-
-gulp.task('chrome-unpacked', function (cb) {
+gulp.task('chrome-unpacked', cb => {
   return merge(
     gulp.src([ 'extensions/chrome/main.js', 'extensions/chrome/manifest.json' ])
       .pipe(template(packg))
@@ -138,17 +140,17 @@ gulp.task('chrome-unpacked', function (cb) {
   );
 });
 
-gulp.task('chrome-pack', function () {
+gulp.task('chrome-pack', () => {
   return gulp.src('build/chrome/*')
     .pipe(zip('extplug.chrome.zip'))
     .pipe(gulp.dest('build/'));
 });
 
-gulp.task('chrome', function (cb) {
+gulp.task('chrome', cb => {
   runseq('chrome-unpacked', 'chrome-pack', cb);
 });
 
-gulp.task('firefox', function () {
+gulp.task('firefox', () => {
   return merge(
     gulp.src([ 'extensions/firefox/*' ])
       .pipe(template(packg))
@@ -159,22 +161,20 @@ gulp.task('firefox', function () {
   );
 });
 
-gulp.task('userscript-meta', function () {
+gulp.task('userscript-meta', () => {
   return gulp.src([ 'extensions/userscript/extplug.user.js' ])
     .pipe(template(packg))
     .pipe(rename('extplug.meta.user.js'))
     .pipe(gulp.dest('build/'));
 });
 
-gulp.task('userscript', [ 'userscript-meta' ], function () {
+gulp.task('userscript', [ 'userscript-meta' ], () => {
   return gulp.src([ 'build/extplug.meta.user.js', 'build/extplug.js' ])
     .pipe(concat('extplug.user.js'))
     .pipe(gulp.dest('build/'));
 });
 
-gulp.task('clean', [ 'clean-lib', 'clean-build' ]);
-
-gulp.task('default', function (cb) {
+gulp.task('default', cb => {
   runseq(
     'clean',
     [ 'babel', 'dependencies' ],
