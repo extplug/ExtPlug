@@ -1,6 +1,6 @@
 // inline chat messages show the message contents immediately after
 // the username instead of below it.
-define({
+export default {
   '#chat-messages .cm.inline': {
     'min-height': '0',
 
@@ -40,4 +40,4 @@ define({
     'border': 'none',
     'border-radius': '0px'
   }
-});
+};

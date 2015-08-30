@@ -1,21 +1,17 @@
-define(function (require, exports, module) {
+import $ from 'jquery';
+import Events from 'plug/core/Events';
+import popoutView from 'plug/views/rooms/popout/PopoutView';
 
-  const $ = require('jquery');
-  const Events = require('plug/core/Events');
-  const popoutView = require('plug/views/rooms/popout/PopoutView');
+function sync() {
+  _.defer(() => {
+    popoutView.$document.find('head').append($('.extplug-style').clone());
+  });
+}
 
-  function sync() {
-    _.defer(() => {
-      popoutView.$document.find('head').append($('.extplug-style').clone());
-    });
-  }
+export function install() {
+  Events.on('popout:show', sync);
+};
 
-  exports.install = function () {
-    Events.on('popout:show', sync);
-  };
-
-  exports.uninstall = function () {
-    Events.off('popout:show', sync);
-  };
-
-});
+export function uninstall() {
+  Events.off('popout:show', sync);
+};

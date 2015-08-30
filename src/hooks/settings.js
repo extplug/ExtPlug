@@ -1,20 +1,16 @@
-define(function (require, exports, module) {
+// Mirrors plug.dj settings to the ExtPlug settings model, firing
+// change events.
 
-  // Mirrors plug.dj settings to the ExtPlug settings model, firing
-  // change events.
+import { before } from 'meld';
+import plugSettings from 'plug/store/settings';
+import extMirror from '../store/settings';
 
-  const { before } = require('meld');
-  const plugSettings = require('plug/store/settings');
-  const extMirror = require('../store/settings');
+let advice;
 
-  let advice;
+export function install() {
+  advice = before(plugSettings, 'save', extMirror.update);
+};
 
-  exports.install = function () {
-    advice = before(plugSettings, 'save', extMirror.update);
-  };
-
-  exports.uninstall = function () {
-    advice.remove();
-  };
-
-});
+export function uninstall() {
+  advice.remove();
+};

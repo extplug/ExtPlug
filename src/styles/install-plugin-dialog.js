@@ -1,4 +1,4 @@
-define({
+export default {
   '#dialog-install-plugin': {
     // magic numbers! stolen from other plug.dj dialogs
     '.dialog-body': { 'height': '137px' },
@@ -16,4 +16,4 @@ define({
       }
     }
   }
-});
+};

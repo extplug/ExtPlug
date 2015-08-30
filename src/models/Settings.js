@@ -1,19 +1,15 @@
-define(function (require, exports, module) {
+import { Model } from 'backbone';
 
-  const Backbone = require('backbone');
+const Settings = Model.extend({
 
-  const Settings = Backbone.Model.extend({
+  initialize(attrs, opts = {}) {
+    this._meta = opts.meta;
+  },
 
-    initialize(attrs, opts = {}) {
-      this._meta = opts.meta;
-    },
-
-    meta() {
-      return this._meta;
-    }
-
-  });
-
-  module.exports = Settings;
+  meta() {
+    return this._meta;
+  }
 
 });
+
+export default Settings;

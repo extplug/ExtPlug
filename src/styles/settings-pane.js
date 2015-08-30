@@ -1,4 +1,4 @@
-define({
+export default {
   '#user-view #user-settings': {
     // unlike plug.dj's own settings, ExtPlug settings are grouped
     // in separate DOM elements (separate backbone views, even)
@@ -119,4 +119,4 @@ define({
       'left': '9px'
     }
   }
-});
+};

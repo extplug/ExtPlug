@@ -1,5 +1,5 @@
 // the red ExtPlug badge in the top left corner
-define({
+export default {
   '#app-menu .button i:after': {
     // double quoted ):
     'content': '"EXT"',
@@ -13,4 +13,4 @@ define({
     'position': 'relative',
     'float': 'right'
   }
-});
+};
