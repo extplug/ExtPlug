@@ -80,17 +80,17 @@ const ExtPlug = Plugin.extend({
     this._super('extplug', this);
 
     this._core = [
-      new CommandsPlugin('chat-commands', this),
-      new SettingsTabPlugin('settings-tab', this),
-      new MoreChatEventsPlugin('more-chat-events', this),
-      new ChatTypePlugin('custom-chat-type', this),
-      new UserClassesPlugin('user-classes', this),
-      new EmojiDataPlugin('emoji-data', this),
-      new TooltipsPlugin('tooltips', this),
-      new SocketEventsPlugin('socket-events', this)
+      new CommandsPlugin('extplug:chat-commands', this),
+      new SettingsTabPlugin('extplug:settings-tab', this),
+      new MoreChatEventsPlugin('extplug:more-chat-events', this),
+      new ChatTypePlugin('extplug:custom-chat-type', this),
+      new UserClassesPlugin('extplug:user-classes', this),
+      new EmojiDataPlugin('extplug:emoji-data', this),
+      new TooltipsPlugin('extplug:tooltips', this),
+      new SocketEventsPlugin('extplug:socket-events', this)
     ];
 
-    this._guest = new GuestPlugin('guest', this);
+    this._guest = new GuestPlugin('extplug:guest', this);
   },
 
   /**
