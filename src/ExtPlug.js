@@ -17,6 +17,7 @@ import UserClassesPlugin from './plugins/UserClassesPlugin';
 import EmojiDataPlugin from './plugins/EmojiDataPlugin';
 import TooltipsPlugin from './plugins/TooltipsPlugin';
 import GuestPlugin from './plugins/GuestPlugin';
+import SocketEventsPlugin from './plugins/SocketEventsPlugin';
 
 import * as _package from './package';
 
@@ -85,7 +86,8 @@ const ExtPlug = Plugin.extend({
       new ChatTypePlugin('custom-chat-type', this),
       new UserClassesPlugin('user-classes', this),
       new EmojiDataPlugin('emoji-data', this),
-      new TooltipsPlugin('tooltips', this)
+      new TooltipsPlugin('tooltips', this),
+      new SocketEventsPlugin('socket-events', this)
     ];
 
     this._guest = new GuestPlugin('guest', this);
