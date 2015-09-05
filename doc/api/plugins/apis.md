@@ -1,8 +1,51 @@
 # Plugin APIs
 
+ * [Events](#events)
  * [Plugin Settings](#plugin-settings)
  * [CSS](#css)
  * [Chat Commands](#chat-commands)
+
+## Events
+
+The Events API can be used to add events to Backbone Events objects. It's the
+preferred way to do so, because events added through the Events API will
+automatically be cleaned up when your plugin is disabled, so you don't have to
+worry about it in your `disable()` method.
+
+The Events API contains three methods:
+
+ * `this.listenTo` - The Backbone.Events [listenTo](http://backbonejs.org/#Events-listenTo)
+   method, used for adding event listeners.
+
+   ```js
+   import Events from 'plug/core/Events';
+
+   const EveryoneIsSubscriber = Plugin.extend({
+     enable() {
+       // this handler will be automatically removed when the plugin is
+       // disabled, so no custom disable() method is needed.
+       this.listenTo(Events, 'chat:beforereceive', message => {
+         message.sub = 1;
+       });
+       // Event listeners added with `.listenTo` are also bound to the plugin
+       // instance by default, so you can use `this` inside them safely.
+       this.listenTo(Events, 'chat:command', this.handleCommand);
+     },
+
+     handleCommand(text) {
+       if (text === '/disablesub') {
+         this.disable();
+       }
+     }
+   });
+   ```
+
+ * `this.listenToOnce` - The Backbone.Events [listenToOnce](http://backbonejs.org/#Events-listenToOnce)
+   method, used for adding event listeners that should only fire once.
+
+ * `this.stopListening` - The Backbone.Events [stopListening](http://backbonejs.org/#Events-stopListening)
+   method removes all event listeners that were added by your plugin. This
+   method is called automatically when your plugin is disabled.
 
 ## Plugin Settings
 
