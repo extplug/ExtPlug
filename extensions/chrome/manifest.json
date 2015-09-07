@@ -3,12 +3,15 @@
   "name": "ExtPlug",
   "version": "<%= version %>",
   "description": "<%= description %>",
-  "icons": { },
+  "icons": {
+    "16": "img/icon16.png",
+    "48": "img/icon48.png",
+    "128": "img/icon128.png"
+  },
   "permissions": [ "https://plug.dj/*" ],
   "content_scripts": [ {
     "matches": [ "https://plug.dj/*" ],
     "js": [ "main.js" ]
   } ],
-  "web_accessible_resources": [ "extplug.js" ],
-  "icons": {}
+  "web_accessible_resources": [ "extplug.js" ]
 }

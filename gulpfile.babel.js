@@ -134,6 +134,9 @@ gulp.task('chrome-unpacked', cb => {
       .pipe(template(packg))
       .pipe(gulp.dest('build/chrome/')),
 
+    gulp.src([ 'img/icon*.png' ])
+      .pipe(gulp.dest('build/chrome/img/')),
+
     gulp.src([ 'build/extplug.js' ])
       .pipe(concat('extplug.js'))
       .pipe(gulp.dest('build/chrome/'))
