@@ -8,6 +8,15 @@
 
 ExtPlug is a flexible, modular extension framework for plug.dj.
 
+As of September 28th 2015, plug.dj is no longer a thing. That means that ExtPlug
+isn't particularly useful anymore! The ExtPlug code can still be here and across
+other repositories in the [ExtPlug Github organisation](https://github.com/ExtPlug)
+for archival purposes. If you're looking for a worthy plug.dj alternative, feel
+free to join the [radiant.dj Slack community](https://slack.radiant.dj) –
+they'll know when new sites start to pop up. Thanks for using ExtPlug! ♥
+
+---
+
 This repository contains mostly technical information. If you just want to _use_
 ExtPlug, visit [the ExtPlug website](https://extplug.github.io) instead. If
 you're a developer, read on!
