@@ -28,7 +28,10 @@ gulp.task('clean', [ 'clean-lib', 'clean-build' ]);
 
 gulp.task('babel', () => {
   return gulp.src('src/**/*.js')
-    .pipe(babel({ modules: 'amd', externalHelpers: true }))
+    .pipe(babel({
+      presets: ['extplug'],
+      plugins: ['external-helpers']
+    }))
     .pipe(babelHelpers('_babelHelpers.js', 'var'))
     .pipe(gulp.dest('lib/'));
 });
