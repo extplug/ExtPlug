@@ -10,7 +10,7 @@ function inject(url) {
 }
 
 pageMod.PageMod({
-  include: 'https://plug.dj/*',
+  include: '*.plug.dj',
   attachTo: 'top',
   contentScript: ';(' + inject + '(' + JSON.stringify(self.data.url('extplug.js')) + '));'
 });
