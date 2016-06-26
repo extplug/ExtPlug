@@ -3,6 +3,7 @@ import { around } from 'meld';
 import Plugin from '../Plugin';
 import Events from 'plug/core/Events';
 import SaveSettingsAction from 'plug/actions/users/SaveSettingsAction';
+import currentUser from 'plug/models/currentUser';
 import Lang from 'lang/Lang';
 
 const GuestPlugin = Plugin.extend({
@@ -119,6 +120,7 @@ const GuestPlugin = Plugin.extend({
 
   skipWalkthrough() {
     const roomView = this.ext.appView.room;
+    currentUser.off('change:walkthrough', roomView.onWTChange);
     roomView.onWTFinish();
   },
 
