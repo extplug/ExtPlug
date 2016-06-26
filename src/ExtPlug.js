@@ -18,6 +18,7 @@ import EmojiDataPlugin from './plugins/EmojiDataPlugin';
 import TooltipsPlugin from './plugins/TooltipsPlugin';
 import GuestPlugin from './plugins/GuestPlugin';
 import SocketEventsPlugin from './plugins/SocketEventsPlugin';
+import WaitlistEventsPlugin from './plugins/WaitlistEventsPlugin';
 
 import * as _package from './package';
 
@@ -87,7 +88,8 @@ const ExtPlug = Plugin.extend({
       new UserClassesPlugin('extplug:user-classes', this),
       new EmojiDataPlugin('extplug:emoji-data', this),
       new TooltipsPlugin('extplug:tooltips', this),
-      new SocketEventsPlugin('extplug:socket-events', this)
+      new SocketEventsPlugin('extplug:socket-events', this),
+      new WaitlistEventsPlugin('extplug:waitlist-events', this)
     ];
 
     this._guest = new GuestPlugin('extplug:guest', this);

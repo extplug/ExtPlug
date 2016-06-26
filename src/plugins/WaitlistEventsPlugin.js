@@ -1,3 +1,4 @@
+import Plugin from '../Plugin';
 import booth from 'plug/models/booth';
 import waitlist from 'plug/collections/waitlist';
 import users from 'plug/collections/users';
@@ -22,14 +23,21 @@ function onChange() {
   });
 }
 
-export function install() {
-  booth.on('change:waitingDJs', onChange);
-  extend(API, events);
-};
+const WaitlistEvents = Plugin.extend({
+  name: 'Waitlist Events',
+  description: 'Adds events for when users join or leave the waitlist.',
 
-export function uninstall() {
-  booth.off('change:waitingDJs', onChange);
-  Object.keys(events).forEach(n => {
-    delete API[n];
-  });
-};
+  enable() {
+    booth.on('change:waitingDJs', onChange);
+    extend(API, events);
+  },
+
+  disable() {
+    booth.off('change:waitingDJs', onChange);
+    Object.keys(events).forEach(n => {
+      delete API[n];
+    });
+  }
+});
+
+export default WaitlistEvents;
