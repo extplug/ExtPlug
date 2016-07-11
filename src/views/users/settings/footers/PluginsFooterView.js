@@ -1,3 +1,4 @@
+import $ from 'jquery';
 import Events from 'plug/core/Events';
 import ShowDialogEvent from 'plug/events/ShowDialogEvent';
 import InstallPluginDialog from '../../../dialogs/InstallPluginDialog';
@@ -25,7 +26,7 @@ const PluginsFooterView = GroupFooterView.extend({
   remove() {
     this.$install.off();
     this.$manage.off();
-  }
+  },
 });
 
 export default PluginsFooterView;

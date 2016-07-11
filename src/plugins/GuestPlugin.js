@@ -1,10 +1,10 @@
 import $ from 'jquery';
 import { around } from 'meld';
-import Plugin from '../Plugin';
 import Events from 'plug/core/Events';
 import SaveSettingsAction from 'plug/actions/users/SaveSettingsAction';
 import currentUser from 'plug/models/currentUser';
 import Lang from 'lang/Lang';
+import Plugin from '../Plugin';
 
 const GuestPlugin = Plugin.extend({
   name: 'Guest UI',
@@ -12,54 +12,56 @@ const GuestPlugin = Plugin.extend({
                'buttons to the plug.dj footer.',
 
   style: {
+    /* eslint-disable quote-props */
     '.is-guest': {
       '#header-panel-bar': {
         '#chat-button': {
           'width': '33%',
-          'span': { 'display': 'none' }
+          'span': { 'display': 'none' },
         },
         '#users-button': {
           'left': '33%',
-          'width': '34%'
+          'width': '34%',
         },
         '#waitlist-button': {
           'left': '67%',
-          'width': '33%'
+          'width': '33%',
         },
-        '#friends-button': { 'display': 'none' }
+        '#friends-button': { 'display': 'none' },
       },
       '#user-lists': {
         // even the staff one doesn't work for guest users!
-        '.button.staff, .button.ignored': { 'display': 'none' }
+        '.button.staff, .button.ignored': { 'display': 'none' },
       },
       '#footer-user': {
         '.signup': { 'width': '40%' },
         '.signup.login': {
           'margin-left': 'calc(40% + 1px)',
           'width': 'calc(40% - 1px)',
-          'background': '#555d70'
+          'background': '#555d70',
         },
         '.buttons': {
           'display': 'block',
           '.button': { 'display': 'none' },
           '.button.extplug-guest-settings': {
             'display': 'block',
-            'margin-left': '80%'
-          }
-        }
+            'margin-left': '80%',
+          },
+        },
       },
       '#user-menu .item:not(.settings)': {
-        'display': 'none'
+        'display': 'none',
       },
       '#room-bar': {
         '.extplug-room-bar-overlay': {
           'height': 'inherit',
           'width': 'inherit',
           'position': 'absolute',
-          'z-index': 10
-        }
-      }
-    }
+          'z-index': 10,
+        },
+      },
+    },
+    /* eslint-enable quote-props */
   },
 
   enable() {
@@ -96,17 +98,16 @@ const GuestPlugin = Plugin.extend({
         e.stopPropagation();
         if ($('#room-settings').is(':visible')) {
           Events.trigger('hide:settings');
-        }
-        else {
+        } else {
           Events.trigger('show:settings');
         }
       });
 
-    this._enabled = true;
+    this.guestEnabled = true;
   },
 
   disable() {
-    if (this._enabled) {
+    if (this.guestEnabled) {
       this.ssaAdvice.remove();
       this.$settings.remove();
       this.$roomBar.remove();
@@ -115,7 +116,7 @@ const GuestPlugin = Plugin.extend({
       this.$settings = this.$login = this.$signup = null;
     }
 
-    this._enabled = false;
+    this.guestEnabled = false;
   },
 
   skipWalkthrough() {
@@ -137,7 +138,7 @@ const GuestPlugin = Plugin.extend({
     e.stopPropagation();
     Events.trigger('tooltip:hide')
           .trigger('show:user', 'settings', 'extplug');
-  }
+  },
 
 });
 

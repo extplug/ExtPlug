@@ -1,9 +1,10 @@
-import request from './util/request';
 import PluginMeta from './models/PluginMeta';
 
+const requirejs = window.requirejs;
+
 function parse(name) {
-  let parts = name.split(';');
-  let o = {};
+  const parts = name.split(';');
+  const o = {};
   o.url = parts[0];
   if (parts[1]) {
     o.name = parts[1];
@@ -15,8 +16,8 @@ function parse(name) {
   return o;
 }
 
-export function load(url, cb) {
-  let o = parse(url);
+export function load(url, cb) { // eslint-disable-line import/prefer-default-export
+  const o = parse(url);
   if (o.name) {
     // add module name alias to the plugin URL
     // this way, when we require([ module name ]), the plugin URL
@@ -25,20 +26,24 @@ export function load(url, cb) {
     // and requirejs will figure everything out.
     // Chopping off the .js extension because require.js adds it
     // since we're actually requiring a module name and not a path.
-    requirejs({ paths: { [o.name]: o.url.replace(/\.js$/, '') } });
+    requirejs({
+      paths: {
+        [o.name]: o.url.replace(/\.js$/, ''),
+      },
+    });
   }
-  let pluginId = o.name || o.url;
-  let onLoad = Plugin => {
-    let instance = new Plugin(pluginId, window.extp);
-    let meta = new PluginMeta({
+  const pluginId = o.name || o.url;
+  const onLoad = Plugin => {
+    const instance = new Plugin(pluginId, window.extp);
+    const meta = new PluginMeta({
       id: pluginId,
       fullUrl: url,
       name: instance.name,
       description: instance.description,
-      instance: instance,
-      class: Plugin
+      instance,
+      class: Plugin,
     });
     cb(null, meta);
   };
-  requirejs([ pluginId ], onLoad, cb);
-};
+  requirejs([pluginId], onLoad, cb);
+}

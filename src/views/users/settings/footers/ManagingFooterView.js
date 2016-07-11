@@ -1,3 +1,4 @@
+import $ from 'jquery';
 import GroupFooterView from './GroupFooterView';
 
 const ManagingFooterView = GroupFooterView.extend({
@@ -11,7 +12,7 @@ const ManagingFooterView = GroupFooterView.extend({
 
   remove() {
     this.$done.off();
-  }
+  },
 });
 
 export default ManagingFooterView;

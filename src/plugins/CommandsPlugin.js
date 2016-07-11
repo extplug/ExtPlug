@@ -1,15 +1,15 @@
 import Plugin from '../Plugin';
-import _package from '../package';
+import packageMeta from '../../package.json';
 
 // version info
-const pad = x => x < 10 ? `0${x}` : x;
-const ba = new Date(_package.builtAt);
-const builtAt = ba.getUTCFullYear() + '-'
-              + pad(ba.getUTCMonth()   + 1) + '-'
-              + pad(ba.getUTCDate()    + 1) + ' '
-              + pad(ba.getUTCHours()   + 1) + ':'
-              + pad(ba.getUTCMinutes() + 1) + ':'
-              + pad(ba.getUTCSeconds() + 1) + ' UTC';
+const pad = x => (x < 10 ? `0${x}` : x);
+const ba = new Date(packageMeta.builtAt);
+const builtAt = `${ba.getUTCFullYear()}-` +
+                `${pad(ba.getUTCMonth() + 1)}-` +
+                `${pad(ba.getUTCDate() + 1)} ` +
+                `${pad(ba.getUTCHours())}:` +
+                `${pad(ba.getUTCMinutes())}:` +
+                `${pad(ba.getUTCSeconds())} UTC`;
 
 const CommandsPlugin = Plugin.extend({
   name: 'Chat Commands',
@@ -18,11 +18,11 @@ const CommandsPlugin = Plugin.extend({
   commands: {
     version: 'showVersion',
     reloadsettings: 'reloadRoomSettings',
-    disable: 'disableExtPlug'
+    disable: 'disableExtPlug',
   },
 
   showVersion() {
-    API.chatLog(`${_package.name} v${_package.version} (${builtAt})`);
+    API.chatLog(`${packageMeta.name} v${packageMeta.version} (${builtAt})`);
   },
 
   reloadRoomSettings() {
@@ -36,7 +36,7 @@ const CommandsPlugin = Plugin.extend({
     API.chatLog('Disabling ExtPlug! ' +
                 'You cannot re-enable ExtPlug until the next refresh.');
     this.ext.disable();
-  }
+  },
 });
 
 export default CommandsPlugin;

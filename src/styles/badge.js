@@ -1,3 +1,5 @@
+/* eslint-disable quote-props */
+
 // the red ExtPlug badge in the top left corner
 export default {
   '#app-menu .button i:after': {
@@ -11,6 +13,7 @@ export default {
     'padding': '1px 4px',
     'margin-top': '5px',
     'position': 'relative',
-    'float': 'right'
-  }
+    'float': 'right',
+  },
 };
+/* eslint-enable quote-props */

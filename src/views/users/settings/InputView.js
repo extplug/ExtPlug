@@ -63,7 +63,7 @@ const InputView = View.extend({
   onBlur() {
     this.$wrapper.removeClass('focused');
     this.trigger('change', this.$input.val());
-  }
+  },
 });
 
 export default InputView;

@@ -1,8 +1,9 @@
-import { constructor as GrabMenu } from 'plug/views/grabs/grabMenu';
+import $ from 'jquery';
 import Media from 'plug/models/Media';
+import { constructor as GrabMenu } from 'plug/views/grabs/grabMenu';
 import Lang from 'lang/Lang';
 
-const fakeMedia = [ new Media() ];
+const fakeMedia = [new Media()];
 
 const PlaylistSelectMenuView = GrabMenu.extend({
   className: 'pop-menu extplug-playlist-select-menu',
@@ -15,9 +16,15 @@ const PlaylistSelectMenuView = GrabMenu.extend({
   // plug has a little delay in here because it auto-hides the grab
   // menu when the mouse leaves the area.
   hide() {
-    this.$modal && this.$modal.remove();
-    if (this._hide) this._hide();
-    else this._super();
+    if (this.$modal) {
+      this.$modal.remove();
+    }
+
+    if (this._hide) { // eslint-disable-line no-underscore-dangle
+      this._hide(); // eslint-disable-line no-underscore-dangle
+    } else {
+      this._super();
+    }
   },
 
   onRowPress(playlist) {
@@ -36,8 +43,7 @@ const PlaylistSelectMenuView = GrabMenu.extend({
       if (row.model) {
         if (row.model.get('id') === this.options.selected.get('id')) {
           row.$el.append($('<i />').addClass('icon icon-check-purple'));
-        }
-        else if (row.model.get('active')) {
+        } else if (row.model.get('active')) {
           row.$el.find('.icon-check-purple').remove();
         }
       }
@@ -50,7 +56,7 @@ const PlaylistSelectMenuView = GrabMenu.extend({
     this.$el.css('z-index', parseInt(this.$modal.css('z-index'), 10) + 1);
 
     return this;
-  }
+  },
 });
 
 export default PlaylistSelectMenuView;

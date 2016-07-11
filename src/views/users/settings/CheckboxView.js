@@ -20,10 +20,10 @@ const CheckboxView = Backbone.View.extend({
 
     if (this.description) {
       this.$el
-        .on('mouseenter', function () {
-          Events.trigger('tooltip:show', this.description, this.$el);
-        }.bind(this))
-        .on('mouseleave', function () { Events.trigger('tooltip:hide'); });
+        .on('mouseenter', () =>
+          Events.trigger('tooltip:show', this.description, this.$el)
+        )
+        .on('mouseleave', () => Events.trigger('tooltip:hide'));
     }
 
     if (this.enabled) {
@@ -35,12 +35,12 @@ const CheckboxView = Backbone.View.extend({
   },
   onChange() {
     this.$el.toggleClass('selected');
-    var enabled = this.enabled;
+    const enabled = this.enabled;
     this.enabled = this.$el.hasClass('selected');
     if (enabled !== this.enabled) {
       this.trigger('change', this.enabled);
     }
-  }
+  },
 });
 
 export default CheckboxView;

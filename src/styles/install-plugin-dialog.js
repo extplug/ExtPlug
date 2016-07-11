@@ -1,10 +1,18 @@
+/* eslint-disable quote-props */
 export default {
   '#dialog-install-plugin': {
     // magic numbers! stolen from other plug.dj dialogs
-    '.dialog-body': { 'height': '137px' },
-    '.message': { 'top': '21px' },
+    '.dialog-body': {
+      'height': '137px',
+    },
+    '.message': {
+      'top': '21px',
+    },
     // centered spinner
-    '.spinner': { 'top': '50%', 'left': '50%' },
+    '.spinner': {
+      'top': '50%',
+      'left': '50%',
+    },
     // Plugin URL input, center-aligned and wide
     '.dialog-input-background': {
       'top': '67px',
@@ -12,8 +20,9 @@ export default {
       'height': '43px',
       'left': '25px',
       'input': {
-        'width': '440px'
-      }
-    }
-  }
+        'width': '440px',
+      },
+    },
+  },
 };
+/* eslint-enable quote-props */

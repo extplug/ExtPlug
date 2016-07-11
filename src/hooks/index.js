@@ -5,5 +5,5 @@ import * as popoutStyleHook from './popout-style';
 export default [
   apiEarlyHook,
   playbackHook,
-  popoutStyleHook
+  popoutStyleHook,
 ];

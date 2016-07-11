@@ -4,10 +4,13 @@ import PluginMeta from '../models/PluginMeta';
 const PluginsCollection = Collection.extend({
   model: PluginMeta,
   comparator(a, b) {
-    return a.get('name') > b.get('name') ? 1
-         : a.get('name') < b.get('name') ? -1
-         : 0;
-  }
+    if (a.get('name') > b.get('name')) {
+      return 1;
+    } else if (a.get('name') < b.get('name')) {
+      return -1;
+    }
+    return 0;
+  },
 });
 
 export default PluginsCollection;

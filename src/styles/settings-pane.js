@@ -1,3 +1,4 @@
+/* eslint-disable quote-props */
 export default {
   '#user-view #user-settings': {
     // unlike plug.dj's own settings, ExtPlug settings are grouped
@@ -6,7 +7,7 @@ export default {
     // manual margins around the header to make things look somewhat
     // alike.
     '.extplug.control-group:not(:first-child) .header': {
-      'margin': '35px 0 8px 0 !important'
+      'margin': '35px 0 8px 0 !important',
     },
 
     // footer below grouped plugin settings
@@ -14,8 +15,8 @@ export default {
       'clear': 'both',
       'button': {
         'top': 'auto',
-        'position': 'relative'
-      }
+        'position': 'relative',
+      },
     },
 
     // numeric range slider
@@ -23,32 +24,32 @@ export default {
       // plug.dj has three labels on sliders, but ExtPlug sliders
       // just have two counter labels because it's easier
       '.counts .count:nth-child(2)': {
-        'float': 'right'
-      }
+        'float': 'right',
+      },
     },
 
     '.extplug-dropdown': {
       '.title': {
-        'top': '6px'
+        'top': '6px',
       },
       '.dropdown': {
         'width': '50%',
         'top': '-5px',
-        'margin-left': '50%'
+        'margin-left': '50%',
       },
       '.extplug-dropdown-up': {
         'dd': {
           'position': 'absolute',
           'bottom': '39px',
-          'width': '100%'
-        }
-      }
+          'width': '100%',
+        },
+      },
     },
 
     'label.title': {
       'top': '0px',
       'font-size': '14px',
-      'width': '50%'
+      'width': '50%',
     },
 
     '.extplug-input': {
@@ -61,7 +62,7 @@ export default {
         'padding': '1px',
         'width': '47%',
         'left': '50%',
-        'top': '-6px'
+        'top': '-6px',
       },
       'input': {
         'padding': '1px 1px 1px 5px',
@@ -71,12 +72,12 @@ export default {
         'font': '14px "Open Sans", sans-serif',
         'color': '#ccc',
         'background': 'transparent',
-        'border': 'none'
+        'border': 'none',
       },
       '.error': {
         // someone decided to !important the default .focused style ):
-        'box-shadow': 'inset 0 0 0 1px #f04f30 !important'
-      }
+        'box-shadow': 'inset 0 0 0 1px #f04f30 !important',
+      },
     },
 
     // colour inputs
@@ -86,12 +87,12 @@ export default {
         'width': '23px',
         'top': '4px',
         'left': '4px',
-        'position': 'absolute'
+        'position': 'absolute',
       },
       'input': {
         'width': 'calc(100% - 29px)',
-        'margin-left': '29px'
-      }
+        'margin-left': '29px',
+      },
     },
 
     // playlist select
@@ -108,15 +109,16 @@ export default {
         // cut off long playlist names
         'white-space': 'nowrap',
         'text-overflow': 'ellipsis',
-        'overflow': 'hidden'
-      }
-    }
+        'overflow': 'hidden',
+      },
+    },
   },
 
   '.extplug-playlist-select-menu': {
     '.icon-playlist': {
       'top': '9px',
-      'left': '9px'
-    }
-  }
+      'left': '9px',
+    },
+  },
 };
+/* eslint-enable quote-props */

@@ -1,12 +1,12 @@
-import Plugin from '../Plugin';
+import $ from 'jquery';
+import { find } from 'underscore';
+import { before, after, joinpoint } from 'meld';
 import chatFacade from 'plug/facades/chatFacade';
 import currentUser from 'plug/models/currentUser';
 import currentRoom from 'plug/models/currentRoom';
 import ChatView from 'plug/views/rooms/chat/ChatView';
 import Events from 'plug/core/Events';
-import { find } from 'underscore';
-import { before, after, joinpoint } from 'meld';
-import $ from 'jquery';
+import Plugin from '../Plugin';
 
 // Adds a bunch of new chat events.
 // "chat:incoming" is fired as soon as a new message is received from the socket.
@@ -24,7 +24,7 @@ function fireBeforeReceive(message, isSystemMessage) {
 // "chat:afterreceive" is fired after the message has been rendered. It gets two arguments:
 //   The Message object, and a jQuery object containing the message DOM element.
 function fireAfterReceive(message) {
-  let element = $('#chat-messages .cm:last-child');
+  const element = $('#chat-messages .cm:last-child');
   Events.trigger('chat:afterreceive', message, element);
 }
 // "chat:send" is fired when the user sends a message. It takes a single argument: A string
@@ -48,7 +48,9 @@ const MoreChatEvents = Plugin.extend({
   enable() {
     Events.on('chat:receive', fireBeforeReceive);
     // ensure fireBeforeReceive is the first event handler to be called
-    Events._events['chat:receive'].unshift(Events._events['chat:receive'].pop());
+    const receiveHandlers =
+      Events._events['chat:receive']; // eslint-disable-line no-underscore-dangle
+    receiveHandlers.unshift(receiveHandlers.pop());
     this.incomingAdvice = before(chatFacade, 'onChatReceived', fireIncoming);
     this.replaceEventHandler(() => {
       this.afterReceiveAdvice = after(ChatView.prototype, 'onReceived', () => {
@@ -67,16 +69,19 @@ const MoreChatEvents = Plugin.extend({
 
   // replace callback without affecting calling order
   replaceEventHandler(fn) {
-    let chatView = this.ext.appView.room.chat;
+    const chatView = this.ext.appView.room.chat;
     let handler;
     if (chatView) {
-      handler = find(Events._events['chat:receive'], e => e.callback === chatView.onReceived);
+      handler = find(
+        Events._events['chat:receive'], // eslint-disable-line no-underscore-dangle
+        e => e.callback === chatView.onReceived
+      );
     }
     fn();
     if (chatView && handler) {
       handler.callback = chatView.onReceived;
     }
-  }
+  },
 });
 
 export default MoreChatEvents;

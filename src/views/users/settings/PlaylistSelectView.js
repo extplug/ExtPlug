@@ -1,6 +1,7 @@
-import PlaylistSelectMenuView from './PlaylistSelectMenuView';
+import $ from 'jquery';
 import { View } from 'backbone';
 import playlists from 'plug/collections/playlists';
+import PlaylistSelectMenuView from './PlaylistSelectMenuView';
 
 const PlaylistSelectView = View.extend({
   className: 'item extplug-playlist-select',
@@ -24,8 +25,8 @@ const PlaylistSelectView = View.extend({
   },
 
   open() {
-    let menu = new PlaylistSelectMenuView({
-      selected: this.value
+    const menu = new PlaylistSelectMenuView({
+      selected: this.value,
     });
     menu.show(this.$selected);
     menu.on('select', playlist => {
@@ -33,7 +34,7 @@ const PlaylistSelectView = View.extend({
       this.$selected.text(this.value.get('name'));
       this.trigger('change', playlist.get('id'));
     });
-  }
+  },
 });
 
 export default PlaylistSelectView;

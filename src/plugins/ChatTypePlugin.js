@@ -28,31 +28,31 @@ import Plugin from '../Plugin';
 const ChatTypePlugin = Plugin.extend({
   style: {
     '.badge-box .emoji-outer': {
-      'margin': '7px'
+      margin: '7px',
     },
     '.inline .badge-box .emoji-outer': {
-      'margin': '0 7px'
-    }
+      margin: '0 7px',
+    },
   },
 
   enable() {
     // chatView.onReceived will still be the old method after adding advice
     // so the event listener should also be swapped out
     this.replaceEventHandler(() => {
-      this._chatTypeAdvice = around(ChatView.prototype, 'onReceived', this.onReceived);
+      this.chatTypeAdvice = around(ChatView.prototype, 'onReceived', this.onReceived);
     });
   },
   disable() {
     // remove custom chat type advice, and restore
     // the original event listener
     this.replaceEventHandler(() => {
-      this._chatTypeAdvice.remove();
+      this.chatTypeAdvice.remove();
     });
   },
 
   // bound to the ChatView instance
   onReceived(joinpoint) {
-    let message = joinpoint.args[0];
+    const message = joinpoint.args[0];
     if (message.type.split(' ').indexOf('custom') !== -1) {
       // plug.dj has some nice default styling on "update" messages
       message.type += ' update';
@@ -68,15 +68,15 @@ const ChatTypePlugin = Plugin.extend({
     // insert the chat message element
     joinpoint.proceed();
 
-    let el = this.$chatMessages.children().last();
+    const el = this.$chatMessages.children().last();
     if (message.classes) {
       el.addClass(message.classes);
     }
     if (message.badge) {
-      // emoji badge
       if (/^:(.*?):$/.test(message.badge)) {
-        let badgeBox = el.find('.badge-box');
-        let emojiName = message.badge.slice(1, -1);
+        // emoji badge
+        const badgeBox = el.find('.badge-box');
+        const emojiName = message.badge.slice(1, -1);
         if (emoji.map.colons[emojiName]) {
           badgeBox.find('i').remove();
           badgeBox
@@ -84,10 +84,9 @@ const ChatTypePlugin = Plugin.extend({
             // compatibility class
             .find('.emoji-outer').addClass('extplug-badji');
         }
-      }
-      // icon badge
-      else if (/^icon-(.*?)$/.test(message.badge)) {
-        let badgeBox = el.find('.badge-box');
+      } else if (/^icon-(.*?)$/.test(message.badge)) {
+        // icon badge
+        const badgeBox = el.find('.badge-box');
         badgeBox.find('i')
           .removeClass()
           .addClass('icon').addClass(message.badge);
@@ -100,10 +99,13 @@ const ChatTypePlugin = Plugin.extend({
 
   // replace callback without affecting calling order
   replaceEventHandler(fn) {
-    let chatView = this.ext.appView.room.chat;
+    const chatView = this.ext.appView.room.chat;
     let handler;
     if (chatView) {
-      handler = find(Events._events['chat:receive'], e => e.callback === chatView.onReceived);
+      handler = find(
+        Events._events['chat:receive'], // eslint-disable-line no-underscore-dangle
+        e => e.callback === chatView.onReceived
+      );
     }
     fn();
     if (chatView) {
@@ -112,7 +114,7 @@ const ChatTypePlugin = Plugin.extend({
       }
       handler.callback = chatView.onReceived;
     }
-  }
+  },
 });
 
 export default ChatTypePlugin;

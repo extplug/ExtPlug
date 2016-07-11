@@ -16,6 +16,7 @@
     "underscore": "^1.6.0"
   },
   "devDependencies": {
+    "babel-eslint": "^6.1.2",
     "babel-plugin-external-helpers": "^6.5.0",
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-extplug": "^1.0.0",
@@ -41,6 +42,6 @@
   },
   "scripts": {
     "build": "gulp build",
-    "test": "eslint gulpfile.babel.js src/**/*.js test/**/*.js"
+    "test": "eslint gulpfile.babel.js src test"
   }
 }

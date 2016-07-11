@@ -7,7 +7,7 @@ const roleClasses = [
   'bouncer',
   'manager',
   'cohost',
-  'host'
+  'host',
 ];
 // CSS classes for global roles
 const gRoleClasses = [
@@ -16,7 +16,7 @@ const gRoleClasses = [
   '',
   'ambassador',
   '',
-  'admin'
+  'admin',
 ];
 
 /**
@@ -35,8 +35,8 @@ const gRoleClasses = [
  *     "id-${THEIR_ID} role-manager role-none role-friend"
  */
 function getUserClasses(uid) {
-  let classes = [];
-  let user = API.getUser(uid);
+  const classes = [];
+  const user = API.getUser(uid);
 
   classes.push(`id-${uid}`);
   if (user) {
