@@ -1,15 +1,15 @@
 import { Model } from 'backbone';
 
-const Settings = Model.extend({
+const metaSymbol = Symbol('settings schema');
 
+const Settings = Model.extend({
   initialize(attrs, opts = {}) {
-    this._meta = opts.meta;
+    this[metaSymbol] = opts.meta;
   },
 
   meta() {
-    return this._meta;
-  }
-
+    return this[metaSymbol];
+  },
 });
 
 export default Settings;

@@ -1,26 +1,8 @@
-import { View } from 'backbone';
-import ControlGroupView from './ControlGroupView';
-import PluginsGroupView from './PluginsGroupView';
-import CheckboxView from './CheckboxView';
-import RemoveBoxView from './RemoveBoxView';
-import PluginMeta from '../../../models/PluginMeta';
-import Events from 'plug/core/Events';
-import window from 'plug/util/window';
-import { defer } from 'underscore';
 import $ from 'jquery';
-
-/**
- * Wires a control to a setting model, updating the model when the control changes.
- *
- * @param {Backbone.View} el Control view.
- * @param {Backbone.Model} settings Model to reflect the settings to.
- * @param {string} target Relevant property on the model.
- */
-function wireSettingToModel(view, settings, target) {
-  view.on('change', function (value) {
-    settings.set(target, value);
-  });
-}
+import { defer } from 'underscore';
+import { View } from 'backbone';
+import window from 'plug/util/window';
+import PluginsGroupView from './PluginsGroupView';
 
 const SettingsView = View.extend({
   className: 'ext-plug section',
@@ -56,22 +38,22 @@ const SettingsView = View.extend({
     this.groups = [];
     this.addGroup('Plugins', this.createPluginsGroup(), 1000);
     this.addGroup('ExtPlug', this.createExtPlugGroup(), 999);
-    this.plugins.forEach(function (plugin) {
+    this.plugins.forEach(plugin => {
       // add plugin settings group for stuff that was already enabled
       if (plugin.get('enabled')) {
-        let pluginSettings = this.createSettingsGroup(plugin);
+        const pluginSettings = this.createSettingsGroup(plugin);
         if (pluginSettings) {
           this.addGroup(plugin.get('name'), pluginSettings);
         }
       }
-    }, this);
+    });
   },
 
   render() {
     if (this.scrollPane) {
       this.scrollPane.destroy();
       defer(() => {
-        let size = window.getSize();
+        const size = window.getSize();
         this.onResize(size.width, size.height);
       });
     }
@@ -79,15 +61,15 @@ const SettingsView = View.extend({
     this.$el.empty().append(this.$container);
 
     this.sort();
-    this.groups.forEach(function (group) {
-      let header = $('<div />').addClass('header').append(
+    this.groups.forEach(group => {
+      const header = $('<div />').addClass('header').append(
         $('<span>').text(group.name)
       );
       group.view.render();
       this.$container
         .append(header)
         .append(group.view.$el);
-    }, this);
+    });
 
     this.$container.jScrollPane();
     this.scrollPane = this.$container.data('jsp');
@@ -96,8 +78,8 @@ const SettingsView = View.extend({
   },
 
   createPluginsGroup() {
-    let pluginsGroup = new PluginsGroupView({
-      collection: this.plugins
+    const pluginsGroup = new PluginsGroupView({
+      collection: this.plugins,
     });
     return pluginsGroup;
   },
@@ -106,9 +88,9 @@ const SettingsView = View.extend({
   },
 
   createSettingsGroup(pluginMeta) {
-    let plugin = pluginMeta.get('instance');
-    if (!plugin._settings) {
-      return;
+    const plugin = pluginMeta.get('instance');
+    if (!plugin._settings) { // eslint-disable-line no-underscore-dangle
+      return null;
     }
 
     return plugin.getSettingsView();
@@ -118,9 +100,11 @@ const SettingsView = View.extend({
     this.groups.sort((a, b) => {
       let c = b.priority - a.priority;
       if (c === 0) {
-        c = a.name > b.name ? 1
-          : a.name < b.name ? -1
-          : 0;
+        if (a.name > b.name) {
+          c = 1;
+        } else if (a.name < b.name) {
+          c = -1;
+        }
       }
       return c;
     });
@@ -135,9 +119,9 @@ const SettingsView = View.extend({
 
   addGroup(name, view, priority) {
     this.groups.push({
-      name: name,
-      view: view,
-      priority: typeof priority === 'number' ? priority : 0
+      name,
+      view,
+      priority: typeof priority === 'number' ? priority : 0,
     });
   },
 
@@ -147,6 +131,7 @@ const SettingsView = View.extend({
         return this.groups[i].view;
       }
     }
+    return null;
   },
 
   hasGroup(name) {
@@ -159,8 +144,8 @@ const SettingsView = View.extend({
         return this.groups.splice(i, 1);
       }
     }
-  }
-
+    return null;
+  },
 });
 
 export default SettingsView;

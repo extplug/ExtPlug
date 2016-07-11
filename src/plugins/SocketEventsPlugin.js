@@ -1,36 +1,35 @@
-import Plugin from '../Plugin';
+import { defer, pick } from 'underscore';
+import { before } from 'meld';
 import Events from 'plug/core/Events';
 import chatFacade from 'plug/facades/chatFacade';
-import receiver from 'plug/server/socketReceiver';
 import currentRoom from 'plug/models/currentRoom';
 import currentUser from 'plug/models/currentUser';
-import { before } from 'meld';
-import { defer, pick } from 'underscore';
+import Plugin from '../Plugin';
 
 const CHAT_INTERCEPT_STRING = `ExtPlugSocketIntercept${Math.random()}`;
 
 // gives the user all permissions client-side temporarily, to make sure that
 // a chat message will actually be passed to the socket.
 function sudo(cb) {
-  let originalUser = currentUser.toJSON();
+  const originalUser = currentUser.toJSON();
   currentUser.set({
     id: 1,
     guest: false,
     level: 50,
     role: 5,
-    gRole: 5
+    gRole: 5,
   }, { silent: true });
 
-  let originalRoom = pick(currentRoom.toJSON(), 'joined', 'minChatLevel');
+  const originalRoom = pick(currentRoom.toJSON(), 'joined', 'minChatLevel');
   currentRoom.set({
     joined: true,
-    minChatLevel: 0
+    minChatLevel: 0,
   }, { silent: true });
 
   // this forces the chat slowmode cooldown timer to always return 0, thus
   // working around slowmode
-  let originalMax = Math.max;
-  Math.max = () => 0
+  const originalMax = Math.max;
+  Math.max = () => 0;
 
   cb();
 
@@ -40,12 +39,12 @@ function sudo(cb) {
 }
 
 function getSocket() {
-  let _send = WebSocket.prototype.send;
+  const send = WebSocket.prototype.send;
   let socket;
-  WebSocket.prototype.send = function (data) {
+  WebSocket.prototype.send = function sendIntercept(data) {
     if (data.indexOf(CHAT_INTERCEPT_STRING)) {
       socket = this;
-      WebSocket.prototype.send = _send;
+      WebSocket.prototype.send = send;
     }
   };
   sudo(() => {
@@ -53,14 +52,14 @@ function getSocket() {
   });
 
   // restore even if it didn't work
-  WebSocket.prototype.send = _send;
+  WebSocket.prototype.send = send;
 
   return socket;
 }
 
 const SocketEventsPlugin = Plugin.extend({
   enable() {
-    let plugin = this;
+    const plugin = this;
     this.socket = getSocket();
 
     if (this.socket) {
@@ -71,9 +70,9 @@ const SocketEventsPlugin = Plugin.extend({
     // if ExtPlug loads before plug.dj connects, by overriding the WebSocket
     // constructor
     const WS = WebSocket;
-    WebSocket = function (arg) {
+    window.WebSocket = function WebSocketIntercept(arg) {
       plugin.debug('instance', arg);
-      let ws = new WS(arg);
+      const ws = new WS(arg);
       // wait for plug.dj to add handlers
       defer(() => {
         // find the socket object again, this new connection might be
@@ -90,7 +89,7 @@ const SocketEventsPlugin = Plugin.extend({
   },
 
   disable() {
-    if (this.WS) WebSocket = this.WS;
+    if (this.WS) window.WebSocket = this.WS;
     if (this.advice) this.advice.remove();
 
     this.WS = null;
@@ -111,7 +110,7 @@ const SocketEventsPlugin = Plugin.extend({
         });
       }
     });
-  }
+  },
 });
 
 export default SocketEventsPlugin;

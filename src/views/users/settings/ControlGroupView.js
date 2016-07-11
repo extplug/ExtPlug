@@ -9,7 +9,7 @@ const ControlGroupView = View.extend({
   },
 
   render() {
-    let switchAt = Math.ceil(this.controls.length / 2 - 1);
+    const switchAt = Math.ceil((this.controls.length / 2) - 1);
     let current = $('<div />').addClass('left').appendTo(this.$el);
     this.controls.forEach((item, i) => {
       current.append(item.$el);
@@ -24,7 +24,7 @@ const ControlGroupView = View.extend({
   addControl(control) {
     this.controls.push(control);
     return this;
-  }
+  },
 });
 
 export default ControlGroupView;

@@ -1,3 +1,4 @@
+import $ from 'jquery';
 import { View } from 'backbone';
 
 const GroupFooterView = View.extend({
@@ -9,7 +10,7 @@ const GroupFooterView = View.extend({
     this.$el.append(this.$left, this.$right);
 
     return this._super();
-  }
+  },
 });
 
 export default GroupFooterView;

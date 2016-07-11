@@ -1,7 +1,8 @@
-import Plugin from '../Plugin';
+import $ from 'jquery';
+import { around } from 'meld';
 import Events from 'plug/core/Events';
 import emoji from 'plug/util/emoji';
-import { around } from 'meld';
+import Plugin from '../Plugin';
 
 const EmojiDataPlugin = Plugin.extend({
   name: 'Emoji Data',
@@ -12,11 +13,11 @@ const EmojiDataPlugin = Plugin.extend({
       let name = joinpoint.args[2];
       if (!name) {
         // attempt to find the name in the emoji-data map
-        let id = joinpoint.args[0];
-        let data = emoji.data[id];
+        const id = joinpoint.args[0];
+        const data = emoji.data[id];
         if (data) name = data[3][0];
       }
-      let html = joinpoint.proceed();
+      const html = joinpoint.proceed();
       if (name) {
         return html.replace(
           ' class="emoji-inner',
@@ -27,9 +28,9 @@ const EmojiDataPlugin = Plugin.extend({
     });
 
     this.listenTo(Events, 'chat:afterreceive', (msg, el) => {
-      el.find('.gemoji-plug').each(function () {
-        let inner = $(this);
-        let emojiName = inner.attr('class').match(/gemoji-plug-(\S+)/);
+      el.find('.gemoji-plug').each(function addDataAttr() {
+        const inner = $(this);
+        const emojiName = inner.attr('class').match(/gemoji-plug-(\S+)/);
         if (emojiName) {
           inner.attr('data-emoji-name', emojiName[1])
                .addClass(`extplug-emoji-${name}`);
@@ -40,7 +41,7 @@ const EmojiDataPlugin = Plugin.extend({
 
   disable() {
     this.advice.remove();
-  }
+  },
 });
 
 export default EmojiDataPlugin;

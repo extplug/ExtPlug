@@ -1,5 +1,5 @@
-import Backbone from 'backbone';
 import $ from 'jquery';
+import Backbone from 'backbone';
 import { each, defer } from 'underscore';
 
 const DropdownView = Backbone.View.extend({
@@ -25,8 +25,8 @@ const DropdownView = Backbone.View.extend({
     this.$rows = $('<dd />');
     let selected;
     each(this.options.options, (text, value) => {
-      let row = $('<div />').addClass('row').data('value', value);
-      let el = $('<span />').text(text);
+      const row = $('<div />').addClass('row').data('value', value);
+      const el = $('<span />').text(text);
       if (this.options.selected === value) {
         selected = row;
       }
@@ -61,15 +61,13 @@ const DropdownView = Backbone.View.extend({
     $(document).off('click', this.onDocumentClick);
   },
 
-  onBaseClick(e) {
+  onBaseClick() {
     if (this.$dl.hasClass('open')) {
       this.close();
-    }
-    else {
+    } else {
       if (this.canExpandDownward()) {
         this.$dl.addClass('open');
-      }
-      else {
+      } else {
         this.$dl.addClass('open extplug-dropdown-up');
       }
       defer(() => {
@@ -79,7 +77,7 @@ const DropdownView = Backbone.View.extend({
   },
 
   onRowClick(e) {
-    let row = $(e.target).closest('.row');
+    const row = $(e.target).closest('.row');
 
     this.$rows.children().removeClass('selected');
     row.addClass('selected');
@@ -89,17 +87,17 @@ const DropdownView = Backbone.View.extend({
     // will be closed by onDocumentClick()
   },
 
-  onDocumentClick(e) {
+  onDocumentClick() {
     defer(() => {
       this.close();
     });
   },
 
   canExpandDownward() {
-    let top = this.$dl.offset().top;
-    let bottom = top + this.$rows.height();
+    const top = this.$dl.offset().top;
+    const bottom = top + this.$rows.height();
     return bottom < $(document).height();
-  }
+  },
 });
 
 export default DropdownView;

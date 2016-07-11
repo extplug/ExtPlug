@@ -32,11 +32,11 @@ const RemoveBoxView = View.extend({
         title: 'Remove Plugin',
         message: 'Are you sure you want to uninstall this plugin?',
         action: () => {
-          extp.uninstall(this.model.get('id'));
-        }
+          window.extp.uninstall(this.model.get('id'));
+        },
       })
     ));
-  }
+  },
 });
 
 export default RemoveBoxView;

@@ -1,28 +1,28 @@
-import Plugin from '../Plugin';
-import Events from 'plug/core/Events';
 import $ from 'jquery';
+import Events from 'plug/core/Events';
+import Plugin from '../Plugin';
 
 const TooltipsPlugin = Plugin.extend({
   name: 'Tooltips',
   description: 'Provides super easy tooltips using data attributes.',
 
   enable() {
-    this._doc = $(document)
+    this.document = $(document)
       .on('mouseenter.extplug.core.tooltips', '[data-tooltip]', this.onEnter)
       .on('mouseleave.extplug.core.tooltips', '[data-tooltip]', this.onLeave);
   },
 
   disable() {
-    this._doc.off('.extplug.tooltips');
+    this.document.off('.extplug.tooltips');
   },
 
   onEnter(e) {
-    let target = $(e.target).closest('[data-tooltip]');
-    let dir = target.attr('data-tooltip-dir');
-    let alignLeft = dir && dir.toLowerCase() === 'left';
+    const target = $(e.target).closest('[data-tooltip]');
+    const dir = target.attr('data-tooltip-dir');
+    const alignLeft = dir && dir.toLowerCase() === 'left';
     Events.trigger('tooltip:show', target.attr('data-tooltip'), target, alignLeft);
   },
-  onLeave(e) {
+  onLeave() {
     Events.trigger('tooltip:hide');
   },
 

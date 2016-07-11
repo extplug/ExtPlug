@@ -1,6 +1,8 @@
-import Plugin from '../Plugin';
+import $ from 'jquery';
+import { extend } from 'underscore';
 import { before } from 'meld';
 import plugSettings from 'plug/store/settings';
+import Plugin from '../Plugin';
 import extMirror from '../store/settings';
 
 const PlugSettingsPlugin = Plugin.extend({
@@ -18,7 +20,7 @@ const PlugSettingsPlugin = Plugin.extend({
   },
 
   sync() {
-    const newSettings = _.extend({}, plugSettings.settings);
+    const newSettings = extend({}, plugSettings.settings);
     const muted = $('#volume .icon').hasClass('icon-volume-off');
     // when you mute a song using the volume button, plug.dj does not change the associated setting.
     // here we fake a volume of 0% anyway if the volume is muted, so ExtPlug modules can just
@@ -28,7 +30,7 @@ const PlugSettingsPlugin = Plugin.extend({
     }
     newSettings.muted = muted;
     extMirror.set(newSettings);
-  }
+  },
 });
 
 export default PlugSettingsPlugin;

@@ -5,7 +5,6 @@ import ManagingFooterView from './footers/ManagingFooterView';
 import ControlGroupView from './ControlGroupView';
 
 const PluginsGroupView = ControlGroupView.extend({
-
   initialize() {
     this.collection.on('reset add remove', this.onUpdate, this);
     this.onUpdate();
@@ -36,19 +35,17 @@ const PluginsGroupView = ControlGroupView.extend({
       let box = null;
       if (this.managing) {
         box = new RemoveBoxView({ model: plugin });
-      }
-      else {
+      } else {
         box = new CheckboxView({
           label: plugin.get('name'),
           description: plugin.get('instance').description || false,
-          enabled: plugin.get('enabled')
+          enabled: plugin.get('enabled'),
         });
       }
       box.on('change', enabled => {
         if (enabled) {
           plugin.get('instance').enable();
-        }
-        else {
+        } else {
           plugin.get('instance').disable();
         }
       });
@@ -65,8 +62,7 @@ const PluginsGroupView = ControlGroupView.extend({
     this.managing = false;
     this.onUpdate();
     this.render();
-  }
-
+  },
 });
 
 export default PluginsGroupView;

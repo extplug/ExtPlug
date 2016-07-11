@@ -1,7 +1,6 @@
 import { Model } from 'backbone';
 
 const PluginMeta = Model.extend({
-
   defaults: {
     id: '',
     fullUrl: '',
@@ -9,13 +8,13 @@ const PluginMeta = Model.extend({
     name: '',
     description: '',
     instance: null,
-    class: null
+    class: null,
   },
 
   initialize() {
     this.get('instance')
-      .on('enable',  () => { this.set('enabled', true);  })
-      .on('disable', () => { this.set('enabled', false); });
+      .on('enable', () => this.set('enabled', true))
+      .on('disable', () => this.set('enabled', false));
   },
 
   enable() {
@@ -28,8 +27,7 @@ const PluginMeta = Model.extend({
     if (this.get('enabled')) {
       this.get('instance').disable();
     }
-  }
-
+  },
 });
 
 export default PluginMeta;

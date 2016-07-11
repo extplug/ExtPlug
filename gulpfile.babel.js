@@ -8,13 +8,13 @@ import fs from 'fs';
 import gulp from 'gulp';
 import merge from 'merge-stream';
 import mkdirp from 'mkdirp';
-import packg  from './package.json';
 import rename from 'gulp-rename';
 import rjs from 'requirejs';
 import runseq from 'run-sequence';
 import source from 'vinyl-source-stream';
 import template from 'gulp-template';
 import zip from 'gulp-zip';
+import packg from './package.json';
 
 gulp.task('clean-lib', cb => {
   del('lib', cb);
@@ -24,32 +24,30 @@ gulp.task('clean-build', cb => {
   del('build', cb);
 });
 
-gulp.task('clean', [ 'clean-lib', 'clean-build' ]);
+gulp.task('clean', ['clean-lib', 'clean-build']);
 
-gulp.task('babel', () => {
-  return gulp.src('src/**/*.js')
+gulp.task('babel', () =>
+  gulp.src('src/**/*.js')
     .pipe(babel({
       presets: ['extplug'],
-      plugins: ['external-helpers']
+      plugins: ['external-helpers'],
     }))
     .pipe(babelHelpers('_babelHelpers.js', 'var'))
-    .pipe(gulp.dest('lib/'));
-});
+    .pipe(gulp.dest('lib/'))
+);
 
-const nodelib = (entry, standalone, name) => {
-  name = name || `${standalone}.js`;
-
-  let opts = {
-    entries: `./node_modules/${entry}`
+const nodelib = (entry, standalone, name = `${standalone}.js`) => {
+  const opts = {
+    entries: `./node_modules/${entry}`,
   };
-  if (standalone) opts.standalone = standalone;
+  if (standalone) {
+    opts.standalone = standalone;
+  }
 
-  return () => {
-    return browserify(opts)
-      .bundle()
-      .pipe(source(name))
-      .pipe(gulp.dest('build/_deps/'));
-  };
+  return () => browserify(opts)
+    .bundle()
+    .pipe(source(name))
+    .pipe(gulp.dest('build/_deps/'));
 };
 
 gulp.task('lib-debug', nodelib('debug/browser.js', 'debug'));
@@ -63,18 +61,18 @@ gulp.task('dependencies', [
   'lib-semvercmp',
   'lib-sistyl',
   'lib-symbol',
-  'lib-regexp-quote'
+  'lib-regexp-quote',
 ]);
 
 gulp.task('rjs', done => {
-  let npm = 'node_modules/';
+  const npm = 'node_modules/';
   packg.builtAt = Date.now();
-  let packgString = JSON.stringify(packg, null, 2);
+  const packgString = JSON.stringify(packg, null, 2);
   delete packg.builtAt;
   rjs.optimize({
     baseUrl: './',
     name: 'extplug/main',
-    include: [ 'extplug/ExtPlug' ],
+    include: ['extplug/ExtPlug'],
     paths: {
       // plug-modules defines, these are defined at runtime
       // so the r.js optimizer can't find them
@@ -83,43 +81,41 @@ gulp.task('rjs', done => {
       backbone: 'empty:',
       jquery: 'empty:',
       underscore: 'empty:',
-      meld: npm + 'meld/meld',
+      meld: `${npm}meld/meld`,
       sistyl: 'build/_deps/sistyl',
       extplug: 'lib',
       'plug-modules': `${npm}plug-modules/plug-modules`,
-      'debug': 'build/_deps/debug',
-      'onecolor': `${npm}onecolor/one-color-all`,
+      debug: 'build/_deps/debug',
+      onecolor: `${npm}onecolor/one-color-all`,
       'regexp-quote': 'build/_deps/regexp-quote',
-      'semver-compare': 'build/_deps/semvercmp'
+      'semver-compare': 'build/_deps/semvercmp',
     },
     rawText: {
-      'extplug/package': `define(${packgString})`
+      'package.json': `define(${packgString})`,
+      'extplug/package': `define(${packgString})`,
     },
-    insertRequire: [ 'extplug/main' ],
+    insertRequire: ['extplug/main'],
     optimize: 'none',
     out(text) {
       mkdirp('build', e => {
         if (e) {
           done(e);
-        }
-        else {
+        } else {
           fs.writeFile('build/build.rjs.js', text, done);
         }
       });
-    }
+    },
   });
 });
 
-gulp.task('concat', () => {
-  return gulp.src([ 'build/_deps/es6-symbol.js'
-                  , 'lib/_babelHelpers.js'
-                  , 'build/build.rjs.js' ])
+gulp.task('concat', () =>
+  gulp.src(['build/_deps/es6-symbol.js', 'lib/_babelHelpers.js', 'build/build.rjs.js'])
     .pipe(concat('extplug.code.js'))
-    .pipe(gulp.dest('build/'));
-});
+    .pipe(gulp.dest('build/'))
+);
 
-gulp.task('build', [ 'concat' ], () => {
-  return gulp.src('src/loader.js.template')
+gulp.task('build', ['concat'], () =>
+  gulp.src('src/loader.js.template')
     .pipe(data((file, cb) => {
       fs.readFile('build/extplug.code.js', 'utf8', (e, c) => {
         if (e) cb(e);
@@ -128,65 +124,61 @@ gulp.task('build', [ 'concat' ], () => {
     }))
     .pipe(template())
     .pipe(rename('extplug.js'))
-    .pipe(gulp.dest('build/'));
-});
+    .pipe(gulp.dest('build/'))
+);
 
-gulp.task('chrome-unpacked', cb => {
-  return merge(
-    gulp.src([ 'extensions/chrome/main.js', 'extensions/chrome/manifest.json' ])
-      .pipe(template(packg))
-      .pipe(gulp.dest('build/chrome/')),
+gulp.task('chrome-unpacked', () => merge(
+  gulp.src(['extensions/chrome/main.js', 'extensions/chrome/manifest.json'])
+    .pipe(template(packg))
+    .pipe(gulp.dest('build/chrome/')),
 
-    gulp.src([ 'img/icon*.png' ])
-      .pipe(gulp.dest('build/chrome/img/')),
+  gulp.src(['img/icon*.png'])
+    .pipe(gulp.dest('build/chrome/img/')),
 
-    gulp.src([ 'build/extplug.js' ])
-      .pipe(concat('extplug.js'))
-      .pipe(gulp.dest('build/chrome/'))
-  );
-});
+  gulp.src(['build/extplug.js'])
+    .pipe(concat('extplug.js'))
+    .pipe(gulp.dest('build/chrome/'))
+));
 
-gulp.task('chrome-pack', () => {
-  return gulp.src('build/chrome/*')
+gulp.task('chrome-pack', () =>
+  gulp.src('build/chrome/*')
     .pipe(zip('extplug.chrome.zip'))
-    .pipe(gulp.dest('build/'));
-});
+    .pipe(gulp.dest('build/'))
+);
 
 gulp.task('chrome', cb => {
   runseq('chrome-unpacked', 'chrome-pack', cb);
 });
 
-gulp.task('firefox', () => {
-  return merge(
-    gulp.src([ 'extensions/firefox/*' ])
-      .pipe(template(packg))
-      .pipe(gulp.dest('build/firefox/')),
+gulp.task('firefox', () => merge(
+  gulp.src(['extensions/firefox/*'])
+    .pipe(template(packg))
+    .pipe(gulp.dest('build/firefox/')),
 
-    gulp.src([ 'build/extplug.js' ])
-      .pipe(gulp.dest('build/firefox/data/'))
-  );
-});
+  gulp.src(['build/extplug.js'])
+    .pipe(gulp.dest('build/firefox/data/'))
+));
 
-gulp.task('userscript-meta', () => {
-  return gulp.src([ 'extensions/userscript/extplug.user.js' ])
+gulp.task('userscript-meta', () =>
+  gulp.src(['extensions/userscript/extplug.user.js'])
     .pipe(template(packg))
     .pipe(rename('extplug.meta.user.js'))
-    .pipe(gulp.dest('build/'));
-});
+    .pipe(gulp.dest('build/'))
+);
 
-gulp.task('userscript', [ 'userscript-meta' ], () => {
-  return gulp.src([ 'build/extplug.meta.user.js', 'build/extplug.js' ])
+gulp.task('userscript', ['userscript-meta'], () =>
+  gulp.src(['build/extplug.meta.user.js', 'build/extplug.js'])
     .pipe(concat('extplug.user.js'))
-    .pipe(gulp.dest('build/'));
-});
+    .pipe(gulp.dest('build/'))
+);
 
 gulp.task('default', cb => {
   runseq(
     'clean',
-    [ 'babel', 'dependencies' ],
+    ['babel', 'dependencies'],
     'rjs',
     'build',
-    [ 'chrome', 'firefox', 'userscript' ],
+    ['chrome', 'firefox', 'userscript'],
     cb
   );
 });

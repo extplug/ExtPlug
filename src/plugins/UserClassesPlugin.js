@@ -1,12 +1,13 @@
-import Plugin from '../Plugin';
-import getUserClasses from '../util/getUserClasses';
+import $ from 'jquery';
+import { defer } from 'underscore';
+import { after } from 'meld';
 import Events from 'plug/core/Events';
 import currentUser from 'plug/models/currentUser';
 import UserRowView from 'plug/views/rooms/users/RoomUserRowView';
 import WaitListRowView from 'plug/views/rooms/users/WaitListRowView';
 import userRolloverView from 'plug/views/users/userRolloverView';
-import { after } from 'meld';
-import { defer } from 'underscore';
+import Plugin from '../Plugin';
+import getUserClasses from '../util/getUserClasses';
 
 const r = API.ROLE;
 const { roleClasses } = getUserClasses;
@@ -18,20 +19,19 @@ const UserClasses = Plugin.extend({
   enable() {
     this.listenTo(Events, 'chat:beforereceive', this.onChat);
 
-    let plugin = this;
     // common advice for user lists
-    let rowAdvice = function () {
+    const rowAdvice = function afterUpdateRow() {
       // `this` is the row view
-      let id = this.model.get('id');
+      const id = this.model.get('id');
       if (id) {
         this.$el.addClass(getUserClasses(id).join(' '));
       }
     };
     this.rowClasses = after(UserRowView.prototype, 'draw', rowAdvice);
     this.waitListClasses = after(WaitListRowView.prototype, 'render', rowAdvice);
-    this.rolloverClasses = after(userRolloverView, 'showSimple', function () {
+    this.rolloverClasses = after(userRolloverView, 'showSimple', function afterShowSimple() {
       // `this` is the rollover view
-      let id = this.user.get('id');
+      const id = this.user.get('id');
       if (id) {
         this.$el.addClass(getUserClasses(id).join(' '));
       }
@@ -47,7 +47,7 @@ const UserClasses = Plugin.extend({
   },
 
   onChat(msg) {
-    let classes = msg.classes ? [ msg.classes ] : [];
+    const classes = msg.classes ? [msg.classes] : [];
     if (msg.uid) {
       classes.push(...getUserClasses(msg.uid));
       // additional plugCubed chat-only classes
@@ -55,15 +55,14 @@ const UserClasses = Plugin.extend({
       // just use getUserClasses()
       classes.push(`fromID-${msg.uid}`);
 
-      let user = API.getUser(msg.uid);
+      const user = API.getUser(msg.uid);
       if (msg.uid === API.getUser().id) {
         classes.push('from-you');
       }
       if (user) {
         if (user.gRole === r.HOST) {
           classes.push('from-admin');
-        }
-        else if (user.gRole >= r.BOUNCER) {
+        } else if (user.gRole >= r.BOUNCER) {
           classes.push('from-ambassador');
         }
         if (user.friend) {
@@ -97,16 +96,16 @@ const UserClasses = Plugin.extend({
 
   setUserFooterClass() {
     defer(() => {
-      let footer = $('#footer-user');
-      let online = footer.hasClass('online');
-      let showing = footer.hasClass('showing');
+      const footer = $('#footer-user');
+      const online = footer.hasClass('online');
+      const showing = footer.hasClass('showing');
       footer
         .removeClass()
         .toggleClass('online', online)
         .toggleClass('showing', showing)
         .addClass(getUserClasses(API.getUser().id).join(' '));
     });
-  }
+  },
 });
 
 export default UserClasses;

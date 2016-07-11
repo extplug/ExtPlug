@@ -7,8 +7,8 @@ import popoutView from 'plug/views/rooms/popout/PopoutView';
 // hack to get plug.dj-like Class inheritance on a not-plug.dj-like Class
 const Style = Class.extend({
   init(defaults) {
-    this._sistyl = new Sistyl(defaults);
-    this._timeout = null;
+    this.sistyl = new Sistyl(defaults);
+    this.timeout = null;
 
     this.refresh = this.refresh.bind(this);
     this.id = _.uniqueId('eps-');
@@ -17,7 +17,7 @@ const Style = Class.extend({
                             .attr('id', this.id)
                             .attr('type', 'text/css')
                             .appendTo('head');
-    if (popoutView._window) {
+    if (popoutView._window) { // eslint-disable-line no-underscore-dangle
       this.el.clone().appendTo(popoutView.$document.find('head'));
     }
     this.refresh();
@@ -25,28 +25,28 @@ const Style = Class.extend({
 
   $() {
     let el = this.el;
-    if (popoutView._window) {
+    if (popoutView._window) { // eslint-disable-line no-underscore-dangle
       el = el.add(popoutView.$document.find(`#${this.id}`));
     }
     return el;
   },
 
   set(sel, props) {
-    this._sistyl.set(sel, props);
+    this.sistyl.set(sel, props);
 
     // throttle updates
-    clearTimeout(this._timeout);
-    this._timeout = setTimeout(this.refresh, 1);
+    clearTimeout(this.timeout);
+    this.timeout = setTimeout(this.refresh, 1);
     return this;
   },
 
   unset(sel, prop) {
-    this._sistyl.unset(sel, prop);
+    this.sistyl.unset(sel, prop);
     return this;
   },
 
   rulesets() {
-    return this._sistyl.rulesets();
+    return this.sistyl.rulesets();
   },
 
   refresh() {
@@ -58,8 +58,8 @@ const Style = Class.extend({
   },
 
   toString() {
-    return this._sistyl.toString();
-  }
+    return this.sistyl.toString();
+  },
 
 });
 

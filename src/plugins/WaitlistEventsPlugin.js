@@ -1,19 +1,17 @@
-import Plugin from '../Plugin';
-import booth from 'plug/models/booth';
-import waitlist from 'plug/collections/waitlist';
-import users from 'plug/collections/users';
 import { difference, extend } from 'underscore';
+import booth from 'plug/models/booth';
+import Plugin from '../Plugin';
 
 const events = {
   WAIT_LIST_LEAVE: 'waitListLeave',
-  WAIT_LIST_JOIN: 'waitListJoin'
+  WAIT_LIST_JOIN: 'waitListJoin',
 };
 
 function onChange() {
-  let newList = booth.get('waitingDJs');
-  let oldList = booth.previous('waitingDJs');
-  let left = difference(oldList, newList);
-  let entered = difference(newList, oldList);
+  const newList = booth.get('waitingDJs');
+  const oldList = booth.previous('waitingDJs');
+  const left = difference(oldList, newList);
+  const entered = difference(newList, oldList);
 
   left.forEach(uid => {
     API.dispatch(API.WAIT_LIST_LEAVE, API.getUser(uid));
@@ -37,7 +35,7 @@ const WaitlistEvents = Plugin.extend({
     Object.keys(events).forEach(n => {
       delete API[n];
     });
-  }
+  },
 });
 
 export default WaitlistEvents;

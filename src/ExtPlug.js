@@ -1,10 +1,10 @@
+import * as _ from 'underscore';
+
 import Events from 'plug/core/Events';
 import ApplicationView from 'plug/views/app/ApplicationView';
 import currentUser from 'plug/models/currentUser';
 
-import settings from './store/settings';
 import RoomSettings from './models/RoomSettings';
-import PluginMeta from './models/PluginMeta';
 import PluginsCollection from './collections/PluginsCollection';
 import Plugin from './Plugin';
 import * as pluginLoader from './pluginLoader';
@@ -21,10 +21,7 @@ import SocketEventsPlugin from './plugins/SocketEventsPlugin';
 import WaitlistEventsPlugin from './plugins/WaitlistEventsPlugin';
 import PlugSettingsPlugin from './plugins/PlugSettingsPlugin';
 
-import * as _package from './package';
-
-import * as _ from 'underscore';
-import semvercmp from 'semver-compare';
+import * as packageMeta from '../package.json';
 
 import hooks from './hooks/index';
 
@@ -38,9 +35,11 @@ const LS_NAME = 'extPlugins';
 
 // Try to parse as JSON, defaulting to an empty object.
 function jsonParse(str) {
-  try { return JSON.parse(str) || {}; }
-  catch (e) {}
-  return {};
+  try {
+    return JSON.parse(str) || {};
+  } catch (e) {
+    return {};
+  }
 }
 
 /**
@@ -55,7 +54,7 @@ function jsonParse(str) {
  * @return {ApplicationView} The ApplicationView instance of this page.
  */
 function getApplicationView() {
-  let evts = Events._events['show:room'];
+  const evts = Events._events['show:room']; // eslint-disable-line no-underscore-dangle
   // Backbone event handlers have a .ctx property, containing what they will be bound to.
   // And ApplicationView adds a handler that's bound to itself!
   let appView;
@@ -75,13 +74,19 @@ function getApplicationView() {
  */
 const ExtPlug = Plugin.extend({
   name: 'ExtPlug',
+
   settings: {
-    corsProxy: { type: 'boolean', default: true, label: 'Use CORS proxy' }
+    corsProxy: {
+      type: 'boolean',
+      default: true,
+      label: 'Use CORS proxy',
+    },
   },
+
   init() {
     this._super('extplug', this);
 
-    this._core = [
+    this.corePlugins = [
       new CommandsPlugin('extplug:chat-commands', this),
       new SettingsTabPlugin('extplug:settings-tab', this),
       new MoreChatEventsPlugin('extplug:more-chat-events', this),
@@ -91,10 +96,17 @@ const ExtPlug = Plugin.extend({
       new TooltipsPlugin('extplug:tooltips', this),
       new SocketEventsPlugin('extplug:socket-events', this),
       new WaitlistEventsPlugin('extplug:waitlist-events', this),
-      new PlugSettingsPlugin('extplug:plug-settings', this)
+      new PlugSettingsPlugin('extplug:plug-settings', this),
     ];
 
-    this._guest = new GuestPlugin('extplug:guest', this);
+    this.guestPlugin = new GuestPlugin('extplug:guest', this);
+
+    // Alias for compatibility with old versions.
+    Object.defineProperty(this, '_plugins', {
+      get() {
+        return this.plugins;
+      },
+    });
   },
 
   /**
@@ -104,20 +116,24 @@ const ExtPlug = Plugin.extend({
    */
   registerPlugin(id, cb) {
     pluginLoader.load(id, (e, meta) => {
-      if (e) return cb && cb(e);
-      this._plugins.add(meta);
-      let instance = meta.get('instance');
-      let state = this._getPluginSettings(meta.get('id'));
+      if (e) {
+        if (cb) cb(e);
+        return;
+      }
+
+      this.plugins.add(meta);
+      const instance = meta.get('instance');
+      const state = this.getPluginSettings(meta.get('id'));
       instance.settings.set(state.settings);
       instance.settings.on('change', () => {
-        this._savePluginSettings(meta.get('id'));
+        this.savePluginSettings(meta.get('id'));
       });
       if (state.enabled) {
-        _.defer(() => {
-          meta.enable();
-        });
+        _.defer(() => meta.enable());
       }
-      if (cb) cb(null);
+      if (cb) {
+        cb(null);
+      }
     });
     return this;
   },
@@ -126,15 +142,15 @@ const ExtPlug = Plugin.extend({
    * Disables and removes an ExtPlug plugin.
    */
   unregisterPlugin(id) {
-    let plugin = this._plugins.findWhere({ id: id });
+    const plugin = this.plugins.findWhere({ id });
     if (plugin) {
       plugin.disable();
-      this._plugins.remove(plugin);
+      this.plugins.remove(plugin);
     }
   },
 
   getPlugin(id) {
-    let meta = this._plugins.get(id);
+    const meta = this.plugins.get(id);
     return meta ? meta.get('instance') : null;
   },
 
@@ -145,9 +161,12 @@ const ExtPlug = Plugin.extend({
    */
   install(id, cb) {
     this.registerPlugin(id, (e) => {
-      if (e) return cb(e);
-      let json = jsonParse(localStorage.getItem(LS_NAME));
-      json.installed = (json.installed || []).concat([ id ]);
+      if (e) {
+        cb(e);
+        return;
+      }
+      const json = jsonParse(localStorage.getItem(LS_NAME));
+      json.installed = (json.installed || []).concat([id]);
       localStorage.setItem(LS_NAME, JSON.stringify(json));
       cb(null);
     });
@@ -158,9 +177,9 @@ const ExtPlug = Plugin.extend({
    */
   uninstall(id) {
     this.unregisterPlugin(id);
-    let json = jsonParse(localStorage.getItem(LS_NAME));
+    const json = jsonParse(localStorage.getItem(LS_NAME));
     if (json.installed) {
-      let i = json.installed.indexOf(id);
+      const i = json.installed.indexOf(id);
       if (i !== -1) {
         json.installed.splice(i, 1);
         localStorage.setItem(LS_NAME, JSON.stringify(json));
@@ -171,20 +190,19 @@ const ExtPlug = Plugin.extend({
   /**
    * Loads installed plugins.
    */
-  _loadInstalled() {
-    let { installed } = jsonParse(localStorage.getItem(LS_NAME));
+  loadInstalledPlugins() {
+    const { installed } = jsonParse(localStorage.getItem(LS_NAME));
     if (_.isArray(installed)) {
-      let l = installed.length;
+      const l = installed.length;
       let i = 0;
-      let errors = [];
+      const errors = [];
       const done = () => {
         if (errors.length) {
           errors.forEach(e => {
             Events.trigger('notify', 'icon-chat-system',
                            `Plugin error: ${e.message}`);
           });
-        }
-        else if (i > 0) {
+        } else if (i > 0) {
           Events.trigger('notify', 'icon-plug-dj',
                          `ExtPlug: loaded ${i} plugins.`);
         }
@@ -212,7 +230,7 @@ const ExtPlug = Plugin.extend({
    */
   onFirstRun() {
     localStorage.setItem(LS_NAME, JSON.stringify({
-      version: _package.version,
+      version: packageMeta.version,
       installed: [
         'autowoot/build/autowoot.js;extplug/autowoot/main',
         'chat-notifications/build/chat-notifications.js;' +
@@ -222,9 +240,9 @@ const ExtPlug = Plugin.extend({
         'hide-badges/build/hide-badges.js;extplug/hide-badges/main',
         'meh-icons/build/meh-icons.js;extplug/meh-icons/main',
         'room-styles/build/room-styles.js;extplug/room-styles/main',
-        'show-deleted/build/show-deleted.js;extplug/show-deleted/main'
+        'show-deleted/build/show-deleted.js;extplug/show-deleted/main',
       ].map(path => `https://extplug.github.io/${path}`),
-      plugins: {}
+      plugins: {},
     }));
   },
 
@@ -242,9 +260,9 @@ const ExtPlug = Plugin.extend({
     /**
      * Internal map of registered plugins.
      */
-    this._plugins = new PluginsCollection();
-    this._plugins.on('change:enabled', (plugin, enabled) => {
-      this._savePluginSettings(plugin.get('id'));
+    this.plugins = new PluginsCollection();
+    this.plugins.on('change:enabled', plugin => {
+      this.savePluginSettings(plugin.get('id'));
     });
 
     if (this.isFirstRun()) this.onFirstRun();
@@ -258,7 +276,7 @@ const ExtPlug = Plugin.extend({
       hook.install();
     });
 
-    this._core.forEach(plugin => {
+    this.corePlugins.forEach(plugin => {
       plugin.enable();
     });
 
@@ -272,13 +290,13 @@ const ExtPlug = Plugin.extend({
     // room settings
     this.roomSettings = new RoomSettings(this);
 
-    this._loadInstalled();
-    Events.trigger('notify', 'icon-plug-dj', `ExtPlug v${_package.version} loaded`);
+    this.loadInstalledPlugins();
+    Events.trigger('notify', 'icon-plug-dj', `ExtPlug v${packageMeta.version} loaded`);
 
     if (currentUser.get('guest')) {
-      this._guest.enable();
+      this.guestPlugin.enable();
       currentUser.once('change:guest', () => {
-        this._guest.disable();
+        this.guestPlugin.disable();
       });
     }
 
@@ -291,17 +309,17 @@ const ExtPlug = Plugin.extend({
    * Everything should be unloaded here, so the Plug.DJ page looks like nothing ever happened.
    */
   disable() {
-    this._plugins.off().forEach(mod => {
+    this.plugins.off().forEach(mod => {
       mod.disable();
     });
-    this._core.forEach(plugin => {
+    this.corePlugins.forEach(plugin => {
       plugin.disable();
     });
     hooks.forEach(hook => {
       hook.uninstall();
     });
 
-    this._guest.disable();
+    this.guestPlugin.disable();
 
     // remove room settings handling
     this.roomSettings.dispose();
@@ -313,20 +331,28 @@ const ExtPlug = Plugin.extend({
    * Persists plugin settings to localStorage.
    * @private
    */
-  _savePluginSettings(id) {
-    let json = jsonParse(localStorage.getItem(LS_NAME));
-    let plugin = this._plugins.findWhere({ id: id });
-    let settings = plugin.get('instance').settings;
-    if (!json.plugins) json.plugins = {};
-    json.plugins[id] = { enabled: plugin.get('enabled'), settings: settings };
+  savePluginSettings(id) {
+    const json = jsonParse(localStorage.getItem(LS_NAME));
+    const plugin = this.plugins.findWhere({ id });
+    const settings = plugin.get('instance').settings;
+
+    if (!json.plugins) {
+      json.plugins = {};
+    }
+
+    json.plugins[id] = {
+      enabled: plugin.get('enabled'),
+      settings,
+    };
+
     localStorage.setItem(LS_NAME, JSON.stringify(json));
   },
 
   /**
    * Retrieves plugin settings from localStorage.
    */
-  _getPluginSettings(id) {
-    let settings = jsonParse(localStorage.getItem(LS_NAME)).plugins;
+  getPluginSettings(id) {
+    const settings = jsonParse(localStorage.getItem(LS_NAME)).plugins;
     if (settings && id in settings) {
       return settings[id];
     }
@@ -338,7 +364,7 @@ const ExtPlug = Plugin.extend({
    */
   upgrade() {
     // Empty
-  }
+  },
 });
 
 export default ExtPlug;

@@ -7,11 +7,10 @@ import TabMenuView from '../views/users/settings/TabMenuView';
 import SettingsSectionView from '../views/users/settings/SettingsView';
 
 const SettingsTabPlugin = Plugin.extend({
-
   enable() {
-    let userView = this.ext.appView.user;
+    const userView = this.ext.appView.user;
     Events.off('show:user', userView.show);
-    this._userPaneAdvice = after(UserView.prototype, 'show', (category, sub) => {
+    this.userPaneAdvice = after(UserView.prototype, 'show', (category, sub) => {
       if (category === 'settings' && sub === 'ext-plug') {
         this.view.menu.select(sub);
       }
@@ -19,14 +18,13 @@ const SettingsTabPlugin = Plugin.extend({
     Events.on('show:user', userView.show, userView);
 
     // Add ExtPlug tab to user settings
-    this._settingsTabAdvice = around(UserSettingsView.prototype, 'getMenu', () => {
-      return new TabMenuView();
-    });
-    this._settingsPaneAdvice = around(UserSettingsView.prototype, 'getView', joinpoint => {
+    this.settingsTabAdvice = around(UserSettingsView.prototype, 'getMenu',
+      () => new TabMenuView());
+    this.settingsPaneAdvice = around(UserSettingsView.prototype, 'getView', joinpoint => {
       if (joinpoint.args[0] === 'ext-plug') {
         return new SettingsSectionView({
-          plugins: this.ext._plugins,
-          ext: this.ext
+          plugins: this.ext.plugins,
+          ext: this.ext,
         });
       }
       return joinpoint.proceed();
@@ -34,14 +32,13 @@ const SettingsTabPlugin = Plugin.extend({
   },
 
   disable() {
-    this._settingsTabAdvice.remove();
-    this._settingsPaneAdvice.remove();
-    let userView = this.ext.appView.user;
+    this.settingsTabAdvice.remove();
+    this.settingsPaneAdvice.remove();
+    const userView = this.ext.appView.user;
     Events.off('show:user', userView.show);
-    this._userPaneAdvice.remove();
+    this.userPaneAdvice.remove();
     Events.on('show:user', userView.show, userView);
-  }
-
+  },
 });
 
 export default SettingsTabPlugin;
