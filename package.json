@@ -41,7 +41,8 @@
     "vinyl-source-stream": "^1.1.0"
   },
   "scripts": {
-    "build": "gulp build",
+    "prepublish": "npm run build",
+    "build": "gulp",
     "test": "eslint gulpfile.babel.js src test"
   }
 }
