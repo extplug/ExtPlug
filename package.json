@@ -3,14 +3,17 @@
   "version": "0.15.8",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
+    "backbone": "^1.1.2",
     "debug": "^2.2.0",
     "es6-symbol": "^2.0.1",
+    "jquery": "^2.1.1",
     "meld": "^1.3.2",
     "onecolor": "^2.5.0",
     "plug-modules": "^4.3.3",
     "regexp-quote": "0.0.0",
     "semver-compare": "^1.0.0",
-    "sistyl": "^1.0.0"
+    "sistyl": "^1.0.0",
+    "underscore": "^1.6.0"
   },
   "devDependencies": {
     "babel-plugin-external-helpers": "^6.5.0",
@@ -19,6 +22,9 @@
     "babel-preset-stage-2": "^6.5.0",
     "browserify": "^11.0.1",
     "del": "^1.2.1",
+    "eslint": "^3.0.1",
+    "eslint-config-airbnb-base": "^4.0.0",
+    "eslint-plugin-import": "^1.10.2",
     "gulp": "^3.9.0",
     "gulp-babel": "^6.1.2",
     "gulp-babel-external-helpers": "^2.0.0",
@@ -27,7 +33,6 @@
     "gulp-rename": "^1.2.2",
     "gulp-template": "^3.0.0",
     "gulp-zip": "^3.0.2",
-    "jscs": "^1.13.1",
     "merge-stream": "^1.0.0",
     "mkdirp": "^0.5.1",
     "requirejs": "^2.1.20",
@@ -36,6 +41,6 @@
   },
   "scripts": {
     "build": "gulp build",
-    "test": "jscs src"
+    "test": "eslint gulpfile.babel.js src/**/*.js test/**/*.js"
   }
 }
