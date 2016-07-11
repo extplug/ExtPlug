@@ -4,9 +4,9 @@ import ShowDialogEvent from 'plug/events/ShowDialogEvent';
 import InstallPluginDialog from '../../../dialogs/InstallPluginDialog';
 import GroupFooterView from './GroupFooterView';
 
-const PluginsFooterView = GroupFooterView.extend({
+export default class PluginsFooterView extends GroupFooterView {
   render() {
-    this._super();
+    super.render();
     this.$install = $('<button />').text('Install Plugin');
     this.$manage = $('<button />').text('Manage');
 
@@ -21,12 +21,10 @@ const PluginsFooterView = GroupFooterView.extend({
     this.$left.append(this.$install);
     this.$right.append(this.$manage);
     return this;
-  },
+  }
 
   remove() {
     this.$install.off();
     this.$manage.off();
-  },
-});
-
-export default PluginsFooterView;
+  }
+}

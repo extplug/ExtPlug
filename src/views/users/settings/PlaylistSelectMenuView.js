@@ -5,12 +5,12 @@ import Lang from 'lang/Lang';
 
 const fakeMedia = [new Media()];
 
-const PlaylistSelectMenuView = GrabMenu.extend({
-  className: 'pop-menu extplug-playlist-select-menu',
+export default class PlaylistSelectMenuView extends GrabMenu {
+  className = 'pop-menu extplug-playlist-select-menu';
 
   // don't hide automatically on mouse leave
   onMouseLeave() {
-  },
+  }
 
   // hide immediately on hide() calls.
   // plug has a little delay in here because it auto-hides the grab
@@ -23,14 +23,14 @@ const PlaylistSelectMenuView = GrabMenu.extend({
     if (this._hide) { // eslint-disable-line no-underscore-dangle
       this._hide(); // eslint-disable-line no-underscore-dangle
     } else {
-      this._super();
+      super.hide();
     }
-  },
+  }
 
   onRowPress(playlist) {
     this.trigger('select', playlist);
     this.hide();
-  },
+  }
 
   show(el, container) {
     this._super(el, fakeMedia, container);
@@ -56,7 +56,5 @@ const PlaylistSelectMenuView = GrabMenu.extend({
     this.$el.css('z-index', parseInt(this.$modal.css('z-index'), 10) + 1);
 
     return this;
-  },
-});
-
-export default PlaylistSelectMenuView;
+  }
+}

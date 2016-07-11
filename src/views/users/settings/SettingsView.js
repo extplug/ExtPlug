@@ -4,8 +4,8 @@ import { View } from 'backbone';
 import window from 'plug/util/window';
 import PluginsGroupView from './PluginsGroupView';
 
-const SettingsView = View.extend({
-  className: 'ext-plug section',
+export default class SettingsView extends View {
+  className = 'ext-plug section';
 
   initialize(o) {
     this.plugins = o.plugins;
@@ -16,23 +16,23 @@ const SettingsView = View.extend({
     this.plugins
       .on('change:enabled', this.onEnabledChange, this)
       .on('reset add remove', this.onUpdate, this);
-  },
+  }
 
   remove() {
     this.plugins
       .on('change:enabled', this.onEnabledChange)
       .off('reset add remove', this.onUpdate);
-  },
+  }
 
   onUpdate() {
     this.refresh();
     this.render();
-  },
+  }
 
   onEnabledChange() {
     // TODO only add/remove changed groups
     this.onUpdate();
-  },
+  }
 
   refresh() {
     this.groups = [];
@@ -47,7 +47,7 @@ const SettingsView = View.extend({
         }
       }
     });
-  },
+  }
 
   render() {
     if (this.scrollPane) {
@@ -75,17 +75,17 @@ const SettingsView = View.extend({
     this.scrollPane = this.$container.data('jsp');
 
     return this;
-  },
+  }
 
   createPluginsGroup() {
     const pluginsGroup = new PluginsGroupView({
       collection: this.plugins,
     });
     return pluginsGroup;
-  },
+  }
   createExtPlugGroup() {
     return this.ext.getSettingsView();
-  },
+  }
 
   createSettingsGroup(pluginMeta) {
     const plugin = pluginMeta.get('instance');
@@ -94,7 +94,7 @@ const SettingsView = View.extend({
     }
 
     return plugin.getSettingsView();
-  },
+  }
 
   sort() {
     this.groups.sort((a, b) => {
@@ -108,14 +108,14 @@ const SettingsView = View.extend({
       }
       return c;
     });
-  },
+  }
 
   onResize(w, h) {
     this.$container.height(h - this.$container.offset().top);
     if (this.scrollPane) {
       this.scrollPane.reinitialise();
     }
-  },
+  }
 
   addGroup(name, view, priority) {
     this.groups.push({
@@ -123,7 +123,7 @@ const SettingsView = View.extend({
       view,
       priority: typeof priority === 'number' ? priority : 0,
     });
-  },
+  }
 
   getGroup(name) {
     for (let i = 0, l = this.groups.length; i < l; i += 1) {
@@ -132,11 +132,11 @@ const SettingsView = View.extend({
       }
     }
     return null;
-  },
+  }
 
   hasGroup(name) {
     return this.groups.some(group => group.name === name);
-  },
+  }
 
   removeGroup(name) {
     for (let i = 0, l = this.groups.length; i < l; i += 1) {
@@ -145,7 +145,5 @@ const SettingsView = View.extend({
       }
     }
     return null;
-  },
-});
-
-export default SettingsView;
+  }
+}

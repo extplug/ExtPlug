@@ -5,14 +5,16 @@ import Events from 'plug/core/Events';
 /**
  * A checkbox setting item.
  */
-const CheckboxView = Backbone.View.extend({
-  className: 'item',
+export default class CheckboxView extends Backbone.View {
+  className = 'item';
+
   initialize(o) {
     this.label = o.label;
     this.description = o.description;
     this.enabled = o.enabled || false;
     this.onChange = this.onChange.bind(this);
-  },
+  }
+
   render() {
     this.$el
       .append('<i class="icon icon-check-blue" />')
@@ -20,10 +22,12 @@ const CheckboxView = Backbone.View.extend({
 
     if (this.description) {
       this.$el
-        .on('mouseenter', () =>
-          Events.trigger('tooltip:show', this.description, this.$el)
-        )
-        .on('mouseleave', () => Events.trigger('tooltip:hide'));
+        .on('mouseenter', () => {
+          Events.trigger('tooltip:show', this.description, this.$el);
+        })
+        .on('mouseleave', () => {
+          Events.trigger('tooltip:hide');
+        });
     }
 
     if (this.enabled) {
@@ -32,7 +36,8 @@ const CheckboxView = Backbone.View.extend({
 
     this.$el.on('click', this.onChange);
     return this;
-  },
+  }
+
   onChange() {
     this.$el.toggleClass('selected');
     const enabled = this.enabled;
@@ -40,7 +45,5 @@ const CheckboxView = Backbone.View.extend({
     if (enabled !== this.enabled) {
       this.trigger('change', this.enabled);
     }
-  },
-});
-
-export default CheckboxView;
+  }
+}

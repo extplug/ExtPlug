@@ -63,8 +63,7 @@ const controlFactory = {
   },
 };
 
-const DefaultSettingsView = ControlGroupView.extend({
-
+export default class DefaultSettingsView extends ControlGroupView {
   render() {
     this.controls = [];
 
@@ -78,16 +77,13 @@ const DefaultSettingsView = ControlGroupView.extend({
       }
     });
 
-    this._super();
+    super.render();
 
     return this;
-  },
+  }
 
   remove() {
     this.controls.forEach(control => control.destroy());
     this.controls = [];
-  },
-
-});
-
-export default DefaultSettingsView;
+  }
+}

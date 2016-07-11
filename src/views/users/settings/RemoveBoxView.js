@@ -7,11 +7,9 @@ import ShowDialogEvent from 'plug/events/ShowDialogEvent';
 /**
  * A checkbox setting item.
  */
-const RemoveBoxView = View.extend({
-  className: 'item selected',
-  initialize() {
-    this.onRemove = this.onRemove.bind(this);
-  },
+export default class RemoveBoxView extends View {
+  className = 'item selected';
+
   render() {
     this.$icon = $('<i />').addClass('icon icon-delete');
     this.$el
@@ -24,8 +22,9 @@ const RemoveBoxView = View.extend({
 
     this.$icon.on('click', this.onRemove);
     return this;
-  },
-  onRemove() {
+  }
+
+  onRemove = () => {
     Events.dispatch(new ShowDialogEvent(
       ShowDialogEvent.SHOW,
       new ConfirmDialog({
@@ -36,7 +35,5 @@ const RemoveBoxView = View.extend({
         },
       })
     ));
-  },
-});
-
-export default RemoveBoxView;
+  }
+}

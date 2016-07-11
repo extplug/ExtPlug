@@ -1,12 +1,9 @@
 import $ from 'jquery';
 import { View } from 'backbone';
 
-const ControlGroupView = View.extend({
-  className: 'extplug control-group',
-
-  initialize() {
-    this.controls = [];
-  },
+export default class ControlGroupView extends View {
+  className = 'extplug control-group';
+  controls = [];
 
   render() {
     const switchAt = Math.ceil((this.controls.length / 2) - 1);
@@ -19,12 +16,10 @@ const ControlGroupView = View.extend({
       }
     });
     return this;
-  },
+  }
 
   addControl(control) {
     this.controls.push(control);
     return this;
-  },
-});
-
-export default ControlGroupView;
+  }
+}

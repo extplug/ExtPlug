@@ -19,14 +19,15 @@ function template(o) {
   `;
 }
 
-const SliderView = Backbone.View.extend({
-  className: 'extplug-slider cap',
+export default class SliderView extends Backbone.View {
+  className = 'extplug-slider cap';
+
   initialize() {
     this.onStart = this.onStart.bind(this);
     this.onMove = this.onMove.bind(this);
     this.onStop = this.onStop.bind(this);
     this.value = this.options.value || this.options.min;
-  },
+  }
 
   render() {
     this.$el.append(template(this.options));
@@ -38,26 +39,29 @@ const SliderView = Backbone.View.extend({
       this.setValue(this.value, true);
     });
     return this;
-  },
+  }
 
-  onStart() {
+  onStart = () => {
     $(document)
       .on('mousemove', this.onMove)
       .on('mouseup', this.onStop);
-  },
-  onMove(e) {
+  }
+
+  onMove = (e) => {
     const offset = (e.pageX - this.$hit.offset().left);
     const percent = Math.max(0, Math.min(1, offset / (this.$hit.width() - this.$circle.width())));
     const value = Math.round(this.options.min + (percent * (this.options.max - this.options.min)));
     this.setValue(Math.max(this.options.min, value));
     e.preventDefault();
     e.stopPropagation();
-  },
-  onStop() {
+  }
+
+  onStop = () => {
     $(document)
       .off('mousemove', this.onMove)
       .off('mouseup', this.onStop);
-  },
+  }
+
   setValue(value, force) {
     if (value !== this.value || force) {
       const percent = (value - this.options.min) / (this.options.max - this.options.min);
@@ -69,7 +73,5 @@ const SliderView = Backbone.View.extend({
       this.trigger('change', value);
       this.value = value;
     }
-  },
-});
-
-export default SliderView;
+  }
+}

@@ -2,16 +2,11 @@ import $ from 'jquery';
 import onecolor from 'onecolor';
 import InputView from './InputView';
 
-const ColorInputView = InputView.extend({
-  className: 'item extplug-input extplug-color-input',
-
-  initialize(o) {
-    this._super(o);
-    this.onUpdate = this.onUpdate.bind(this);
-  },
+export default class ColorInputView extends InputView {
+  className = 'item extplug-input extplug-color-input';
 
   render() {
-    this._super();
+    super.render();
     this.$color = $('<div />')
       .addClass('extplug-color-swatch');
     this.$wrapper.append(this.$color);
@@ -21,7 +16,7 @@ const ColorInputView = InputView.extend({
     this.$input.on('keyup', this.onUpdate);
 
     return this;
-  },
+  }
 
   color() {
     try {
@@ -31,9 +26,9 @@ const ColorInputView = InputView.extend({
       // ignore
     }
     return null;
-  },
+  }
 
-  onUpdate() {
+  onUpdate = () => {
     const color = this.color();
     if (color) {
       this.$color.css({ 'background-color': color.css() });
@@ -41,12 +36,10 @@ const ColorInputView = InputView.extend({
     } else {
       this.$wrapper.addClass('error');
     }
-  },
+  }
 
   value() {
     const color = this.color();
     return color ? this.$input.val() : '';
-  },
-});
-
-export default ColorInputView;
+  }
+}

@@ -4,20 +4,20 @@ import PluginsFooterView from './footers/PluginsFooterView';
 import ManagingFooterView from './footers/ManagingFooterView';
 import ControlGroupView from './ControlGroupView';
 
-const PluginsGroupView = ControlGroupView.extend({
+export default class PluginsGroupView extends ControlGroupView {
   initialize() {
     this.collection.on('reset add remove', this.onUpdate, this);
     this.onUpdate();
-  },
+  }
 
   render() {
     this.$el.empty();
 
-    this._super();
+    super.render();
     this.renderFooter();
 
     return this;
-  },
+  }
 
   renderFooter() {
     if (this.footer) {
@@ -28,7 +28,7 @@ const PluginsGroupView = ControlGroupView.extend({
     this.footer.on('manage', this.manage, this);
     this.footer.render();
     this.$el.append(this.footer.$el);
-  },
+  }
 
   onUpdate() {
     this.controls = this.collection.toArray().map((plugin) => {
@@ -51,18 +51,16 @@ const PluginsGroupView = ControlGroupView.extend({
       });
       return box;
     });
-  },
+  }
 
   manage() {
     this.managing = true;
     this.onUpdate();
     this.render();
-  },
+  }
   unmanage() {
     this.managing = false;
     this.onUpdate();
     this.render();
-  },
-});
-
-export default PluginsGroupView;
+  }
+}

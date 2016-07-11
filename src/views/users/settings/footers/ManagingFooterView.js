@@ -1,18 +1,16 @@
 import $ from 'jquery';
 import GroupFooterView from './GroupFooterView';
 
-const ManagingFooterView = GroupFooterView.extend({
+export default class ManagingFooterView extends GroupFooterView {
   render() {
-    this._super();
+    super.render();
     this.$done = $('<button />').text('Done')
       .on('click', () => this.trigger('unmanage'));
     this.$right.append(this.$done);
     return this;
-  },
+  }
 
   remove() {
     this.$done.off();
-  },
-});
-
-export default ManagingFooterView;
+  }
+}

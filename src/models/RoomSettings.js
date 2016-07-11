@@ -5,9 +5,9 @@ import util from 'plug/util/util';
 import Events from 'plug/core/Events';
 import { json as getJson } from '../util/request';
 
-const RoomSettings = Backbone.Model.extend({
-  constructor() {
-    Backbone.Model.call(this, {});
+export default class RoomSettings extends Backbone.Model {
+  constructor(ext) {
+    super({});
 
     this.load = this.load.bind(this);
     this.unload = this.unload.bind(this);
@@ -18,7 +18,7 @@ const RoomSettings = Backbone.Model.extend({
     if (currentRoom.get('joined')) {
       this.load();
     }
-  },
+  }
 
   load(unload = false) {
     const description = currentRoom.get('description');
@@ -50,12 +50,12 @@ const RoomSettings = Backbone.Model.extend({
     } else if (unload) {
       this.unload();
     }
-  },
+  }
 
   unload() {
     this.clear();
     this.trigger('unload');
-  },
+  }
 
   reload() {
     // "joined" is set *after* "description"
@@ -64,12 +64,10 @@ const RoomSettings = Backbone.Model.extend({
         this.load(true);
       }
     });
-  },
+  }
 
   dispose() {
     this.unload();
     currentRoom.off('change:description', this.reload);
-  },
-});
-
-export default RoomSettings;
+  }
+}

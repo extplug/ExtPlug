@@ -5,8 +5,8 @@ import $ from 'jquery';
 
 const KEY_ENTER = 13;
 
-const InputView = View.extend({
-  className: 'item extplug-input',
+export default class InputView extends View {
+  className = 'item extplug-input';
 
   initialize(o) {
     this.label = o.label;
@@ -15,13 +15,7 @@ const InputView = View.extend({
 
     o.type = o.type || 'text';
     this.attributes = omit(o, 'label', 'value', 'description');
-
-    this.onKeyUp = this.onKeyUp.bind(this);
-    this.onKeyDown = this.onKeyDown.bind(this);
-    this.onFocus = this.onFocus.bind(this);
-    this.onBlur = this.onBlur.bind(this);
-    this.focus = this.focus.bind(this);
-  },
+  }
 
   render() {
     this.$label = $('<label />').addClass('title').text(this.label);
@@ -33,7 +27,9 @@ const InputView = View.extend({
         .on('mouseenter', () => {
           Events.trigger('tooltip:show', this.description, this.$el);
         })
-        .on('mouseleave', () => { Events.trigger('tooltip:hide'); });
+        .on('mouseleave', () => {
+          Events.trigger('tooltip:hide');
+        });
     }
 
     this.$input.on('keyup', this.onKeyUp);
@@ -42,28 +38,26 @@ const InputView = View.extend({
     this.$input.on('blur', this.onBlur);
 
     this.$el.on('mousedown', this.focus);
-  },
+  }
 
-  onKeyUp() {
-  },
+  onKeyUp = () => {
+  }
 
-  onKeyDown(e) {
+  onKeyDown = (e) => {
     if (e.keyCode === KEY_ENTER) {
       this.onBlur();
     }
-  },
+  }
 
-  focus() {
+  focus = () => {
     this.$input.focus();
-  },
+  }
 
-  onFocus() {
+  onFocus = () => {
     this.$wrapper.addClass('focused');
-  },
-  onBlur() {
+  }
+  onBlur = () => {
     this.$wrapper.removeClass('focused');
     this.trigger('change', this.$input.val());
-  },
-});
-
-export default InputView;
+  }
+}

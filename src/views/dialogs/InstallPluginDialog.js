@@ -5,9 +5,9 @@ import Events from 'plug/core/Events';
 import AlertEvent from 'plug/events/AlertEvent';
 import SpinnerView from 'plug/views/spinner/SpinnerView';
 
-const InstallPluginDialog = Dialog.extend({
-  id: 'dialog-install-plugin',
-  className: 'dialog',
+export default class InstallPluginDialog extends Dialog {
+  id = 'dialog-install-plugin';
+  className = 'dialog';
 
   render() {
     // don't overlay chat
@@ -26,12 +26,12 @@ const InstallPluginDialog = Dialog.extend({
         .append(this.$wrap))
       .append(this.getButtons('Install', true));
     defer(this.deferFocus.bind(this));
-    return this._super();
-  },
+    return super.render();
+  }
 
   deferFocus() {
     this.$input.focus();
-  },
+  }
 
   submit() {
     const inp = this.$input;
@@ -61,13 +61,11 @@ const InstallPluginDialog = Dialog.extend({
         }
       });
     }
-  },
+  }
 
   close() {
     $('#dialog-container').removeClass('is-preview');
     this.$input.off();
-    this._super();
-  },
-});
-
-export default InstallPluginDialog;
+    super.close();
+  }
+}

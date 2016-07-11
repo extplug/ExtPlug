@@ -2,8 +2,8 @@ import $ from 'jquery';
 import Backbone from 'backbone';
 import { each, defer } from 'underscore';
 
-const DropdownView = Backbone.View.extend({
-  className: 'extplug-dropdown',
+export default class DropdownView extends Backbone.View {
+  className = 'extplug-dropdown';
 
   initialize() {
     if (!this.options.selected) {
@@ -11,7 +11,7 @@ const DropdownView = Backbone.View.extend({
     }
 
     this.onDocumentClick = this.onDocumentClick.bind(this);
-  },
+  }
 
   render() {
     this.$label = $('<label />').addClass('title').text(this.options.label);
@@ -48,18 +48,18 @@ const DropdownView = Backbone.View.extend({
       selected.click();
     }
     return this;
-  },
+  }
 
   remove() {
     this.$('dt, dd').off();
     $(document).off('click', this.onDocumentClick);
-    this._super();
-  },
+    super.remove();
+  }
 
   close() {
     this.$dl.removeClass('open extplug-dropdown-up');
     $(document).off('click', this.onDocumentClick);
-  },
+  }
 
   onBaseClick() {
     if (this.$dl.hasClass('open')) {
@@ -74,7 +74,7 @@ const DropdownView = Backbone.View.extend({
         $(document).on('click', this.onDocumentClick);
       });
     }
-  },
+  }
 
   onRowClick(e) {
     const row = $(e.target).closest('.row');
@@ -85,19 +85,17 @@ const DropdownView = Backbone.View.extend({
     this.trigger('change', row.data('value'));
 
     // will be closed by onDocumentClick()
-  },
+  }
 
   onDocumentClick() {
     defer(() => {
       this.close();
     });
-  },
+  }
 
   canExpandDownward() {
     const top = this.$dl.offset().top;
     const bottom = top + this.$rows.height();
     return bottom < $(document).height();
-  },
-});
-
-export default DropdownView;
+  }
+}

@@ -3,14 +3,14 @@ import { View } from 'backbone';
 import playlists from 'plug/collections/playlists';
 import PlaylistSelectMenuView from './PlaylistSelectMenuView';
 
-const PlaylistSelectView = View.extend({
-  className: 'item extplug-playlist-select',
+export default class PlaylistSelectView extends View {
+  className = 'item extplug-playlist-select';
 
   initialize(o) {
     this.label = o.label;
     this.description = o.description;
     this.value = o.value ? playlists.get(o.value) : playlists.at(0);
-  },
+  }
 
   render() {
     this.$label = $('<label />')
@@ -22,7 +22,7 @@ const PlaylistSelectView = View.extend({
       .on('click', () => this.open());
     this.$el.append(this.$label, this.$selected);
     return this;
-  },
+  }
 
   open() {
     const menu = new PlaylistSelectMenuView({
@@ -34,7 +34,5 @@ const PlaylistSelectView = View.extend({
       this.$selected.text(this.value.get('name'));
       this.trigger('change', playlist.get('id'));
     });
-  },
-});
-
-export default PlaylistSelectView;
+  }
+}

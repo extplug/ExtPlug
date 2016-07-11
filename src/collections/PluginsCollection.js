@@ -1,8 +1,9 @@
 import { Collection } from 'backbone';
 import PluginMeta from '../models/PluginMeta';
 
-const PluginsCollection = Collection.extend({
-  model: PluginMeta,
+export default class PluginsCollection extends Collection {
+  model = PluginMeta;
+
   comparator(a, b) {
     if (a.get('name') > b.get('name')) {
       return 1;
@@ -10,7 +11,5 @@ const PluginsCollection = Collection.extend({
       return -1;
     }
     return 0;
-  },
-});
-
-export default PluginsCollection;
+  }
+}
