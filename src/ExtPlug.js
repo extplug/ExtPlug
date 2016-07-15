@@ -9,6 +9,7 @@ import PluginsCollection from './collections/PluginsCollection';
 import Plugin from './Plugin';
 import * as pluginLoader from './pluginLoader';
 
+import EarlyAPIEventsPlugin from './plugins/EarlyAPIEventsPlugin';
 import CommandsPlugin from './plugins/CommandsPlugin';
 import SettingsTabPlugin from './plugins/SettingsTabPlugin';
 import ChatTypePlugin from './plugins/ChatTypePlugin';
@@ -87,6 +88,7 @@ const ExtPlug = Plugin.extend({
     this._super('extplug', this);
 
     this.corePlugins = [
+      new EarlyAPIEventsPlugin('extplug:early-api', this),
       new CommandsPlugin('extplug:chat-commands', this),
       new SettingsTabPlugin('extplug:settings-tab', this),
       new MoreChatEventsPlugin('extplug:more-chat-events', this),
