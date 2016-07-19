@@ -22,9 +22,6 @@ deobfuscate plug.dj's internal module names.
 All of that is then executed by [loader.js](./loader.js.template) when plug.dj
 is ready.
 
-Files in the [hooks/](./hooks/) directory add new event types to the plug.dj API
-or synchronise data between ExtPlug and plug.dj.
-
 The [plugins/](./plugins/) directory contains core plugins that add more
-advanced default functionality, such as the core ExtPlug chat commands or the
-plugin management views.
+functionality to plug.dj, such as event types, the core ExtPlug chat commands,
+and the plugin management views.

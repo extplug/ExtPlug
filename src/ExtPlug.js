@@ -20,11 +20,11 @@ import TooltipsPlugin from './plugins/TooltipsPlugin';
 import GuestPlugin from './plugins/GuestPlugin';
 import SocketEventsPlugin from './plugins/SocketEventsPlugin';
 import WaitlistEventsPlugin from './plugins/WaitlistEventsPlugin';
+import PlaybackEventsPlugin from './plugins/PlaybackEventsPlugin';
 import PlugSettingsPlugin from './plugins/PlugSettingsPlugin';
+import PopoutStylePlugin from './plugins/PopoutStylePlugin';
 
 import * as packageMeta from '../package.json';
-
-import hooks from './hooks/index';
 
 import badgeStyles from './styles/badge';
 import inlineChatStyles from './styles/inline-chat';
@@ -98,7 +98,9 @@ const ExtPlug = Plugin.extend({
       new TooltipsPlugin('extplug:tooltips', this),
       new SocketEventsPlugin('extplug:socket-events', this),
       new WaitlistEventsPlugin('extplug:waitlist-events', this),
+      new PlaybackEventsPlugin('extplug:playback-events', this),
       new PlugSettingsPlugin('extplug:plug-settings', this),
+      new PopoutStylePlugin('extplug:popout-style', this),
     ];
 
     this.guestPlugin = new GuestPlugin('extplug:guest', this);
@@ -273,11 +275,6 @@ const ExtPlug = Plugin.extend({
 
     this.appView = getApplicationView();
 
-    // install extra events
-    hooks.forEach(hook => {
-      hook.install();
-    });
-
     this.corePlugins.forEach(plugin => {
       plugin.enable();
     });
@@ -316,9 +313,6 @@ const ExtPlug = Plugin.extend({
     });
     this.corePlugins.forEach(plugin => {
       plugin.disable();
-    });
-    hooks.forEach(hook => {
-      hook.uninstall();
     });
 
     this.guestPlugin.disable();
