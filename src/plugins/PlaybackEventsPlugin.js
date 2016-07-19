@@ -4,7 +4,8 @@ import Plugin from '../Plugin';
 
 const PlaybackEventsPlugin = Plugin.extend({
   name: 'Playback Events',
-  description: 'Add internal events for some playback-related actions: refresh, snooze, toggling HD video.',
+  description: 'Add internal events for some playback-related actions: ' +
+    'refresh, snooze, toggling HD video.',
 
   init(id, ext) {
     this._super(id, ext);
