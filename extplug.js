@@ -18,42 +18,6 @@
     (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
-if (!require('./is-implemented')()) {
-	Object.defineProperty(require('es5-ext/global'), 'Symbol',
-		{ value: require('./polyfill'), configurable: true, enumerable: false,
-			writable: true });
-}
-
-},{"./is-implemented":2,"./polyfill":18,"es5-ext/global":5}],2:[function(require,module,exports){
-'use strict';
-
-module.exports = function () {
-	var symbol;
-	if (typeof Symbol !== 'function') return false;
-	symbol = Symbol('test symbol');
-	try { String(symbol); } catch (e) { return false; }
-	if (typeof Symbol.iterator === 'symbol') return true;
-
-	// Return 'true' for polyfills
-	if (typeof Symbol.isConcatSpreadable !== 'object') return false;
-	if (typeof Symbol.iterator !== 'object') return false;
-	if (typeof Symbol.toPrimitive !== 'object') return false;
-	if (typeof Symbol.toStringTag !== 'object') return false;
-	if (typeof Symbol.unscopables !== 'object') return false;
-
-	return true;
-};
-
-},{}],3:[function(require,module,exports){
-'use strict';
-
-module.exports = function (x) {
-	return (x && ((typeof x === 'symbol') || (x['@@toStringTag'] === 'Symbol'))) || false;
-};
-
-},{}],4:[function(require,module,exports){
-'use strict';
-
 var assign        = require('es5-ext/object/assign')
   , normalizeOpts = require('es5-ext/object/normalize-options')
   , isCallable    = require('es5-ext/object/is-callable')
@@ -116,19 +80,19 @@ d.gs = function (dscr, get, set/*, options*/) {
 	return !options ? desc : assign(normalizeOpts(options), desc);
 };
 
-},{"es5-ext/object/assign":6,"es5-ext/object/is-callable":9,"es5-ext/object/normalize-options":13,"es5-ext/string/#/contains":15}],5:[function(require,module,exports){
+},{"es5-ext/object/assign":3,"es5-ext/object/is-callable":6,"es5-ext/object/normalize-options":10,"es5-ext/string/#/contains":12}],2:[function(require,module,exports){
 'use strict';
 
 module.exports = new Function("return this")();
 
-},{}],6:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./is-implemented')()
 	? Object.assign
 	: require('./shim');
 
-},{"./is-implemented":7,"./shim":8}],7:[function(require,module,exports){
+},{"./is-implemented":4,"./shim":5}],4:[function(require,module,exports){
 'use strict';
 
 module.exports = function () {
@@ -139,7 +103,7 @@ module.exports = function () {
 	return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
 };
 
-},{}],8:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 'use strict';
 
 var keys  = require('../keys')
@@ -163,21 +127,21 @@ module.exports = function (dest, src/*, …srcn*/) {
 	return dest;
 };
 
-},{"../keys":10,"../valid-value":14}],9:[function(require,module,exports){
+},{"../keys":7,"../valid-value":11}],6:[function(require,module,exports){
 // Deprecated
 
 'use strict';
 
 module.exports = function (obj) { return typeof obj === 'function'; };
 
-},{}],10:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./is-implemented')()
 	? Object.keys
 	: require('./shim');
 
-},{"./is-implemented":11,"./shim":12}],11:[function(require,module,exports){
+},{"./is-implemented":8,"./shim":9}],8:[function(require,module,exports){
 'use strict';
 
 module.exports = function () {
@@ -187,7 +151,7 @@ module.exports = function () {
 	} catch (e) { return false; }
 };
 
-},{}],12:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 var keys = Object.keys;
@@ -196,7 +160,7 @@ module.exports = function (object) {
 	return keys(object == null ? object : Object(object));
 };
 
-},{}],13:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var forEach = Array.prototype.forEach, create = Object.create;
@@ -215,7 +179,7 @@ module.exports = function (options/*, …options*/) {
 	return result;
 };
 
-},{}],14:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 module.exports = function (value) {
@@ -223,14 +187,14 @@ module.exports = function (value) {
 	return value;
 };
 
-},{}],15:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./is-implemented')()
 	? String.prototype.contains
 	: require('./shim');
 
-},{"./is-implemented":16,"./shim":17}],16:[function(require,module,exports){
+},{"./is-implemented":13,"./shim":14}],13:[function(require,module,exports){
 'use strict';
 
 var str = 'razdwatrzy';
@@ -240,13 +204,49 @@ module.exports = function () {
 	return ((str.contains('dwa') === true) && (str.contains('foo') === false));
 };
 
-},{}],17:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 'use strict';
 
 var indexOf = String.prototype.indexOf;
 
 module.exports = function (searchString/*, position*/) {
 	return indexOf.call(this, searchString, arguments[1]) > -1;
+};
+
+},{}],15:[function(require,module,exports){
+'use strict';
+
+if (!require('./is-implemented')()) {
+	Object.defineProperty(require('es5-ext/global'), 'Symbol',
+		{ value: require('./polyfill'), configurable: true, enumerable: false,
+			writable: true });
+}
+
+},{"./is-implemented":16,"./polyfill":18,"es5-ext/global":2}],16:[function(require,module,exports){
+'use strict';
+
+module.exports = function () {
+	var symbol;
+	if (typeof Symbol !== 'function') return false;
+	symbol = Symbol('test symbol');
+	try { String(symbol); } catch (e) { return false; }
+	if (typeof Symbol.iterator === 'symbol') return true;
+
+	// Return 'true' for polyfills
+	if (typeof Symbol.isConcatSpreadable !== 'object') return false;
+	if (typeof Symbol.iterator !== 'object') return false;
+	if (typeof Symbol.toPrimitive !== 'object') return false;
+	if (typeof Symbol.toStringTag !== 'object') return false;
+	if (typeof Symbol.unscopables !== 'object') return false;
+
+	return true;
+};
+
+},{}],17:[function(require,module,exports){
+'use strict';
+
+module.exports = function (x) {
+	return (x && ((typeof x === 'symbol') || (x['@@toStringTag'] === 'Symbol'))) || false;
 };
 
 },{}],18:[function(require,module,exports){
@@ -328,7 +328,7 @@ defineProperty(HiddenSymbol.prototype, Symbol.toPrimitive,
 defineProperty(HiddenSymbol.prototype, Symbol.toStringTag,
 	d('c', Symbol.prototype[Symbol.toStringTag]));
 
-},{"./validate-symbol":19,"d":4}],19:[function(require,module,exports){
+},{"./validate-symbol":19,"d":1}],19:[function(require,module,exports){
 'use strict';
 
 var isSymbol = require('./is-symbol');
@@ -338,23 +338,38 @@ module.exports = function (value) {
 	return value;
 };
 
-},{"./is-symbol":3}]},{},[1]);
+},{"./is-symbol":17}]},{},[15]);
 
 var babelHelpers = {};
-
-babelHelpers.toArray = function (arr) {
-  return Array.isArray(arr) ? arr : Array.from(arr);
+babelHelpers.typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+  return typeof obj;
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj;
 };
 
-babelHelpers.toConsumableArray = function (arr) {
-  if (Array.isArray(arr)) {
-    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
-
-    return arr2;
-  } else {
-    return Array.from(arr);
+babelHelpers.classCallCheck = function (instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
   }
 };
+
+babelHelpers.createClass = function () {
+  function defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  return function (Constructor, protoProps, staticProps) {
+    if (protoProps) defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) defineProperties(Constructor, staticProps);
+    return Constructor;
+  };
+}();
 
 babelHelpers.defineProperty = function (obj, key, value) {
   if (key in obj) {
@@ -371,11 +386,145 @@ babelHelpers.defineProperty = function (obj, key, value) {
   return obj;
 };
 
+babelHelpers.extends = Object.assign || function (target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i];
+
+    for (var key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  }
+
+  return target;
+};
+
+babelHelpers.get = function get(object, property, receiver) {
+  if (object === null) object = Function.prototype;
+  var desc = Object.getOwnPropertyDescriptor(object, property);
+
+  if (desc === undefined) {
+    var parent = Object.getPrototypeOf(object);
+
+    if (parent === null) {
+      return undefined;
+    } else {
+      return get(parent, property, receiver);
+    }
+  } else if ("value" in desc) {
+    return desc.value;
+  } else {
+    var getter = desc.get;
+
+    if (getter === undefined) {
+      return undefined;
+    }
+
+    return getter.call(receiver);
+  }
+};
+
+babelHelpers.inherits = function (subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      enumerable: false,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+};
+
 babelHelpers.interopRequireDefault = function (obj) {
   return obj && obj.__esModule ? obj : {
-    "default": obj
+    default: obj
   };
 };
+
+babelHelpers.interopRequireWildcard = function (obj) {
+  if (obj && obj.__esModule) {
+    return obj;
+  } else {
+    var newObj = {};
+
+    if (obj != null) {
+      for (var key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];
+      }
+    }
+
+    newObj.default = obj;
+    return newObj;
+  }
+};
+
+babelHelpers.possibleConstructorReturn = function (self, call) {
+  if (!self) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return call && (typeof call === "object" || typeof call === "function") ? call : self;
+};
+
+babelHelpers.slicedToArray = function () {
+  function sliceIterator(arr, i) {
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+    var _e = undefined;
+
+    try {
+      for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"]) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  return function (arr, i) {
+    if (Array.isArray(arr)) {
+      return arr;
+    } else if (Symbol.iterator in Object(arr)) {
+      return sliceIterator(arr, i);
+    } else {
+      throw new TypeError("Invalid attempt to destructure non-iterable instance");
+    }
+  };
+}();
+
+babelHelpers.toArray = function (arr) {
+  return Array.isArray(arr) ? arr : Array.from(arr);
+};
+
+babelHelpers.toConsumableArray = function (arr) {
+  if (Array.isArray(arr)) {
+    for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
+
+    return arr2;
+  } else {
+    return Array.from(arr);
+  }
+};
+
+babelHelpers;
 ;(function (root, factory) {
   if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module.
@@ -2106,7 +2255,7 @@ return context;
 
 }));
 
-define('extplug/main',['exports', 'plug-modules'], function (exports, _plugModules) {
+define('extplug/main',['plug-modules'], function (_plugModules) {
   'use strict';
 
   var _plugModules2 = babelHelpers.interopRequireDefault(_plugModules);
@@ -2120,10 +2269,30 @@ define('extplug/main',['exports', 'plug-modules'], function (exports, _plugModul
     }, 20);
   }
 
-  _plugModules2['default'].run();
-  _plugModules2['default'].register();
+  function appViewExists() {
+    try {
+      var _ret = function () {
+        // the ApplicationView attaches an event handler on instantiation.
+        var AppView = _plugModules2.default.require('plug/views/app/ApplicationView');
+        var Events = _plugModules2.default.require('plug/core/Events');
+        var evts = Events._events['show:room']; // eslint-disable-line no-underscore-dangle
+        return {
+          v: evts.some(function (event) {
+            return event.ctx instanceof AppView;
+          })
+        };
+      }();
 
-  require(['extplug/ExtPlug'], function _loaded(ExtPlug) {
+      if ((typeof _ret === 'undefined' ? 'undefined' : babelHelpers.typeof(_ret)) === "object") return _ret.v;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  _plugModules2.default.run();
+  _plugModules2.default.register();
+
+  window.require(['extplug/ExtPlug'], function (ExtPlug) {
     waitFor(appViewExists, function () {
       var ext = new ExtPlug();
       window.extp = ext;
@@ -2131,103 +2300,20 @@ define('extplug/main',['exports', 'plug-modules'], function (exports, _plugModul
       ext.enable();
     });
   });
-
-  function appViewExists() {
-    try {
-      var _ret = (function () {
-        // the ApplicationView attaches an event handler on instantiation.
-        var AppView = _plugModules2['default'].require('plug/views/app/ApplicationView');
-        var Events = _plugModules2['default'].require('plug/core/Events');
-        var evts = Events._events['show:room'];
-        return {
-          v: evts.some(function (event) {
-            return event.ctx instanceof AppView;
-          })
-        };
-      })();
-
-      if (typeof _ret === 'object') return _ret.v;
-    } catch (e) {
-      return false;
-    }
-  }
 });
-define('extplug/models/Settings',['exports', 'module', 'backbone'], function (exports, module, _backbone) {
+define('extplug/util/request',['exports', 'jquery'], function (exports, _jquery) {
   'use strict';
 
-  var Settings = _backbone.Model.extend({
-
-    initialize: function initialize(attrs) {
-      var opts = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
-      this._meta = opts.meta;
-    },
-
-    meta: function meta() {
-      return this._meta;
-    }
-
+  Object.defineProperty(exports, "__esModule", {
+    value: true
   });
+  exports.url = undefined;
+  exports.default = request;
+  exports.json = json;
 
-  module.exports = Settings;
-});
-define('extplug/store/settings',['exports', 'module', 'underscore', 'plug/store/settings', '../models/Settings'], function (exports, module, _underscore, _plugStoreSettings, _modelsSettings) {
-  'use strict';
-
-  var _2 = babelHelpers.interopRequireDefault(_underscore);
-
-  var _plugSettings = babelHelpers.interopRequireDefault(_plugStoreSettings);
-
-  var _Settings = babelHelpers.interopRequireDefault(_modelsSettings);
-
-  var settings = new _Settings['default']();
-
-  function sync() {
-    var newSettings = _2['default'].extend({}, _plugSettings['default'].settings);
-    var muted = $('#volume .icon').hasClass('icon-volume-off');
-    // when you mute a song using the volume button, plug.dj does not change the associated setting.
-    // here we fake a volume of 0% anyway if the volume is muted, so ExtPlug modules can just
-    // use volume throughout and have it work.
-    if (newSettings.volume !== 0 && muted) {
-      newSettings.volume = 0;
-    }
-    newSettings.muted = muted;
-    settings.set(newSettings);
-  }
-
-  settings.update = sync;
-
-  module.exports = settings;
-});
-define('extplug/util/request',['exports', 'module', 'jquery'], function (exports, module, _jquery) {
-  'use strict';
-
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
-
-  module.exports = request;
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
 
   var corsproxy = 'https://cors-anywhere.herokuapp.com/';
-
-  function request(url, options) {
-    var ajax = _$['default'].ajax(url, options);
-    // try to work around CORS blocks
-    if (mayNeedProxy(url)) {
-      ajax = ajax.then(null, function () {
-        return _$['default'].ajax(corsproxy + url);
-      });
-    }
-    return ajax;
-  }
-
-  request.url = function (url) {
-    return mayNeedProxy(url) ? corsproxy + url : url;
-  };
-
-  request.json = function (url, options) {
-    options = options || {};
-    options.dataType = 'json';
-    return request(url, options);
-  };
 
   function mayNeedProxy(url) {
     if (url.substr(0, corsproxy.length) !== corsproxy) {
@@ -2238,49 +2324,71 @@ define('extplug/util/request',['exports', 'module', 'jquery'], function (exports
     }
     return false;
   }
+
+  function request(url, options) {
+    var ajax = _jquery2.default.ajax(url, options);
+    // try to work around CORS blocks
+    if (mayNeedProxy(url)) {
+      ajax = ajax.then(null, function () {
+        return _jquery2.default.ajax(corsproxy + url);
+      });
+    }
+    return ajax;
+  }
+
+  function proxyUrl(url) {
+    return mayNeedProxy(url) ? corsproxy + url : url;
+  }
+  exports.url = proxyUrl;
+  function json(url, options) {
+    return request(url, babelHelpers.extends({}, options, {
+      dataType: 'json'
+    }));
+  }
+
+  request.url = proxyUrl;
+  request.json = json;
 });
-define('extplug/models/RoomSettings',['exports', 'module', 'plug/models/currentRoom', 'plug/util/util', '../util/request', 'backbone', 'plug/core/Events'], function (exports, module, _plugModelsCurrentRoom, _plugUtilUtil, _utilRequest, _backbone, _plugCoreEvents) {
+define('extplug/models/RoomSettings',['module', 'exports', 'underscore', 'backbone', 'plug/models/currentRoom', 'plug/util/util', 'plug/core/Events', '../util/request'], function (module, exports, _underscore, _backbone, _currentRoom, _util, _Events, _request) {
   'use strict';
 
-  var _currentRoom = babelHelpers.interopRequireDefault(_plugModelsCurrentRoom);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-  var _util = babelHelpers.interopRequireDefault(_plugUtilUtil);
+  var _backbone2 = babelHelpers.interopRequireDefault(_backbone);
 
-  var _request = babelHelpers.interopRequireDefault(_utilRequest);
+  var _currentRoom2 = babelHelpers.interopRequireDefault(_currentRoom);
 
-  var _Backbone = babelHelpers.interopRequireDefault(_backbone);
+  var _util2 = babelHelpers.interopRequireDefault(_util);
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
 
-  var RoomSettings = _Backbone['default'].Model.extend({
-
-    constructor: function constructor(ext) {
-      _Backbone['default'].Model.call(this, {});
-
-      this._loaded = {};
+  var RoomSettings = _backbone2.default.Model.extend({
+    constructor: function constructor() {
+      _backbone2.default.Model.call(this, {});
 
       this.load = this.load.bind(this);
       this.unload = this.unload.bind(this);
       this.reload = this.reload.bind(this);
 
-      _currentRoom['default'].on('change:description', this.reload);
+      _currentRoom2.default.on('change:description', this.reload);
 
-      if (_currentRoom['default'].get('joined')) {
+      if (_currentRoom2.default.get('joined')) {
         this.load();
       }
     },
-
     load: function load() {
       var _this = this;
 
       var unload = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
 
-      var description = _currentRoom['default'].get('description'),
-          m = description.match(/(?:^|\n)@(?:p3|rcs)=(.*?)(?:\n|$)/);
+      var description = _currentRoom2.default.get('description');
+      var m = description.match(/(?:^|\n)@(?:p3|rcs)=(.*?)(?:\n|$)/);
 
       if (m) {
-        var url = _util['default'].h2t(m[1]);
-        _request['default'].json(url).then(function (settings) {
+        var url = _util2.default.h2t(m[1]);
+        (0, _request.json)(url).then(function (settings) {
           if (unload) {
             _this.unload();
           } else {
@@ -2298,43 +2406,44 @@ define('extplug/models/RoomSettings',['exports', 'module', 'plug/models/currentR
           } else if (e.status) {
             message += ' Status code: ' + e.status;
           }
-          _Events['default'].trigger('notify', 'icon-chat-system', 'Room Settings could not be loaded for this room.' + message);
+          _Events2.default.trigger('notify', 'icon-chat-system', 'Room Settings could not be loaded for this room.' + message);
         });
       } else if (unload) {
         this.unload();
       }
     },
-
     unload: function unload() {
       this.clear();
       this.trigger('unload');
     },
-
     reload: function reload() {
       var _this2 = this;
 
       // "joined" is set *after* "description"
-      _.defer(function () {
-        if (_currentRoom['default'].get('joined')) {
+      (0, _underscore.defer)(function () {
+        if (_currentRoom2.default.get('joined')) {
           _this2.load(true);
         }
       });
     },
-
     dispose: function dispose() {
       this.unload();
-      _currentRoom['default'].off('change:description', this.reload);
+      _currentRoom2.default.off('change:description', this.reload);
     }
-
   });
 
-  module.exports = RoomSettings;
+  exports.default = RoomSettings;
+  module.exports = exports['default'];
 });
-define('extplug/models/PluginMeta',['exports', 'module', 'backbone'], function (exports, module, _backbone) {
+define('extplug/models/PluginMeta',['module', 'exports', 'backbone'], function (module, exports, _backbone) {
   'use strict';
 
-  var PluginMeta = _backbone.Model.extend({
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
+
+  var PluginMeta = _backbone.Model.extend({
     defaults: {
       id: '',
       fullUrl: '',
@@ -2342,909 +2451,56 @@ define('extplug/models/PluginMeta',['exports', 'module', 'backbone'], function (
       name: '',
       description: '',
       instance: null,
-      'class': null
+      class: null
     },
 
     initialize: function initialize() {
       var _this = this;
 
       this.get('instance').on('enable', function () {
-        _this.set('enabled', true);
+        return _this.set('enabled', true);
       }).on('disable', function () {
-        _this.set('enabled', false);
+        return _this.set('enabled', false);
       });
     },
-
     enable: function enable() {
       if (!this.get('enabled')) {
         this.get('instance').enable();
       }
     },
-
     disable: function disable() {
       if (this.get('enabled')) {
         this.get('instance').disable();
       }
     }
-
   });
 
-  module.exports = PluginMeta;
+  exports.default = PluginMeta;
+  module.exports = exports['default'];
 });
-define('extplug/collections/PluginsCollection',['exports', 'module', 'backbone', '../models/PluginMeta'], function (exports, module, _backbone, _modelsPluginMeta) {
+define('extplug/collections/PluginsCollection',['module', 'exports', 'backbone', '../models/PluginMeta'], function (module, exports, _backbone, _PluginMeta) {
   'use strict';
 
-  var _PluginMeta = babelHelpers.interopRequireDefault(_modelsPluginMeta);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _PluginMeta2 = babelHelpers.interopRequireDefault(_PluginMeta);
 
   var PluginsCollection = _backbone.Collection.extend({
-    model: _PluginMeta['default'],
+    model: _PluginMeta2.default,
     comparator: function comparator(a, b) {
-      return a.get('name') > b.get('name') ? 1 : a.get('name') < b.get('name') ? -1 : 0;
+      if (a.get('name') > b.get('name')) {
+        return 1;
+      } else if (a.get('name') < b.get('name')) {
+        return -1;
+      }
+      return 0;
     }
   });
 
-  module.exports = PluginsCollection;
-});
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define('sistyl',[],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.sistyl = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-(function (global, factory) {
-  if (typeof define === 'function' && define.amd) {
-    define(['exports', 'module', 'split-selector'], factory);
-  } else if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
-    factory(exports, module, require('split-selector'));
-  } else {
-    var mod = {
-      exports: {}
-    };
-    factory(mod.exports, mod, global.splitSelector);
-    global.sistyl = mod.exports;
-  }
-})(this, function (exports, module, _splitSelector) {
-  'use strict';
-
-  var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-  module.exports = sistyl;
-
-  function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-  function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-  var _splitSelector2 = _interopRequireDefault(_splitSelector);
-
-  function sistyl(defaults) {
-    return new sistyl.Sistyl(defaults);
-  }
-
-  sistyl.Sistyl = (function () {
-
-    // sistyl constructor, takes an optional default set of rulesets
-
-    function Sistyl() {
-      var defaults = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-      _classCallCheck(this, Sistyl);
-
-      this._rules = {};
-
-      if (defaults) this.set(defaults);
-    }
-
-    // concats and regroups selectors. Deals with nested groups like
-    //
-    //   expand('#a, #b', '.x, .y')
-    //
-    // returns:
-    //
-    //   '#a .x, #a .y, #b .x, #b .y'
-
-    _createClass(Sistyl, [{
-      key: '_expand',
-      value: function _expand(base, sub) {
-        var children = (0, _splitSelector2['default'])(sub);
-        return (0, _splitSelector2['default'])(base).reduce(function (selectors, parent) {
-          return selectors.concat(children.map(function (child) {
-            return parent + ' ' + child;
-          }));
-        }, []).join(', ');
-      }
-
-      // .set() takes a selector name and an object of properties
-      // and nested rulesets (passing an object as a property value)
-      // Alternatively, it takes an object of rulesets, the keys
-      // being selectors and the values being rulesets (incl. nested)
-      //
-      //   style.set('.selector', { 'css-prop': 'value' })
-      //   style.set('.selector', {
-      //     '.nested': { 'prop': 'value' },
-      //     'sibling-prop': 'sibling'
-      //   })
-      //   style.set({
-      //     '.selector-1': { 'css-prop': 'one' },
-      //     '.selector-2': { 'css-prop': 'two' }
-      //   })
-    }, {
-      key: 'set',
-      value: function set(sel, props) {
-        var _this = this;
-
-        var rules = this._rules;
-        if (props) {
-          if (props instanceof Sistyl) props = props.rulesets();
-          Object.keys(props).forEach(function (prop) {
-            var val = props[prop];
-            if (typeof val === 'object') {
-              // nested rules
-              _this.set(_this._expand(sel, prop), val);
-            } else {
-              if (!(sel in _this._rules)) {
-                _this._rules[sel] = {};
-              }
-              _this._rules[sel][prop] = val;
-            }
-          });
-        } else {
-          if (sel instanceof Sistyl) sel = sel.rulesets();
-          Object.keys(sel).forEach(function (selector) {
-            _this.set(selector, sel[selector]);
-          });
-        }
-
-        return this;
-      }
-
-      // .unset() removes a ruleset from the sistyl instance, that
-      // corresponds to the given selector.
-      // Note that it removes *just* the given selector, and not
-      // other rulesets that also match the selector. Specifically,
-      // .unset('.rem') does *not* remove a '.keep, .rem' selector.
-      //
-      // style.unset('.selector') // removes the `.selector {}`
-      //                          // ruleset
-      // style.unset('.selector', // removes the `color` property
-      //             'color')     // from the `.selector` ruleset.
-    }, {
-      key: 'unset',
-      value: function unset(selector, prop) {
-        if (prop !== undefined) {
-          delete this._rules[selector][prop];
-        } else {
-          delete this._rules[selector];
-        }
-        return this;
-      }
-
-      // returns the flattened rulesets on this sistyl object
-      // i.e. after
-      //
-      //   style.set({ '.parent': { '.child': {} } })
-      //
-      // `style.rulesets()` will return
-      //
-      //   { '.parent .child': {} }
-      //
-    }, {
-      key: 'rulesets',
-      value: function rulesets() {
-        return this._rules;
-      }
-
-      // formats the current rulesets as a valid CSS string
-      // (unless you set invalid property values, but then
-      // you're to blame!)
-    }, {
-      key: 'toString',
-      value: function toString() {
-        var str = '';
-        var rules = this._rules;
-        Object.keys(rules).forEach(function (selector) {
-          var ruleset = rules[selector];
-          str += selector + ' {\n';
-          Object.keys(ruleset).forEach(function (property) {
-            str += '  ' + property + ': ' + ruleset[property] + ';\n';
-          });
-          str += '}\n\n';
-        });
-        return str;
-      }
-    }]);
-
-    return Sistyl;
-  })();
-});
-},{"split-selector":2}],2:[function(require,module,exports){
-// attr regex, from Sizzle via css-what:
-// https://github.com/fb55/css-what/blob/3083ac06/index.js#L8
-// https://github.com/jquery/sizzle/blob/a7020477/src/sizzle.js#L84
-var attr = /^\s*((?:\\.|[\w\u00c0-\uFFFF\-])+)\s*(?:(\S?)=\s*(?:(['"])(.*?)\3|(#?(?:\\.|[\w\u00c0-\uFFFF\-])*)|)|)\s*(i)?\]/
-// all the non-attr things
-var normalBits = /^([^\[\],]+)/
-
-module.exports = function splitSelector(selector) {
-  var i = 0
-  var chunk = selector
-  var parts = []
-  var current = ''
-  var match
-
-  while (chunk = chunk.slice(i)) {
-    if (match = normalBits.exec(chunk)) {
-      i = match[0].length
-      current += match[0]
-    }
-    else if (chunk[0] === ',') {
-      parts.push(current.trim())
-      current = ''
-      i = 1
-    }
-    else if (chunk[0] === '[') {
-      match = attr.exec(chunk.slice(1))
-      if (match) {
-        current += '[' + match[0]
-        i = 1 + match[0].length
-      }
-    }
-    else {
-      throw new Error('Could not parse: ' + chunk)
-    }
-  }
-
-  if (current) parts.push(current.trim())
-
-  return parts
-}
-},{}]},{},[1])(1)
-});
-define('extplug/util/Style',['exports', 'module', 'jquery', 'underscore', 'sistyl', 'plug/core/Class', 'plug/views/rooms/popout/PopoutView'], function (exports, module, _jquery, _underscore, _sistyl, _plugCoreClass, _plugViewsRoomsPopoutPopoutView) {
-  'use strict';
-
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
-
-  var _2 = babelHelpers.interopRequireDefault(_underscore);
-
-  var _Class = babelHelpers.interopRequireDefault(_plugCoreClass);
-
-  var _popoutView = babelHelpers.interopRequireDefault(_plugViewsRoomsPopoutPopoutView);
-
-  // hack to get plug.dj-like Class inheritance on a not-plug.dj-like Class
-  var Style = _Class['default'].extend({
-    init: function init(defaults) {
-      this._sistyl = new _sistyl.Sistyl(defaults);
-      this._timeout = null;
-
-      this.refresh = this.refresh.bind(this);
-      this.id = _2['default'].uniqueId('eps-');
-
-      this.el = (0, _$['default'])('<style />').addClass('extplug-style').attr('id', this.id).attr('type', 'text/css').appendTo('head');
-      if (_popoutView['default']._window) {
-        this.el.clone().appendTo(_popoutView['default'].$document.find('head'));
-      }
-      this.refresh();
-    },
-
-    $: function $() {
-      var el = this.el;
-      if (_popoutView['default']._window) {
-        el = el.add(_popoutView['default'].$document.find('#' + this.id));
-      }
-      return el;
-    },
-
-    set: function set(sel, props) {
-      this._sistyl.set(sel, props);
-
-      // throttle updates
-      clearTimeout(this._timeout);
-      this._timeout = setTimeout(this.refresh, 1);
-      return this;
-    },
-
-    unset: function unset(sel, prop) {
-      this._sistyl.unset(sel, prop);
-      return this;
-    },
-
-    rulesets: function rulesets() {
-      return this._sistyl.rulesets();
-    },
-
-    refresh: function refresh() {
-      this.$().text(this.toString());
-    },
-
-    remove: function remove() {
-      this.$().remove();
-    },
-
-    toString: function toString() {
-      return this._sistyl.toString();
-    }
-
-  });
-
-  module.exports = Style;
-});
-define('extplug/views/users/settings/ControlGroupView',['exports', 'module', 'jquery', 'backbone'], function (exports, module, _jquery, _backbone) {
-  'use strict';
-
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
-
-  var ControlGroupView = _backbone.View.extend({
-    className: 'extplug control-group',
-
-    initialize: function initialize() {
-      this.controls = [];
-    },
-
-    render: function render() {
-      var _this = this;
-
-      var switchAt = Math.ceil(this.controls.length / 2 - 1);
-      var current = (0, _$['default'])('<div />').addClass('left').appendTo(this.$el);
-      this.controls.forEach(function (item, i) {
-        current.append(item.$el);
-        item.render();
-        if (i === switchAt) {
-          current = (0, _$['default'])('<div />').addClass('right').appendTo(_this.$el);
-        }
-      });
-      return this;
-    },
-
-    addControl: function addControl(control) {
-      this.controls.push(control);
-      return this;
-    }
-  });
-
-  module.exports = ControlGroupView;
-});
-define('extplug/views/users/settings/CheckboxView',['exports', 'module', 'backbone', 'jquery', 'plug/core/Events'], function (exports, module, _backbone, _jquery, _plugCoreEvents) {
-  'use strict';
-
-  var _Backbone = babelHelpers.interopRequireDefault(_backbone);
-
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
-
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
-
-  /**
-   * A checkbox setting item.
-   */
-  var CheckboxView = _Backbone['default'].View.extend({
-    className: 'item',
-    initialize: function initialize(o) {
-      this.label = o.label;
-      this.description = o.description;
-      this.enabled = o.enabled || false;
-      this.onChange = this.onChange.bind(this);
-    },
-    render: function render() {
-      this.$el.append('<i class="icon icon-check-blue" />').append((0, _$['default'])('<span />').text(this.label));
-
-      if (this.description) {
-        this.$el.on('mouseenter', (function () {
-          _Events['default'].trigger('tooltip:show', this.description, this.$el);
-        }).bind(this)).on('mouseleave', function () {
-          _Events['default'].trigger('tooltip:hide');
-        });
-      }
-
-      if (this.enabled) {
-        this.$el.addClass('selected');
-      }
-
-      this.$el.on('click', this.onChange);
-      return this;
-    },
-    onChange: function onChange() {
-      this.$el.toggleClass('selected');
-      var enabled = this.enabled;
-      this.enabled = this.$el.hasClass('selected');
-      if (enabled !== this.enabled) {
-        this.trigger('change', this.enabled);
-      }
-    }
-  });
-
-  module.exports = CheckboxView;
-});
-define('extplug/views/users/settings/InputView',['exports', 'module', 'plug/core/Events', 'backbone', 'underscore', 'jquery'], function (exports, module, _plugCoreEvents, _backbone, _underscore, _jquery) {
-  'use strict';
-
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
-
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
-
-  var KEY_ENTER = 13;
-
-  var InputView = _backbone.View.extend({
-    className: 'item extplug-input',
-
-    initialize: function initialize(o) {
-      this.label = o.label;
-      this.description = o.description;
-      this.value = o.value;
-
-      o.type = o.type || 'text';
-      this.attributes = (0, _underscore.omit)(o, 'label', 'value', 'description');
-
-      this.onKeyUp = this.onKeyUp.bind(this);
-      this.onKeyDown = this.onKeyDown.bind(this);
-      this.onFocus = this.onFocus.bind(this);
-      this.onBlur = this.onBlur.bind(this);
-      this.focus = this.focus.bind(this);
-    },
-
-    render: function render() {
-      var _this = this;
-
-      this.$label = (0, _$['default'])('<label />').addClass('title').text(this.label);
-      this.$input = (0, _$['default'])('<input />').attr(this.attributes).val(this.value);
-      this.$wrapper = (0, _$['default'])('<div />').addClass('extplug-input-wrap');
-      this.$el.append(this.$label, this.$wrapper.append(this.$input));
-      if (this.description) {
-        this.$label.on('mouseenter', function () {
-          _Events['default'].trigger('tooltip:show', _this.description, _this.$el);
-        }).on('mouseleave', function () {
-          _Events['default'].trigger('tooltip:hide');
-        });
-      }
-
-      this.$input.on('keyup', this.onKeyUp);
-      this.$input.on('keydown', this.onKeyDown);
-      this.$input.on('focus', this.onFocus);
-      this.$input.on('blur', this.onBlur);
-
-      this.$el.on('mousedown', this.focus);
-    },
-
-    onKeyUp: function onKeyUp() {},
-
-    onKeyDown: function onKeyDown(e) {
-      if (e.keyCode === KEY_ENTER) {
-        this.onBlur();
-      }
-    },
-
-    focus: function focus() {
-      this.$input.focus();
-    },
-
-    onFocus: function onFocus() {
-      this.$wrapper.addClass('focused');
-    },
-    onBlur: function onBlur() {
-      this.$wrapper.removeClass('focused');
-      this.trigger('change', this.$input.val());
-    }
-  });
-
-  module.exports = InputView;
-});
-(function(e,t,n,r,i,s,o,u,a){function m(e){if(Object.prototype.toString.apply(e)==="[object Array]"){if(typeof e[0]=="string"&&typeof m[e[0]]=="function")return new m[e[0]](e.slice(1,e.length));if(e.length===4)return new m.RGB(e[0]/255,e[1]/255,e[2]/255,e[3]/255)}else if(typeof e=="string"){var i=e.toLowerCase();l[i]&&(e="#"+l[i]),i==="transparent"&&(e="rgba(0,0,0,0)");var s=e.match(v);if(s){var o=s[1].toUpperCase(),u=c(s[8])?s[8]:n(s[8]),a=o[0]==="H",f=s[3]?100:a?360:255,h=s[5]||a?100:255,d=s[7]||a?100:255;if(c(m[o]))throw new Error("one.color."+o+" is not installed.");return new m[o](n(s[2])/f,n(s[4])/h,n(s[6])/d,u)}e.length<6&&(e=e.replace(/^#?([0-9a-f])([0-9a-f])([0-9a-f])$/i,"$1$1$2$2$3$3"));var g=e.match(/^#?([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])$/i);if(g)return new m.RGB(r(g[1],16)/255,r(g[2],16)/255,r(g[3],16)/255);if(m.CMYK){var y=e.match(new t("^cmyk\\("+p.source+","+p.source+","+p.source+","+p.source+"\\)$","i"));if(y)return new m.CMYK(n(y[1])/100,n(y[2])/100,n(y[3])/100,n(y[4])/100)}}else if(typeof e=="object"&&e.isColor)return e;return!1}function g(t,n,r){function a(e,t){var n={};n[t.toLowerCase()]=new i("return this.rgb()."+t.toLowerCase()+"();"),m[t].propertyNames.forEach(function(e,r){n[e]=n[e==="black"?"k":e[0]]=new i("value","isDelta","return this."+t.toLowerCase()+"()."+e+"(value, isDelta);")});for(var r in n)n.hasOwnProperty(r)&&m[e].prototype[r]===undefined&&(m[e].prototype[r]=n[r])}m[t]=new i(n.join(","),"if (Object.prototype.toString.apply("+n[0]+") === '[object Array]') {"+n.map(function(e,t){return e+"="+n[0]+"["+t+"];"}).reverse().join("")+"}"+"if ("+n.filter(function(e){return e!=="alpha"}).map(function(e){return"isNaN("+e+")"}).join("||")+"){"+'throw new Error("['+t+']: Invalid color: ("+'+n.join('+","+')+'+")");}'+n.map(function(e){return e==="hue"?"this._hue=hue<0?hue-Math.floor(hue):hue%1":e==="alpha"?"this._alpha=(isNaN(alpha)||alpha>1)?1:(alpha<0?0:alpha);":"this._"+e+"="+e+"<0?0:("+e+">1?1:"+e+")"}).join(";")+";"),m[t].propertyNames=n;var s=m[t].prototype;["valueOf","hex","hexa","css","cssa"].forEach(function(e){s[e]=s[e]||(t==="RGB"?s.hex:new i("return this.rgb()."+e+"();"))}),s.isColor=!0,s.equals=function(r,i){c(i)&&(i=1e-10),r=r[t.toLowerCase()]();for(var s=0;s<n.length;s+=1)if(e.abs(this["_"+n[s]]-r["_"+n[s]])>i)return!1;return!0},s.toJSON=new i("return ['"+t+"', "+n.map(function(e){return"this._"+e},this).join(", ")+"];");for(var o in r)if(r.hasOwnProperty(o)){var u=o.match(/^from(.*)$/);u?m[u[1].toUpperCase()].prototype[t.toLowerCase()]=r[o]:s[o]=r[o]}s[t.toLowerCase()]=function(){return this},s.toString=new i('return "[one.color.'+t+':"+'+n.map(function(e,t){return'" '+n[t]+'="+this._'+e}).join("+")+'+"]";'),n.forEach(function(e,t){s[e]=s[e==="black"?"k":e[0]]=new i("value","isDelta","if (typeof value === 'undefined') {return this._"+e+";"+"}"+"if (isDelta) {"+"return new this.constructor("+n.map(function(t,n){return"this._"+t+(e===t?"+value":"")}).join(", ")+");"+"}"+"return new this.constructor("+n.map(function(t,n){return e===t?"value":"this._"+t}).join(", ")+");")}),f.forEach(function(e){a(t,e),a(e,t)}),f.push(t)}function y(){var e=this.rgb(),t=e._red*.3+e._green*.59+e._blue*.11;return new m.RGB(t,t,t,this._alpha)}var f=[],l={},c=function(e){return typeof e=="undefined"},h=/\s*(\.\d+|\d+(?:\.\d+)?)(%)?\s*/,p=/\s*(\.\d+|100|\d?\d(?:\.\d+)?)%\s*/,d=/\s*(\.\d+|\d+(?:\.\d+)?)\s*/,v=new t("^(rgb|hsl|hsv)a?\\("+h.source+","+h.source+","+h.source+"(?:,"+d.source+")?"+"\\)$","i");m.installMethod=function(e,t){f.forEach(function(n){m[n].prototype[e]=t})},g("RGB",["red","green","blue","alpha"],{hex:function(){var e=(o(255*this._red)*65536+o(255*this._green)*256+o(255*this._blue)).toString(16);return"#"+"00000".substr(0,6-e.length)+e},hexa:function(){var e=o(this._alpha*255).toString(16);return"#"+"00".substr(0,2-e.length)+e+this.hex().substr(1,6)},css:function(){return"rgb("+o(255*this._red)+","+o(255*this._green)+","+o(255*this._blue)+")"},cssa:function(){return"rgba("+o(255*this._red)+","+o(255*this._green)+","+o(255*this._blue)+","+this._alpha+")"}}),typeof define=="function"&&!c(define.amd)?define('onecolor',[],function(){return m}):typeof exports=="object"?module.exports=m:(one=window.one||{},one.color=m),typeof jQuery!="undefined"&&c(jQuery.color)&&(jQuery.color=m),l={aliceblue:"f0f8ff",antiquewhite:"faebd7",aqua:"0ff",aquamarine:"7fffd4",azure:"f0ffff",beige:"f5f5dc",bisque:"ffe4c4",black:"000",blanchedalmond:"ffebcd",blue:"00f",blueviolet:"8a2be2",brown:"a52a2a",burlywood:"deb887",cadetblue:"5f9ea0",chartreuse:"7fff00",chocolate:"d2691e",coral:"ff7f50",cornflowerblue:"6495ed",cornsilk:"fff8dc",crimson:"dc143c",cyan:"0ff",darkblue:"00008b",darkcyan:"008b8b",darkgoldenrod:"b8860b",darkgray:"a9a9a9",darkgrey:"a9a9a9",darkgreen:"006400",darkkhaki:"bdb76b",darkmagenta:"8b008b",darkolivegreen:"556b2f",darkorange:"ff8c00",darkorchid:"9932cc",darkred:"8b0000",darksalmon:"e9967a",darkseagreen:"8fbc8f",darkslateblue:"483d8b",darkslategray:"2f4f4f",darkslategrey:"2f4f4f",darkturquoise:"00ced1",darkviolet:"9400d3",deeppink:"ff1493",deepskyblue:"00bfff",dimgray:"696969",dimgrey:"696969",dodgerblue:"1e90ff",firebrick:"b22222",floralwhite:"fffaf0",forestgreen:"228b22",fuchsia:"f0f",gainsboro:"dcdcdc",ghostwhite:"f8f8ff",gold:"ffd700",goldenrod:"daa520",gray:"808080",grey:"808080",green:"008000",greenyellow:"adff2f",honeydew:"f0fff0",hotpink:"ff69b4",indianred:"cd5c5c",indigo:"4b0082",ivory:"fffff0",khaki:"f0e68c",lavender:"e6e6fa",lavenderblush:"fff0f5",lawngreen:"7cfc00",lemonchiffon:"fffacd",lightblue:"add8e6",lightcoral:"f08080",lightcyan:"e0ffff",lightgoldenrodyellow:"fafad2",lightgray:"d3d3d3",lightgrey:"d3d3d3",lightgreen:"90ee90",lightpink:"ffb6c1",lightsalmon:"ffa07a",lightseagreen:"20b2aa",lightskyblue:"87cefa",lightslategray:"789",lightslategrey:"789",lightsteelblue:"b0c4de",lightyellow:"ffffe0",lime:"0f0",limegreen:"32cd32",linen:"faf0e6",magenta:"f0f",maroon:"800000",mediumaquamarine:"66cdaa",mediumblue:"0000cd",mediumorchid:"ba55d3",mediumpurple:"9370d8",mediumseagreen:"3cb371",mediumslateblue:"7b68ee",mediumspringgreen:"00fa9a",mediumturquoise:"48d1cc",mediumvioletred:"c71585",midnightblue:"191970",mintcream:"f5fffa",mistyrose:"ffe4e1",moccasin:"ffe4b5",navajowhite:"ffdead",navy:"000080",oldlace:"fdf5e6",olive:"808000",olivedrab:"6b8e23",orange:"ffa500",orangered:"ff4500",orchid:"da70d6",palegoldenrod:"eee8aa",palegreen:"98fb98",paleturquoise:"afeeee",palevioletred:"d87093",papayawhip:"ffefd5",peachpuff:"ffdab9",peru:"cd853f",pink:"ffc0cb",plum:"dda0dd",powderblue:"b0e0e6",purple:"800080",rebeccapurple:"639",red:"f00",rosybrown:"bc8f8f",royalblue:"4169e1",saddlebrown:"8b4513",salmon:"fa8072",sandybrown:"f4a460",seagreen:"2e8b57",seashell:"fff5ee",sienna:"a0522d",silver:"c0c0c0",skyblue:"87ceeb",slateblue:"6a5acd",slategray:"708090",slategrey:"708090",snow:"fffafa",springgreen:"00ff7f",steelblue:"4682b4",tan:"d2b48c",teal:"008080",thistle:"d8bfd8",tomato:"ff6347",turquoise:"40e0d0",violet:"ee82ee",wheat:"f5deb3",white:"fff",whitesmoke:"f5f5f5",yellow:"ff0",yellowgreen:"9acd32"},g("XYZ",["x","y","z","alpha"],{fromRgb:function(){var e=function(e){return e>.04045?u((e+.055)/1.055,2.4):e/12.92},t=e(this._red),n=e(this._green),r=e(this._blue);return new m.XYZ(t*.4124564+n*.3575761+r*.1804375,t*.2126729+n*.7151522+r*.072175,t*.0193339+n*.119192+r*.9503041,this._alpha)},rgb:function(){var e=this._x,t=this._y,n=this._z,r=function(e){return e>.0031308?1.055*u(e,1/2.4)-.055:12.92*e};return new m.RGB(r(e*3.2404542+t*-1.5371385+n*-0.4985314),r(e*-0.969266+t*1.8760108+n*.041556),r(e*.0556434+t*-0.2040259+n*1.0572252),this._alpha)},lab:function(){var e=function(e){return e>.008856?u(e,1/3):7.787037*e+4/29},t=e(this._x/95.047),n=e(this._y/100),r=e(this._z/108.883);return new m.LAB(116*n-16,500*(t-n),200*(n-r),this._alpha)}}),g("LAB",["l","a","b","alpha"],{fromRgb:function(){return this.xyz().lab()},rgb:function(){return this.xyz().rgb()},xyz:function(){var e=function(e){var t=u(e,3);return t>.008856?t:(e-16/116)/7.87},t=(this._l+16)/116,n=this._a/500+t,r=t-this._b/200;return new m.XYZ(e(n)*95.047,e(t)*100,e(r)*108.883,this._alpha)}}),g("HSV",["hue","saturation","value","alpha"],{rgb:function(){var t=this._hue,n=this._saturation,r=this._value,i=a(5,e.floor(t*6)),s=t*6-i,o=r*(1-n),u=r*(1-s*n),f=r*(1-(1-s)*n),l,c,h;switch(i){case 0:l=r,c=f,h=o;break;case 1:l=u,c=r,h=o;break;case 2:l=o,c=r,h=f;break;case 3:l=o,c=u,h=r;break;case 4:l=f,c=o,h=r;break;case 5:l=r,c=o,h=u}return new m.RGB(l,c,h,this._alpha)},hsl:function(){var e=(2-this._saturation)*this._value,t=this._saturation*this._value,n=e<=1?e:2-e,r;return n<1e-9?r=0:r=t/n,new m.HSL(this._hue,r,e/2,this._alpha)},fromRgb:function(){var t=this._red,n=this._green,r=this._blue,i=e.max(t,n,r),s=a(t,n,r),o=i-s,u,f=i===0?0:o/i,l=i;if(o===0)u=0;else switch(i){case t:u=(n-r)/o/6+(n<r?1:0);break;case n:u=(r-t)/o/6+1/3;break;case r:u=(t-n)/o/6+2/3}return new m.HSV(u,f,l,this._alpha)}}),g("HSL",["hue","saturation","lightness","alpha"],{hsv:function(){var e=this._lightness*2,t=this._saturation*(e<=1?e:2-e),n;return e+t<1e-9?n=0:n=2*t/(e+t),new m.HSV(this._hue,n,(e+t)/2,this._alpha)},rgb:function(){return this.hsv().rgb()},fromRgb:function(){return this.hsv().hsl()}}),g("CMYK",["cyan","magenta","yellow","black","alpha"],{rgb:function(){return new m.RGB(1-this._cyan*(1-this._black)-this._black,1-this._magenta*(1-this._black)-this._black,1-this._yellow*(1-this._black)-this._black,this._alpha)},fromRgb:function(){var e=this._red,t=this._green,n=this._blue,r=1-e,i=1-t,s=1-n,o=1;return e||t||n?(o=a(r,a(i,s)),r=(r-o)/(1-o),i=(i-o)/(1-o),s=(s-o)/(1-o)):o=1,new m.CMYK(r,i,s,o,this._alpha)}}),m.installMethod("clearer",function(e){return this.alpha(s(e)?-0.1:-e,!0)}),m.installMethod("darken",function(e){return this.lightness(s(e)?-0.1:-e,!0)}),m.installMethod("desaturate",function(e){return this.saturation(s(e)?-0.1:-e,!0)}),m.installMethod("greyscale",y),m.installMethod("grayscale",y),m.installMethod("lighten",function(e){return this.lightness(s(e)?.1:e,!0)}),m.installMethod("mix",function(e,t){e=m(e).rgb(),t=1-(s(t)?.5:t);var n=t*2-1,r=this._alpha-e._alpha,i=((n*r===-1?n:(n+r)/(1+n*r))+1)/2,o=1-i,u=this.rgb();return new m.RGB(u._red*i+e._red*o,u._green*i+e._green*o,u._blue*i+e._blue*o,u._alpha*t+e._alpha*(1-t))}),m.installMethod("negate",function(){var e=this.rgb();return new m.RGB(1-e._red,1-e._green,1-e._blue,this._alpha)}),m.installMethod("opaquer",function(e){return this.alpha(s(e)?.1:e,!0)}),m.installMethod("rotate",function(e){return this.hue((e||0)/360,!0)}),m.installMethod("saturate",function(e){return this.saturation(s(e)?.1:e,!0)}),m.installMethod("toAlpha",function(e){var t=this.rgb(),n=m(e).rgb(),r=1e-10,i=new m.RGB(0,0,0,t._alpha),s=["_red","_green","_blue"];return s.forEach(function(e){t[e]<r?i[e]=t[e]:t[e]>n[e]?i[e]=(t[e]-n[e])/(1-n[e]):t[e]>n[e]?i[e]=(n[e]-t[e])/n[e]:i[e]=0}),i._red>i._green?i._red>i._blue?t._alpha=i._red:t._alpha=i._blue:i._green>i._blue?t._alpha=i._green:t._alpha=i._blue,t._alpha<r?t:(s.forEach(function(e){t[e]=(t[e]-n[e])/t._alpha+n[e]}),t._alpha*=i._alpha,t)})})(Math,RegExp,parseFloat,parseInt,Function,isNaN,Math.round,Math.pow,Math.min)
-;
-define('extplug/views/users/settings/ColorInputView',['exports', 'module', './InputView', 'onecolor'], function (exports, module, _InputView, _onecolor) {
-  'use strict';
-
-  var _InputView2 = babelHelpers.interopRequireDefault(_InputView);
-
-  var _onecolor2 = babelHelpers.interopRequireDefault(_onecolor);
-
-  var ColorInputView = _InputView2['default'].extend({
-    className: 'item extplug-input extplug-color-input',
-
-    initialize: function initialize(o) {
-      this._super(o);
-      this.onUpdate = this.onUpdate.bind(this);
-    },
-
-    render: function render() {
-      this._super();
-      this.$color = $('<div />').addClass('extplug-color-swatch');
-      this.$wrapper.append(this.$color);
-
-      this.onUpdate();
-      this.on('change', this.onUpdate);
-      this.$input.on('keyup', this.onUpdate);
-
-      return this;
-    },
-
-    color: function color() {
-      try {
-        var c = (0, _onecolor2['default'])(this.$input.val());
-        if (c) return c;
-      } catch (e) {}
-    },
-
-    onUpdate: function onUpdate() {
-      var color = this.color();
-      if (color) {
-        this.$color.css({ 'background-color': color.css() });
-        this.$wrapper.removeClass('error');
-      } else {
-        this.$wrapper.addClass('error');
-      }
-    },
-
-    value: function value() {
-      var color = this.color();
-      return color ? this.$input.val() : '';
-    }
-  });
-
-  module.exports = ColorInputView;
-});
-define('extplug/views/users/settings/DropdownView',['exports', 'module', 'backbone', 'jquery', 'underscore'], function (exports, module, _backbone, _jquery, _underscore) {
-  'use strict';
-
-  var _Backbone = babelHelpers.interopRequireDefault(_backbone);
-
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
-
-  var DropdownView = _Backbone['default'].View.extend({
-    className: 'extplug-dropdown',
-
-    initialize: function initialize() {
-      if (!this.options.selected) {
-        this.options.selected = Object.keys(this.options.options)[0];
-      }
-
-      this.onDocumentClick = this.onDocumentClick.bind(this);
-    },
-
-    render: function render() {
-      var _this = this;
-
-      this.$label = (0, _$['default'])('<label />').addClass('title').text(this.options.label);
-      this.$dl = (0, _$['default'])('<dl />').addClass('dropdown');
-      this.$selectedValue = (0, _$['default'])('<span />');
-      this.$selected = (0, _$['default'])('<dt />').append(this.$selectedValue).append((0, _$['default'])('<i />').addClass('icon icon-arrow-down-grey')).append((0, _$['default'])('<i />').addClass('icon icon-arrow-up-grey'));
-
-      this.$rows = (0, _$['default'])('<dd />');
-      var selected = undefined;
-      (0, _underscore.each)(this.options.options, function (text, value) {
-        var row = (0, _$['default'])('<div />').addClass('row').data('value', value);
-        var el = (0, _$['default'])('<span />').text(text);
-        if (_this.options.selected === value) {
-          selected = row;
-        }
-        row.append(el).appendTo(_this.$rows);
-      });
-
-      this.$dl.append(this.$selected).append(this.$rows);
-
-      this.$el.append(this.$label).append(this.$dl);
-
-      this.$selected.on('click', this.onBaseClick.bind(this));
-      this.$rows.on('click', this.onRowClick.bind(this));
-      // trigger the above as a default
-      if (selected) {
-        selected.click();
-      }
-      return this;
-    },
-
-    remove: function remove() {
-      this.$('dt, dd').off();
-      (0, _$['default'])(document).off('click', this.onDocumentClick);
-      this._super();
-    },
-
-    close: function close() {
-      this.$dl.removeClass('open extplug-dropdown-up');
-      (0, _$['default'])(document).off('click', this.onDocumentClick);
-    },
-
-    onBaseClick: function onBaseClick(e) {
-      var _this2 = this;
-
-      if (this.$dl.hasClass('open')) {
-        this.close();
-      } else {
-        if (this.canExpandDownward()) {
-          this.$dl.addClass('open');
-        } else {
-          this.$dl.addClass('open extplug-dropdown-up');
-        }
-        (0, _underscore.defer)(function () {
-          (0, _$['default'])(document).on('click', _this2.onDocumentClick);
-        });
-      }
-    },
-
-    onRowClick: function onRowClick(e) {
-      var row = (0, _$['default'])(e.target).closest('.row');
-
-      this.$rows.children().removeClass('selected');
-      row.addClass('selected');
-      this.$selectedValue.text(row.text());
-      this.trigger('change', row.data('value'));
-
-      // will be closed by onDocumentClick()
-    },
-
-    onDocumentClick: function onDocumentClick(e) {
-      var _this3 = this;
-
-      (0, _underscore.defer)(function () {
-        _this3.close();
-      });
-    },
-
-    canExpandDownward: function canExpandDownward() {
-      var top = this.$dl.offset().top;
-      var bottom = top + this.$rows.height();
-      return bottom < (0, _$['default'])(document).height();
-    }
-  });
-
-  module.exports = DropdownView;
-});
-define('extplug/views/users/settings/PlaylistSelectMenuView',['exports', 'module', 'plug/views/grabs/grabMenu', 'plug/models/Media', 'lang/Lang'], function (exports, module, _plugViewsGrabsGrabMenu, _plugModelsMedia, _langLang) {
-  'use strict';
-
-  var _Media = babelHelpers.interopRequireDefault(_plugModelsMedia);
-
-  var _Lang = babelHelpers.interopRequireDefault(_langLang);
-
-  var fakeMedia = [new _Media['default']()];
-
-  var PlaylistSelectMenuView = _plugViewsGrabsGrabMenu.constructor.extend({
-    className: 'pop-menu extplug-playlist-select-menu',
-
-    // don't hide automatically on mouse leave
-    onMouseLeave: function onMouseLeave() {},
-
-    // hide immediately on hide() calls.
-    // plug has a little delay in here because it auto-hides the grab
-    // menu when the mouse leaves the area.
-    hide: function hide() {
-      this.$modal && this.$modal.remove();
-      if (this._hide) this._hide();else this._super();
-    },
-
-    onRowPress: function onRowPress(playlist) {
-      this.trigger('select', playlist);
-      this.hide();
-    },
-
-    show: function show(el, container) {
-      var _this = this;
-
-      this._super(el, fakeMedia, container);
-      this.$icon.removeClass('icon-add').addClass('icon-playlist');
-      this.$title.text(_Lang['default'].playlist.yourPlaylists);
-
-      // show the check mark in front of the selected playlist instead of the
-      // active one
-      this.rows.forEach(function (row) {
-        if (row.model) {
-          if (row.model.get('id') === _this.options.selected.get('id')) {
-            row.$el.append($('<i />').addClass('icon icon-check-purple'));
-          } else if (row.model.get('active')) {
-            row.$el.find('.icon-check-purple').remove();
-          }
-        }
-      });
-
-      this.$modal = $('<div />').addClass('user-rollover-modal').on('click', this.hide.bind(this)).appendTo('body');
-      this.$el.css('z-index', parseInt(this.$modal.css('z-index'), 10) + 1);
-
-      return this;
-    }
-  });
-
-  module.exports = PlaylistSelectMenuView;
-});
-define('extplug/views/users/settings/PlaylistSelectView',['exports', 'module', './PlaylistSelectMenuView', 'backbone', 'plug/collections/playlists'], function (exports, module, _PlaylistSelectMenuView, _backbone, _plugCollectionsPlaylists) {
-  'use strict';
-
-  var _PlaylistSelectMenuView2 = babelHelpers.interopRequireDefault(_PlaylistSelectMenuView);
-
-  var _playlists = babelHelpers.interopRequireDefault(_plugCollectionsPlaylists);
-
-  var PlaylistSelectView = _backbone.View.extend({
-    className: 'item extplug-playlist-select',
-
-    initialize: function initialize(o) {
-      this.label = o.label;
-      this.description = o.description;
-      this.value = o.value ? _playlists['default'].get(o.value) : _playlists['default'].at(0);
-    },
-
-    render: function render() {
-      var _this = this;
-
-      this.$label = $('<label />').addClass('title').text(this.label);
-      this.$selected = $('<div />').addClass('extplug-playlist-selected').text(this.value.get('name')).on('click', function () {
-        return _this.open();
-      });
-      this.$el.append(this.$label, this.$selected);
-      return this;
-    },
-
-    open: function open() {
-      var _this2 = this;
-
-      var menu = new _PlaylistSelectMenuView2['default']({
-        selected: this.value
-      });
-      menu.show(this.$selected);
-      menu.on('select', function (playlist) {
-        _this2.value = playlist;
-        _this2.$selected.text(_this2.value.get('name'));
-        _this2.trigger('change', playlist.get('id'));
-      });
-    }
-  });
-
-  module.exports = PlaylistSelectView;
-});
-define('extplug/views/users/settings/SliderView',['exports', 'module', 'backbone', 'jquery'], function (exports, module, _backbone, _jquery) {
-  'use strict';
-
-  var _Backbone = babelHelpers.interopRequireDefault(_backbone);
-
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
-
-  function template(o) {
-    return '\n    <span class="title">' + o.label + '</span>\n    <span class="value"></span>\n    <div class="counts">\n      <span class="count">' + o.min + '</span>\n      <span class="count">' + o.max + '</span>\n      <span class="stretch"></span>\n    </div>\n    <div class="slider">\n      <div class="bar"></div>\n      <div class="circle"></div>\n      <div class="hit"></div>\n    </div>\n  ';
-  }
-
-  var SliderView = _Backbone['default'].View.extend({
-    className: 'extplug-slider cap',
-    initialize: function initialize() {
-      this.onStart = this.onStart.bind(this);
-      this.onMove = this.onMove.bind(this);
-      this.onStop = this.onStop.bind(this);
-      this._value = this.options.value || this.options.min;
-    },
-    render: function render() {
-      this.$el.append(template(this.options));
-      this.$bar = this.$('.bar');
-      this.$hit = this.$('.hit').on('mousedown', this.onStart);
-      this.$circle = this.$('.circle');
-      this.$value = this.$('.value');
-      _.delay((function () {
-        this.setValue(this._value, true);
-      }).bind(this));
-      return this;
-    },
-    onStart: function onStart() {
-      (0, _$['default'])(document).on('mousemove', this.onMove).on('mouseup', this.onStop);
-    },
-    onMove: function onMove(e) {
-      var offset = e.pageX - this.$hit.offset().left;
-      var percent = Math.max(0, Math.min(1, offset / (this.$hit.width() - this.$circle.width())));
-      var value = Math.round(this.options.min + percent * (this.options.max - this.options.min));
-      this.setValue(Math.max(this.options.min, value));
-      e.preventDefault();
-      e.stopPropagation();
-    },
-    onStop: function onStop() {
-      (0, _$['default'])(document).off('mousemove', this.onMove).off('mouseup', this.onStop);
-    },
-    setValue: function setValue(value, force) {
-      if (value !== this._value || force) {
-        var percent = (value - this.options.min) / (this.options.max - this.options.min);
-        this.$circle.css('left', parseInt(this.$hit.css('left'), 10) + (this.$hit.width() - this.$circle.width()) * percent - this.$circle.width() / 2);
-        this.$value.text(value);
-        this.trigger('change', value);
-        this._value = value;
-      }
-    }
-  });
-
-  module.exports = SliderView;
-});
-define('extplug/views/users/settings/DefaultSettingsView',['exports', 'module', './ControlGroupView', './CheckboxView', './ColorInputView', './DropdownView', './InputView', './PlaylistSelectView', './SliderView', 'underscore'], function (exports, module, _ControlGroupView, _CheckboxView, _ColorInputView, _DropdownView, _InputView, _PlaylistSelectView, _SliderView, _underscore) {
-  'use strict';
-
-  var _ControlGroupView2 = babelHelpers.interopRequireDefault(_ControlGroupView);
-
-  var _CheckboxView2 = babelHelpers.interopRequireDefault(_CheckboxView);
-
-  var _ColorInputView2 = babelHelpers.interopRequireDefault(_ColorInputView);
-
-  var _DropdownView2 = babelHelpers.interopRequireDefault(_DropdownView);
-
-  var _InputView2 = babelHelpers.interopRequireDefault(_InputView);
-
-  var _PlaylistSelectView2 = babelHelpers.interopRequireDefault(_PlaylistSelectView);
-
-  var _SliderView2 = babelHelpers.interopRequireDefault(_SliderView);
-
-  var controlFactory = {
-    boolean: function boolean(setting, value) {
-      return new _CheckboxView2['default']({
-        label: setting.label,
-        enabled: value
-      });
-    },
-    dropdown: function dropdown(setting, value) {
-      return new _DropdownView2['default']({
-        label: setting.label,
-        options: setting.options,
-        selected: value
-      });
-    },
-    slider: function slider(setting, value) {
-      return new _SliderView2['default']({
-        label: setting.label,
-        min: setting.min,
-        max: setting.max,
-        value: settings.get(name)
-      });
-    },
-    text: function text(setting, value) {
-      return new _InputView2['default']({
-        label: setting.label,
-        description: setting.description,
-        value: value
-      });
-    },
-    number: function number(setting, value) {
-      return new _InputView2['default']({
-        type: 'number',
-        label: setting.label,
-        description: setting.description,
-        value: value,
-        min: (0, _underscore.has)(setting, 'min') ? setting.min : '',
-        max: (0, _underscore.has)(setting, 'max') ? setting.max : '',
-        step: (0, _underscore.has)(setting, 'step') ? setting.step : ''
-      });
-    },
-    color: function color(setting, value) {
-      return new _ColorInputView2['default']({
-        label: setting.label,
-        description: setting.description,
-        value: value
-      });
-    },
-    playlist: function playlist(setting, value) {
-      return new _PlaylistSelectView2['default']({
-        label: setting.label,
-        description: setting.description,
-        value: value
-      });
-    }
-  };
-
-  var DefaultSettingsView = _ControlGroupView2['default'].extend({
-
-    render: function render() {
-      var _this = this;
-
-      this.controls = [];
-
-      var meta = this.model.meta();
-      var settings = this.model;
-      (0, _underscore.each)(meta, function (setting, name) {
-        if ((0, _underscore.has)(controlFactory, setting.type)) {
-          var control = controlFactory[setting.type](setting, settings.get(name));
-          control.on('change', function (value) {
-            return settings.set(name, value);
-          });
-          _this.addControl(control);
-        }
-      });
-
-      this._super();
-
-      return this;
-    },
-
-    remove: function remove() {
-      this.controls.forEach(function (control) {
-        return control.destroy();
-      });
-      this.controls = [];
-    }
-
-  });
-
-  module.exports = DefaultSettingsView;
+  exports.default = PluginsCollection;
+  module.exports = exports['default'];
 });
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define('debug',[],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.debug = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 
@@ -3751,47 +3007,975 @@ module.exports = function (string) {
 
 },{}]},{},[1])(1)
 });
-define('extplug/Plugin',['exports', 'module', 'jquery', 'underscore', 'backbone', 'plug/core/Class', './models/Settings', './util/Style', './views/users/settings/DefaultSettingsView', 'debug', 'regexp-quote'], function (exports, module, _jquery, _underscore, _backbone, _plugCoreClass, _modelsSettings, _utilStyle, _viewsUsersSettingsDefaultSettingsView, _debug, _regexpQuote) {
+define('extplug/models/Settings',['module', 'exports', 'backbone'], function (module, exports, _backbone) {
   'use strict';
 
-  var _jQuery = babelHelpers.interopRequireDefault(_jquery);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-  var _2 = babelHelpers.interopRequireDefault(_underscore);
 
-  var _Backbone = babelHelpers.interopRequireDefault(_backbone);
+  var metaSymbol = Symbol('settings schema');
 
-  var _Class = babelHelpers.interopRequireDefault(_plugCoreClass);
+  var Settings = _backbone.Model.extend({
+    initialize: function initialize(attrs) {
+      var opts = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
 
-  var _Settings = babelHelpers.interopRequireDefault(_modelsSettings);
+      this[metaSymbol] = opts.meta;
+    },
+    meta: function meta() {
+      return this[metaSymbol];
+    }
+  });
 
-  var _Style = babelHelpers.interopRequireDefault(_utilStyle);
+  exports.default = Settings;
+  module.exports = exports['default'];
+});
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define('sistyl',[],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.sistyl = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function (global, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define(['exports', 'module', 'split-selector'], factory);
+  } else if (typeof exports !== 'undefined' && typeof module !== 'undefined') {
+    factory(exports, module, require('split-selector'));
+  } else {
+    var mod = {
+      exports: {}
+    };
+    factory(mod.exports, mod, global.splitSelector);
+    global.sistyl = mod.exports;
+  }
+})(this, function (exports, module, _splitSelector) {
+  'use strict';
 
-  var _SettingsView = babelHelpers.interopRequireDefault(_viewsUsersSettingsDefaultSettingsView);
+  var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+  module.exports = sistyl;
+
+  function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+  function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+  var _splitSelector2 = _interopRequireDefault(_splitSelector);
+
+  function sistyl(defaults) {
+    return new sistyl.Sistyl(defaults);
+  }
+
+  sistyl.Sistyl = (function () {
+
+    // sistyl constructor, takes an optional default set of rulesets
+
+    function Sistyl() {
+      var defaults = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+      _classCallCheck(this, Sistyl);
+
+      this._rules = {};
+
+      if (defaults) this.set(defaults);
+    }
+
+    // concats and regroups selectors. Deals with nested groups like
+    //
+    //   expand('#a, #b', '.x, .y')
+    //
+    // returns:
+    //
+    //   '#a .x, #a .y, #b .x, #b .y'
+
+    _createClass(Sistyl, [{
+      key: '_expand',
+      value: function _expand(base, sub) {
+        var children = (0, _splitSelector2['default'])(sub);
+        return (0, _splitSelector2['default'])(base).reduce(function (selectors, parent) {
+          return selectors.concat(children.map(function (child) {
+            return parent + ' ' + child;
+          }));
+        }, []).join(', ');
+      }
+
+      // .set() takes a selector name and an object of properties
+      // and nested rulesets (passing an object as a property value)
+      // Alternatively, it takes an object of rulesets, the keys
+      // being selectors and the values being rulesets (incl. nested)
+      //
+      //   style.set('.selector', { 'css-prop': 'value' })
+      //   style.set('.selector', {
+      //     '.nested': { 'prop': 'value' },
+      //     'sibling-prop': 'sibling'
+      //   })
+      //   style.set({
+      //     '.selector-1': { 'css-prop': 'one' },
+      //     '.selector-2': { 'css-prop': 'two' }
+      //   })
+    }, {
+      key: 'set',
+      value: function set(sel, props) {
+        var _this = this;
+
+        var rules = this._rules;
+        if (props) {
+          if (props instanceof Sistyl) props = props.rulesets();
+          Object.keys(props).forEach(function (prop) {
+            var val = props[prop];
+            if (typeof val === 'object') {
+              // nested rules
+              _this.set(_this._expand(sel, prop), val);
+            } else {
+              if (!(sel in _this._rules)) {
+                _this._rules[sel] = {};
+              }
+              _this._rules[sel][prop] = val;
+            }
+          });
+        } else {
+          if (sel instanceof Sistyl) sel = sel.rulesets();
+          Object.keys(sel).forEach(function (selector) {
+            _this.set(selector, sel[selector]);
+          });
+        }
+
+        return this;
+      }
+
+      // .unset() removes a ruleset from the sistyl instance, that
+      // corresponds to the given selector.
+      // Note that it removes *just* the given selector, and not
+      // other rulesets that also match the selector. Specifically,
+      // .unset('.rem') does *not* remove a '.keep, .rem' selector.
+      //
+      // style.unset('.selector') // removes the `.selector {}`
+      //                          // ruleset
+      // style.unset('.selector', // removes the `color` property
+      //             'color')     // from the `.selector` ruleset.
+    }, {
+      key: 'unset',
+      value: function unset(selector, prop) {
+        if (prop !== undefined) {
+          delete this._rules[selector][prop];
+        } else {
+          delete this._rules[selector];
+        }
+        return this;
+      }
+
+      // returns the flattened rulesets on this sistyl object
+      // i.e. after
+      //
+      //   style.set({ '.parent': { '.child': {} } })
+      //
+      // `style.rulesets()` will return
+      //
+      //   { '.parent .child': {} }
+      //
+    }, {
+      key: 'rulesets',
+      value: function rulesets() {
+        return this._rules;
+      }
+
+      // formats the current rulesets as a valid CSS string
+      // (unless you set invalid property values, but then
+      // you're to blame!)
+    }, {
+      key: 'toString',
+      value: function toString() {
+        var str = '';
+        var rules = this._rules;
+        Object.keys(rules).forEach(function (selector) {
+          var ruleset = rules[selector];
+          str += selector + ' {\n';
+          Object.keys(ruleset).forEach(function (property) {
+            str += '  ' + property + ': ' + ruleset[property] + ';\n';
+          });
+          str += '}\n\n';
+        });
+        return str;
+      }
+    }]);
+
+    return Sistyl;
+  })();
+});
+},{"split-selector":2}],2:[function(require,module,exports){
+// attr regex, from Sizzle via css-what:
+// https://github.com/fb55/css-what/blob/3083ac06/index.js#L8
+// https://github.com/jquery/sizzle/blob/a7020477/src/sizzle.js#L84
+var attr = /^\s*((?:\\.|[\w\u00c0-\uFFFF\-])+)\s*(?:(\S?)=\s*(?:(['"])(.*?)\3|(#?(?:\\.|[\w\u00c0-\uFFFF\-])*)|)|)\s*(i)?\]/
+// all the non-attr things
+var normalBits = /^([^\[\],]+)/
+
+module.exports = function splitSelector(selector) {
+  var i = 0
+  var chunk = selector
+  var parts = []
+  var current = ''
+  var match
+
+  while (chunk = chunk.slice(i)) {
+    if (match = normalBits.exec(chunk)) {
+      i = match[0].length
+      current += match[0]
+    }
+    else if (chunk[0] === ',') {
+      parts.push(current.trim())
+      current = ''
+      i = 1
+    }
+    else if (chunk[0] === '[') {
+      match = attr.exec(chunk.slice(1))
+      if (match) {
+        current += '[' + match[0]
+        i = 1 + match[0].length
+      }
+    }
+    else {
+      throw new Error('Could not parse: ' + chunk)
+    }
+  }
+
+  if (current) parts.push(current.trim())
+
+  return parts
+}
+},{}]},{},[1])(1)
+});
+define('extplug/util/Style',['module', 'exports', 'jquery', 'underscore', 'sistyl', 'plug/core/Class', 'plug/views/rooms/popout/PopoutView'], function (module, exports, _jquery, _underscore, _sistyl, _Class, _PopoutView) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _underscore2 = babelHelpers.interopRequireDefault(_underscore);
+
+  var _Class2 = babelHelpers.interopRequireDefault(_Class);
+
+  var _PopoutView2 = babelHelpers.interopRequireDefault(_PopoutView);
+
+  // hack to get plug.dj-like Class inheritance on a not-plug.dj-like Class
+  var Style = _Class2.default.extend({
+    init: function init(defaults) {
+      this.sistyl = new _sistyl.Sistyl(defaults);
+      this.timeout = null;
+
+      this.refresh = this.refresh.bind(this);
+      this.id = _underscore2.default.uniqueId('eps-');
+
+      this.el = (0, _jquery2.default)('<style />').addClass('extplug-style').attr('id', this.id).attr('type', 'text/css').appendTo('head');
+      if (_PopoutView2.default._window) {
+        // eslint-disable-line no-underscore-dangle
+        this.el.clone().appendTo(_PopoutView2.default.$document.find('head'));
+      }
+      this.refresh();
+    },
+    $: function $() {
+      var el = this.el;
+      if (_PopoutView2.default._window) {
+        // eslint-disable-line no-underscore-dangle
+        el = el.add(_PopoutView2.default.$document.find('#' + this.id));
+      }
+      return el;
+    },
+    set: function set(sel, props) {
+      this.sistyl.set(sel, props);
+
+      // throttle updates
+      clearTimeout(this.timeout);
+      this.timeout = setTimeout(this.refresh, 1);
+      return this;
+    },
+    unset: function unset(sel, prop) {
+      this.sistyl.unset(sel, prop);
+      return this;
+    },
+    rulesets: function rulesets() {
+      return this.sistyl.rulesets();
+    },
+    refresh: function refresh() {
+      this.$().text(this.toString());
+    },
+    remove: function remove() {
+      this.$().remove();
+    },
+    toString: function toString() {
+      return this.sistyl.toString();
+    }
+  });
+
+  exports.default = Style;
+  module.exports = exports['default'];
+});
+define('extplug/views/users/settings/ControlGroupView',['module', 'exports', 'jquery', 'backbone'], function (module, exports, _jquery, _backbone) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var ControlGroupView = _backbone.View.extend({
+    className: 'extplug control-group',
+
+    initialize: function initialize() {
+      this.controls = [];
+    },
+    render: function render() {
+      var _this = this;
+
+      var switchAt = Math.ceil(this.controls.length / 2 - 1);
+      var current = (0, _jquery2.default)('<div />').addClass('left').appendTo(this.$el);
+      this.controls.forEach(function (item, i) {
+        current.append(item.$el);
+        item.render();
+        if (i === switchAt) {
+          current = (0, _jquery2.default)('<div />').addClass('right').appendTo(_this.$el);
+        }
+      });
+      return this;
+    },
+    addControl: function addControl(control) {
+      this.controls.push(control);
+      return this;
+    }
+  });
+
+  exports.default = ControlGroupView;
+  module.exports = exports['default'];
+});
+define('extplug/views/users/settings/CheckboxView',['module', 'exports', 'backbone', 'jquery', 'plug/core/Events'], function (module, exports, _backbone, _jquery, _Events) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _backbone2 = babelHelpers.interopRequireDefault(_backbone);
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
+
+  /**
+   * A checkbox setting item.
+   */
+  var CheckboxView = _backbone2.default.View.extend({
+    className: 'item',
+    initialize: function initialize(o) {
+      this.label = o.label;
+      this.description = o.description;
+      this.enabled = o.enabled || false;
+      this.onChange = this.onChange.bind(this);
+    },
+    render: function render() {
+      var _this = this;
+
+      this.$el.append('<i class="icon icon-check-blue" />').append((0, _jquery2.default)('<span />').text(this.label));
+
+      if (this.description) {
+        this.$el.on('mouseenter', function () {
+          return _Events2.default.trigger('tooltip:show', _this.description, _this.$el);
+        }).on('mouseleave', function () {
+          return _Events2.default.trigger('tooltip:hide');
+        });
+      }
+
+      if (this.enabled) {
+        this.$el.addClass('selected');
+      }
+
+      this.$el.on('click', this.onChange);
+      return this;
+    },
+    onChange: function onChange() {
+      this.$el.toggleClass('selected');
+      var enabled = this.enabled;
+      this.enabled = this.$el.hasClass('selected');
+      if (enabled !== this.enabled) {
+        this.trigger('change', this.enabled);
+      }
+    }
+  });
+
+  exports.default = CheckboxView;
+  module.exports = exports['default'];
+});
+(function(e,t,n,r,i,s,o,u,a){function m(e){if(Object.prototype.toString.apply(e)==="[object Array]"){if(typeof e[0]=="string"&&typeof m[e[0]]=="function")return new m[e[0]](e.slice(1,e.length));if(e.length===4)return new m.RGB(e[0]/255,e[1]/255,e[2]/255,e[3]/255)}else if(typeof e=="string"){var i=e.toLowerCase();l[i]&&(e="#"+l[i]),i==="transparent"&&(e="rgba(0,0,0,0)");var s=e.match(v);if(s){var o=s[1].toUpperCase(),u=c(s[8])?s[8]:n(s[8]),a=o[0]==="H",f=s[3]?100:a?360:255,h=s[5]||a?100:255,d=s[7]||a?100:255;if(c(m[o]))throw new Error("one.color."+o+" is not installed.");return new m[o](n(s[2])/f,n(s[4])/h,n(s[6])/d,u)}e.length<6&&(e=e.replace(/^#?([0-9a-f])([0-9a-f])([0-9a-f])$/i,"$1$1$2$2$3$3"));var g=e.match(/^#?([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])([0-9a-f][0-9a-f])$/i);if(g)return new m.RGB(r(g[1],16)/255,r(g[2],16)/255,r(g[3],16)/255);if(m.CMYK){var y=e.match(new t("^cmyk\\("+p.source+","+p.source+","+p.source+","+p.source+"\\)$","i"));if(y)return new m.CMYK(n(y[1])/100,n(y[2])/100,n(y[3])/100,n(y[4])/100)}}else if(typeof e=="object"&&e.isColor)return e;return!1}function g(t,n,r){function a(e,t){var n={};n[t.toLowerCase()]=new i("return this.rgb()."+t.toLowerCase()+"();"),m[t].propertyNames.forEach(function(e,r){n[e]=n[e==="black"?"k":e[0]]=new i("value","isDelta","return this."+t.toLowerCase()+"()."+e+"(value, isDelta);")});for(var r in n)n.hasOwnProperty(r)&&m[e].prototype[r]===undefined&&(m[e].prototype[r]=n[r])}m[t]=new i(n.join(","),"if (Object.prototype.toString.apply("+n[0]+") === '[object Array]') {"+n.map(function(e,t){return e+"="+n[0]+"["+t+"];"}).reverse().join("")+"}"+"if ("+n.filter(function(e){return e!=="alpha"}).map(function(e){return"isNaN("+e+")"}).join("||")+"){"+'throw new Error("['+t+']: Invalid color: ("+'+n.join('+","+')+'+")");}'+n.map(function(e){return e==="hue"?"this._hue=hue<0?hue-Math.floor(hue):hue%1":e==="alpha"?"this._alpha=(isNaN(alpha)||alpha>1)?1:(alpha<0?0:alpha);":"this._"+e+"="+e+"<0?0:("+e+">1?1:"+e+")"}).join(";")+";"),m[t].propertyNames=n;var s=m[t].prototype;["valueOf","hex","hexa","css","cssa"].forEach(function(e){s[e]=s[e]||(t==="RGB"?s.hex:new i("return this.rgb()."+e+"();"))}),s.isColor=!0,s.equals=function(r,i){c(i)&&(i=1e-10),r=r[t.toLowerCase()]();for(var s=0;s<n.length;s+=1)if(e.abs(this["_"+n[s]]-r["_"+n[s]])>i)return!1;return!0},s.toJSON=new i("return ['"+t+"', "+n.map(function(e){return"this._"+e},this).join(", ")+"];");for(var o in r)if(r.hasOwnProperty(o)){var u=o.match(/^from(.*)$/);u?m[u[1].toUpperCase()].prototype[t.toLowerCase()]=r[o]:s[o]=r[o]}s[t.toLowerCase()]=function(){return this},s.toString=new i('return "[one.color.'+t+':"+'+n.map(function(e,t){return'" '+n[t]+'="+this._'+e}).join("+")+'+"]";'),n.forEach(function(e,t){s[e]=s[e==="black"?"k":e[0]]=new i("value","isDelta","if (typeof value === 'undefined') {return this._"+e+";"+"}"+"if (isDelta) {"+"return new this.constructor("+n.map(function(t,n){return"this._"+t+(e===t?"+value":"")}).join(", ")+");"+"}"+"return new this.constructor("+n.map(function(t,n){return e===t?"value":"this._"+t}).join(", ")+");")}),f.forEach(function(e){a(t,e),a(e,t)}),f.push(t)}function y(){var e=this.rgb(),t=e._red*.3+e._green*.59+e._blue*.11;return new m.RGB(t,t,t,this._alpha)}var f=[],l={},c=function(e){return typeof e=="undefined"},h=/\s*(\.\d+|\d+(?:\.\d+)?)(%)?\s*/,p=/\s*(\.\d+|100|\d?\d(?:\.\d+)?)%\s*/,d=/\s*(\.\d+|\d+(?:\.\d+)?)\s*/,v=new t("^(rgb|hsl|hsv)a?\\("+h.source+","+h.source+","+h.source+"(?:,"+d.source+")?"+"\\)$","i");m.installMethod=function(e,t){f.forEach(function(n){m[n].prototype[e]=t})},g("RGB",["red","green","blue","alpha"],{hex:function(){var e=(o(255*this._red)*65536+o(255*this._green)*256+o(255*this._blue)).toString(16);return"#"+"00000".substr(0,6-e.length)+e},hexa:function(){var e=o(this._alpha*255).toString(16);return"#"+"00".substr(0,2-e.length)+e+this.hex().substr(1,6)},css:function(){return"rgb("+o(255*this._red)+","+o(255*this._green)+","+o(255*this._blue)+")"},cssa:function(){return"rgba("+o(255*this._red)+","+o(255*this._green)+","+o(255*this._blue)+","+this._alpha+")"}}),typeof define=="function"&&!c(define.amd)?define('onecolor',[],function(){return m}):typeof exports=="object"?module.exports=m:(one=window.one||{},one.color=m),typeof jQuery!="undefined"&&c(jQuery.color)&&(jQuery.color=m),l={aliceblue:"f0f8ff",antiquewhite:"faebd7",aqua:"0ff",aquamarine:"7fffd4",azure:"f0ffff",beige:"f5f5dc",bisque:"ffe4c4",black:"000",blanchedalmond:"ffebcd",blue:"00f",blueviolet:"8a2be2",brown:"a52a2a",burlywood:"deb887",cadetblue:"5f9ea0",chartreuse:"7fff00",chocolate:"d2691e",coral:"ff7f50",cornflowerblue:"6495ed",cornsilk:"fff8dc",crimson:"dc143c",cyan:"0ff",darkblue:"00008b",darkcyan:"008b8b",darkgoldenrod:"b8860b",darkgray:"a9a9a9",darkgrey:"a9a9a9",darkgreen:"006400",darkkhaki:"bdb76b",darkmagenta:"8b008b",darkolivegreen:"556b2f",darkorange:"ff8c00",darkorchid:"9932cc",darkred:"8b0000",darksalmon:"e9967a",darkseagreen:"8fbc8f",darkslateblue:"483d8b",darkslategray:"2f4f4f",darkslategrey:"2f4f4f",darkturquoise:"00ced1",darkviolet:"9400d3",deeppink:"ff1493",deepskyblue:"00bfff",dimgray:"696969",dimgrey:"696969",dodgerblue:"1e90ff",firebrick:"b22222",floralwhite:"fffaf0",forestgreen:"228b22",fuchsia:"f0f",gainsboro:"dcdcdc",ghostwhite:"f8f8ff",gold:"ffd700",goldenrod:"daa520",gray:"808080",grey:"808080",green:"008000",greenyellow:"adff2f",honeydew:"f0fff0",hotpink:"ff69b4",indianred:"cd5c5c",indigo:"4b0082",ivory:"fffff0",khaki:"f0e68c",lavender:"e6e6fa",lavenderblush:"fff0f5",lawngreen:"7cfc00",lemonchiffon:"fffacd",lightblue:"add8e6",lightcoral:"f08080",lightcyan:"e0ffff",lightgoldenrodyellow:"fafad2",lightgray:"d3d3d3",lightgrey:"d3d3d3",lightgreen:"90ee90",lightpink:"ffb6c1",lightsalmon:"ffa07a",lightseagreen:"20b2aa",lightskyblue:"87cefa",lightslategray:"789",lightslategrey:"789",lightsteelblue:"b0c4de",lightyellow:"ffffe0",lime:"0f0",limegreen:"32cd32",linen:"faf0e6",magenta:"f0f",maroon:"800000",mediumaquamarine:"66cdaa",mediumblue:"0000cd",mediumorchid:"ba55d3",mediumpurple:"9370d8",mediumseagreen:"3cb371",mediumslateblue:"7b68ee",mediumspringgreen:"00fa9a",mediumturquoise:"48d1cc",mediumvioletred:"c71585",midnightblue:"191970",mintcream:"f5fffa",mistyrose:"ffe4e1",moccasin:"ffe4b5",navajowhite:"ffdead",navy:"000080",oldlace:"fdf5e6",olive:"808000",olivedrab:"6b8e23",orange:"ffa500",orangered:"ff4500",orchid:"da70d6",palegoldenrod:"eee8aa",palegreen:"98fb98",paleturquoise:"afeeee",palevioletred:"d87093",papayawhip:"ffefd5",peachpuff:"ffdab9",peru:"cd853f",pink:"ffc0cb",plum:"dda0dd",powderblue:"b0e0e6",purple:"800080",rebeccapurple:"639",red:"f00",rosybrown:"bc8f8f",royalblue:"4169e1",saddlebrown:"8b4513",salmon:"fa8072",sandybrown:"f4a460",seagreen:"2e8b57",seashell:"fff5ee",sienna:"a0522d",silver:"c0c0c0",skyblue:"87ceeb",slateblue:"6a5acd",slategray:"708090",slategrey:"708090",snow:"fffafa",springgreen:"00ff7f",steelblue:"4682b4",tan:"d2b48c",teal:"008080",thistle:"d8bfd8",tomato:"ff6347",turquoise:"40e0d0",violet:"ee82ee",wheat:"f5deb3",white:"fff",whitesmoke:"f5f5f5",yellow:"ff0",yellowgreen:"9acd32"},g("XYZ",["x","y","z","alpha"],{fromRgb:function(){var e=function(e){return e>.04045?u((e+.055)/1.055,2.4):e/12.92},t=e(this._red),n=e(this._green),r=e(this._blue);return new m.XYZ(t*.4124564+n*.3575761+r*.1804375,t*.2126729+n*.7151522+r*.072175,t*.0193339+n*.119192+r*.9503041,this._alpha)},rgb:function(){var e=this._x,t=this._y,n=this._z,r=function(e){return e>.0031308?1.055*u(e,1/2.4)-.055:12.92*e};return new m.RGB(r(e*3.2404542+t*-1.5371385+n*-0.4985314),r(e*-0.969266+t*1.8760108+n*.041556),r(e*.0556434+t*-0.2040259+n*1.0572252),this._alpha)},lab:function(){var e=function(e){return e>.008856?u(e,1/3):7.787037*e+4/29},t=e(this._x/95.047),n=e(this._y/100),r=e(this._z/108.883);return new m.LAB(116*n-16,500*(t-n),200*(n-r),this._alpha)}}),g("LAB",["l","a","b","alpha"],{fromRgb:function(){return this.xyz().lab()},rgb:function(){return this.xyz().rgb()},xyz:function(){var e=function(e){var t=u(e,3);return t>.008856?t:(e-16/116)/7.87},t=(this._l+16)/116,n=this._a/500+t,r=t-this._b/200;return new m.XYZ(e(n)*95.047,e(t)*100,e(r)*108.883,this._alpha)}}),g("HSV",["hue","saturation","value","alpha"],{rgb:function(){var t=this._hue,n=this._saturation,r=this._value,i=a(5,e.floor(t*6)),s=t*6-i,o=r*(1-n),u=r*(1-s*n),f=r*(1-(1-s)*n),l,c,h;switch(i){case 0:l=r,c=f,h=o;break;case 1:l=u,c=r,h=o;break;case 2:l=o,c=r,h=f;break;case 3:l=o,c=u,h=r;break;case 4:l=f,c=o,h=r;break;case 5:l=r,c=o,h=u}return new m.RGB(l,c,h,this._alpha)},hsl:function(){var e=(2-this._saturation)*this._value,t=this._saturation*this._value,n=e<=1?e:2-e,r;return n<1e-9?r=0:r=t/n,new m.HSL(this._hue,r,e/2,this._alpha)},fromRgb:function(){var t=this._red,n=this._green,r=this._blue,i=e.max(t,n,r),s=a(t,n,r),o=i-s,u,f=i===0?0:o/i,l=i;if(o===0)u=0;else switch(i){case t:u=(n-r)/o/6+(n<r?1:0);break;case n:u=(r-t)/o/6+1/3;break;case r:u=(t-n)/o/6+2/3}return new m.HSV(u,f,l,this._alpha)}}),g("HSL",["hue","saturation","lightness","alpha"],{hsv:function(){var e=this._lightness*2,t=this._saturation*(e<=1?e:2-e),n;return e+t<1e-9?n=0:n=2*t/(e+t),new m.HSV(this._hue,n,(e+t)/2,this._alpha)},rgb:function(){return this.hsv().rgb()},fromRgb:function(){return this.hsv().hsl()}}),g("CMYK",["cyan","magenta","yellow","black","alpha"],{rgb:function(){return new m.RGB(1-this._cyan*(1-this._black)-this._black,1-this._magenta*(1-this._black)-this._black,1-this._yellow*(1-this._black)-this._black,this._alpha)},fromRgb:function(){var e=this._red,t=this._green,n=this._blue,r=1-e,i=1-t,s=1-n,o=1;return e||t||n?(o=a(r,a(i,s)),r=(r-o)/(1-o),i=(i-o)/(1-o),s=(s-o)/(1-o)):o=1,new m.CMYK(r,i,s,o,this._alpha)}}),m.installMethod("clearer",function(e){return this.alpha(s(e)?-0.1:-e,!0)}),m.installMethod("darken",function(e){return this.lightness(s(e)?-0.1:-e,!0)}),m.installMethod("desaturate",function(e){return this.saturation(s(e)?-0.1:-e,!0)}),m.installMethod("greyscale",y),m.installMethod("grayscale",y),m.installMethod("lighten",function(e){return this.lightness(s(e)?.1:e,!0)}),m.installMethod("mix",function(e,t){e=m(e).rgb(),t=1-(s(t)?.5:t);var n=t*2-1,r=this._alpha-e._alpha,i=((n*r===-1?n:(n+r)/(1+n*r))+1)/2,o=1-i,u=this.rgb();return new m.RGB(u._red*i+e._red*o,u._green*i+e._green*o,u._blue*i+e._blue*o,u._alpha*t+e._alpha*(1-t))}),m.installMethod("negate",function(){var e=this.rgb();return new m.RGB(1-e._red,1-e._green,1-e._blue,this._alpha)}),m.installMethod("opaquer",function(e){return this.alpha(s(e)?.1:e,!0)}),m.installMethod("rotate",function(e){return this.hue((e||0)/360,!0)}),m.installMethod("saturate",function(e){return this.saturation(s(e)?.1:e,!0)}),m.installMethod("toAlpha",function(e){var t=this.rgb(),n=m(e).rgb(),r=1e-10,i=new m.RGB(0,0,0,t._alpha),s=["_red","_green","_blue"];return s.forEach(function(e){t[e]<r?i[e]=t[e]:t[e]>n[e]?i[e]=(t[e]-n[e])/(1-n[e]):t[e]>n[e]?i[e]=(n[e]-t[e])/n[e]:i[e]=0}),i._red>i._green?i._red>i._blue?t._alpha=i._red:t._alpha=i._blue:i._green>i._blue?t._alpha=i._green:t._alpha=i._blue,t._alpha<r?t:(s.forEach(function(e){t[e]=(t[e]-n[e])/t._alpha+n[e]}),t._alpha*=i._alpha,t)})})(Math,RegExp,parseFloat,parseInt,Function,isNaN,Math.round,Math.pow,Math.min)
+;
+define('extplug/views/users/settings/InputView',['module', 'exports', 'plug/core/Events', 'backbone', 'underscore', 'jquery'], function (module, exports, _Events, _backbone, _underscore, _jquery) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var KEY_ENTER = 13;
+
+  var InputView = _backbone.View.extend({
+    className: 'item extplug-input',
+
+    initialize: function initialize(o) {
+      this.label = o.label;
+      this.description = o.description;
+      this.value = o.value;
+
+      o.type = o.type || 'text';
+      this.attributes = (0, _underscore.omit)(o, 'label', 'value', 'description');
+
+      this.onKeyUp = this.onKeyUp.bind(this);
+      this.onKeyDown = this.onKeyDown.bind(this);
+      this.onFocus = this.onFocus.bind(this);
+      this.onBlur = this.onBlur.bind(this);
+      this.focus = this.focus.bind(this);
+    },
+    render: function render() {
+      var _this = this;
+
+      this.$label = (0, _jquery2.default)('<label />').addClass('title').text(this.label);
+      this.$input = (0, _jquery2.default)('<input />').attr(this.attributes).val(this.value);
+      this.$wrapper = (0, _jquery2.default)('<div />').addClass('extplug-input-wrap');
+      this.$el.append(this.$label, this.$wrapper.append(this.$input));
+      if (this.description) {
+        this.$label.on('mouseenter', function () {
+          _Events2.default.trigger('tooltip:show', _this.description, _this.$el);
+        }).on('mouseleave', function () {
+          _Events2.default.trigger('tooltip:hide');
+        });
+      }
+
+      this.$input.on('keyup', this.onKeyUp);
+      this.$input.on('keydown', this.onKeyDown);
+      this.$input.on('focus', this.onFocus);
+      this.$input.on('blur', this.onBlur);
+
+      this.$el.on('mousedown', this.focus);
+    },
+    onKeyUp: function onKeyUp() {},
+    onKeyDown: function onKeyDown(e) {
+      if (e.keyCode === KEY_ENTER) {
+        this.onBlur();
+      }
+    },
+    focus: function focus() {
+      this.$input.focus();
+    },
+    onFocus: function onFocus() {
+      this.$wrapper.addClass('focused');
+    },
+    onBlur: function onBlur() {
+      this.$wrapper.removeClass('focused');
+      this.trigger('change', this.$input.val());
+    }
+  });
+
+  exports.default = InputView;
+  module.exports = exports['default'];
+});
+define('extplug/views/users/settings/ColorInputView',['module', 'exports', 'jquery', 'onecolor', './InputView'], function (module, exports, _jquery, _onecolor, _InputView) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _onecolor2 = babelHelpers.interopRequireDefault(_onecolor);
+
+  var _InputView2 = babelHelpers.interopRequireDefault(_InputView);
+
+  var ColorInputView = _InputView2.default.extend({
+    className: 'item extplug-input extplug-color-input',
+
+    initialize: function initialize(o) {
+      this._super(o);
+      this.onUpdate = this.onUpdate.bind(this);
+    },
+    render: function render() {
+      this._super();
+      this.$color = (0, _jquery2.default)('<div />').addClass('extplug-color-swatch');
+      this.$wrapper.append(this.$color);
+
+      this.onUpdate();
+      this.on('change', this.onUpdate);
+      this.$input.on('keyup', this.onUpdate);
+
+      return this;
+    },
+    color: function color() {
+      try {
+        var c = (0, _onecolor2.default)(this.$input.val());
+        if (c) return c;
+      } catch (e) {
+        // ignore
+      }
+      return null;
+    },
+    onUpdate: function onUpdate() {
+      var color = this.color();
+      if (color) {
+        this.$color.css({ 'background-color': color.css() });
+        this.$wrapper.removeClass('error');
+      } else {
+        this.$wrapper.addClass('error');
+      }
+    },
+    value: function value() {
+      var color = this.color();
+      return color ? this.$input.val() : '';
+    }
+  });
+
+  exports.default = ColorInputView;
+  module.exports = exports['default'];
+});
+define('extplug/views/users/settings/DropdownView',['module', 'exports', 'jquery', 'backbone', 'underscore'], function (module, exports, _jquery, _backbone, _underscore) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _backbone2 = babelHelpers.interopRequireDefault(_backbone);
+
+  var DropdownView = _backbone2.default.View.extend({
+    className: 'extplug-dropdown',
+
+    initialize: function initialize() {
+      if (!this.options.selected) {
+        this.options.selected = Object.keys(this.options.options)[0];
+      }
+
+      this.onDocumentClick = this.onDocumentClick.bind(this);
+    },
+    render: function render() {
+      var _this = this;
+
+      this.$label = (0, _jquery2.default)('<label />').addClass('title').text(this.options.label);
+      this.$dl = (0, _jquery2.default)('<dl />').addClass('dropdown');
+      this.$selectedValue = (0, _jquery2.default)('<span />');
+      this.$selected = (0, _jquery2.default)('<dt />').append(this.$selectedValue).append((0, _jquery2.default)('<i />').addClass('icon icon-arrow-down-grey')).append((0, _jquery2.default)('<i />').addClass('icon icon-arrow-up-grey'));
+
+      this.$rows = (0, _jquery2.default)('<dd />');
+      var selected = void 0;
+      (0, _underscore.each)(this.options.options, function (text, value) {
+        var row = (0, _jquery2.default)('<div />').addClass('row').data('value', value);
+        var el = (0, _jquery2.default)('<span />').text(text);
+        if (_this.options.selected === value) {
+          selected = row;
+        }
+        row.append(el).appendTo(_this.$rows);
+      });
+
+      this.$dl.append(this.$selected).append(this.$rows);
+
+      this.$el.append(this.$label).append(this.$dl);
+
+      this.$selected.on('click', this.onBaseClick.bind(this));
+      this.$rows.on('click', this.onRowClick.bind(this));
+      // trigger the above as a default
+      if (selected) {
+        selected.click();
+      }
+      return this;
+    },
+    remove: function remove() {
+      this.$('dt, dd').off();
+      (0, _jquery2.default)(document).off('click', this.onDocumentClick);
+      this._super();
+    },
+    close: function close() {
+      this.$dl.removeClass('open extplug-dropdown-up');
+      (0, _jquery2.default)(document).off('click', this.onDocumentClick);
+    },
+    onBaseClick: function onBaseClick() {
+      var _this2 = this;
+
+      if (this.$dl.hasClass('open')) {
+        this.close();
+      } else {
+        if (this.canExpandDownward()) {
+          this.$dl.addClass('open');
+        } else {
+          this.$dl.addClass('open extplug-dropdown-up');
+        }
+        (0, _underscore.defer)(function () {
+          (0, _jquery2.default)(document).on('click', _this2.onDocumentClick);
+        });
+      }
+    },
+    onRowClick: function onRowClick(e) {
+      var row = (0, _jquery2.default)(e.target).closest('.row');
+
+      this.$rows.children().removeClass('selected');
+      row.addClass('selected');
+      this.$selectedValue.text(row.text());
+      this.trigger('change', row.data('value'));
+
+      // will be closed by onDocumentClick()
+    },
+    onDocumentClick: function onDocumentClick() {
+      var _this3 = this;
+
+      (0, _underscore.defer)(function () {
+        _this3.close();
+      });
+    },
+    canExpandDownward: function canExpandDownward() {
+      var top = this.$dl.offset().top;
+      var bottom = top + this.$rows.height();
+      return bottom < (0, _jquery2.default)(document).height();
+    }
+  });
+
+  exports.default = DropdownView;
+  module.exports = exports['default'];
+});
+define('extplug/views/users/settings/PlaylistSelectMenuView',['module', 'exports', 'jquery', 'plug/models/Media', 'plug/views/grabs/grabMenu', 'lang/Lang'], function (module, exports, _jquery, _Media, _grabMenu, _Lang) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _Media2 = babelHelpers.interopRequireDefault(_Media);
+
+  var _Lang2 = babelHelpers.interopRequireDefault(_Lang);
+
+  var fakeMedia = [new _Media2.default()];
+
+  var PlaylistSelectMenuView = _grabMenu.constructor.extend({
+    className: 'pop-menu extplug-playlist-select-menu',
+
+    onMouseLeave: function onMouseLeave() {},
+    hide: function hide() {
+      if (this.$modal) {
+        this.$modal.remove();
+      }
+
+      if (this._hide) {
+        // eslint-disable-line no-underscore-dangle
+        this._hide(); // eslint-disable-line no-underscore-dangle
+      } else {
+          this._super();
+        }
+    },
+    onRowPress: function onRowPress(playlist) {
+      this.trigger('select', playlist);
+      this.hide();
+    },
+    show: function show(el, container) {
+      var _this = this;
+
+      this._super(el, fakeMedia, container);
+      this.$icon.removeClass('icon-add').addClass('icon-playlist');
+      this.$title.text(_Lang2.default.playlist.yourPlaylists);
+
+      // show the check mark in front of the selected playlist instead of the
+      // active one
+      this.rows.forEach(function (row) {
+        if (row.model) {
+          if (row.model.get('id') === _this.options.selected.get('id')) {
+            row.$el.append((0, _jquery2.default)('<i />').addClass('icon icon-check-purple'));
+          } else if (row.model.get('active')) {
+            row.$el.find('.icon-check-purple').remove();
+          }
+        }
+      });
+
+      this.$modal = (0, _jquery2.default)('<div />').addClass('user-rollover-modal').on('click', this.hide.bind(this)).appendTo('body');
+      this.$el.css('z-index', parseInt(this.$modal.css('z-index'), 10) + 1);
+
+      return this;
+    }
+  });
+
+  exports.default = PlaylistSelectMenuView;
+  module.exports = exports['default'];
+});
+define('extplug/views/users/settings/PlaylistSelectView',['module', 'exports', 'jquery', 'backbone', 'plug/collections/playlists', './PlaylistSelectMenuView'], function (module, exports, _jquery, _backbone, _playlists, _PlaylistSelectMenuView) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _playlists2 = babelHelpers.interopRequireDefault(_playlists);
+
+  var _PlaylistSelectMenuView2 = babelHelpers.interopRequireDefault(_PlaylistSelectMenuView);
+
+  var PlaylistSelectView = _backbone.View.extend({
+    className: 'item extplug-playlist-select',
+
+    initialize: function initialize(o) {
+      this.label = o.label;
+      this.description = o.description;
+      this.value = o.value ? _playlists2.default.get(o.value) : _playlists2.default.at(0);
+    },
+    render: function render() {
+      var _this = this;
+
+      this.$label = (0, _jquery2.default)('<label />').addClass('title').text(this.label);
+      this.$selected = (0, _jquery2.default)('<div />').addClass('extplug-playlist-selected').text(this.value.get('name')).on('click', function () {
+        return _this.open();
+      });
+      this.$el.append(this.$label, this.$selected);
+      return this;
+    },
+    open: function open() {
+      var _this2 = this;
+
+      var menu = new _PlaylistSelectMenuView2.default({
+        selected: this.value
+      });
+      menu.show(this.$selected);
+      menu.on('select', function (playlist) {
+        _this2.value = playlist;
+        _this2.$selected.text(_this2.value.get('name'));
+        _this2.trigger('change', playlist.get('id'));
+      });
+    }
+  });
+
+  exports.default = PlaylistSelectView;
+  module.exports = exports['default'];
+});
+define('extplug/views/users/settings/SliderView',['module', 'exports', 'backbone', 'jquery', 'underscore'], function (module, exports, _backbone, _jquery, _underscore) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _backbone2 = babelHelpers.interopRequireDefault(_backbone);
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  function template(o) {
+    return '\n    <span class="title">' + o.label + '</span>\n    <span class="value"></span>\n    <div class="counts">\n      <span class="count">' + o.min + '</span>\n      <span class="count">' + o.max + '</span>\n      <span class="stretch"></span>\n    </div>\n    <div class="slider">\n      <div class="bar"></div>\n      <div class="circle"></div>\n      <div class="hit"></div>\n    </div>\n  ';
+  }
+
+  var SliderView = _backbone2.default.View.extend({
+    className: 'extplug-slider cap',
+    initialize: function initialize() {
+      this.onStart = this.onStart.bind(this);
+      this.onMove = this.onMove.bind(this);
+      this.onStop = this.onStop.bind(this);
+      this.value = this.options.value || this.options.min;
+    },
+    render: function render() {
+      var _this = this;
+
+      this.$el.append(template(this.options));
+      this.$bar = this.$('.bar');
+      this.$hit = this.$('.hit').on('mousedown', this.onStart);
+      this.$circle = this.$('.circle');
+      this.$value = this.$('.value');
+      (0, _underscore.defer)(function () {
+        _this.setValue(_this.value, true);
+      });
+      return this;
+    },
+    onStart: function onStart() {
+      (0, _jquery2.default)(document).on('mousemove', this.onMove).on('mouseup', this.onStop);
+    },
+    onMove: function onMove(e) {
+      var offset = e.pageX - this.$hit.offset().left;
+      var percent = Math.max(0, Math.min(1, offset / (this.$hit.width() - this.$circle.width())));
+      var value = Math.round(this.options.min + percent * (this.options.max - this.options.min));
+      this.setValue(Math.max(this.options.min, value));
+      e.preventDefault();
+      e.stopPropagation();
+    },
+    onStop: function onStop() {
+      (0, _jquery2.default)(document).off('mousemove', this.onMove).off('mouseup', this.onStop);
+    },
+    setValue: function setValue(value, force) {
+      if (value !== this.value || force) {
+        var percent = (value - this.options.min) / (this.options.max - this.options.min);
+        var circleCenter = this.$circle.width() / 2;
+        var position = (this.$hit.width() - this.$circle.width()) * percent;
+        var baseOffset = parseInt(this.$hit.css('left'), 10);
+        this.$circle.css('left', baseOffset + (position - circleCenter));
+        this.$value.text(value);
+        this.trigger('change', value);
+        this.value = value;
+      }
+    }
+  });
+
+  exports.default = SliderView;
+  module.exports = exports['default'];
+});
+define('extplug/views/users/settings/DefaultSettingsView',['module', 'exports', 'underscore', './ControlGroupView', './CheckboxView', './ColorInputView', './DropdownView', './InputView', './PlaylistSelectView', './SliderView'], function (module, exports, _underscore, _ControlGroupView, _CheckboxView, _ColorInputView, _DropdownView, _InputView, _PlaylistSelectView, _SliderView) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _ControlGroupView2 = babelHelpers.interopRequireDefault(_ControlGroupView);
+
+  var _CheckboxView2 = babelHelpers.interopRequireDefault(_CheckboxView);
+
+  var _ColorInputView2 = babelHelpers.interopRequireDefault(_ColorInputView);
+
+  var _DropdownView2 = babelHelpers.interopRequireDefault(_DropdownView);
+
+  var _InputView2 = babelHelpers.interopRequireDefault(_InputView);
+
+  var _PlaylistSelectView2 = babelHelpers.interopRequireDefault(_PlaylistSelectView);
+
+  var _SliderView2 = babelHelpers.interopRequireDefault(_SliderView);
+
+  var controlFactory = {
+    boolean: function boolean(setting, value) {
+      return new _CheckboxView2.default({
+        label: setting.label,
+        enabled: value
+      });
+    },
+    dropdown: function dropdown(setting, value) {
+      return new _DropdownView2.default({
+        label: setting.label,
+        options: setting.options,
+        selected: value
+      });
+    },
+    slider: function slider(setting, value) {
+      return new _SliderView2.default({
+        label: setting.label,
+        min: setting.min,
+        max: setting.max,
+        value: value
+      });
+    },
+    text: function text(setting, value) {
+      return new _InputView2.default({
+        label: setting.label,
+        description: setting.description,
+        value: value
+      });
+    },
+    number: function number(setting, value) {
+      return new _InputView2.default({
+        type: 'number',
+        label: setting.label,
+        description: setting.description,
+        value: value,
+        min: (0, _underscore.has)(setting, 'min') ? setting.min : '',
+        max: (0, _underscore.has)(setting, 'max') ? setting.max : '',
+        step: (0, _underscore.has)(setting, 'step') ? setting.step : ''
+      });
+    },
+    color: function color(setting, value) {
+      return new _ColorInputView2.default({
+        label: setting.label,
+        description: setting.description,
+        value: value
+      });
+    },
+    playlist: function playlist(setting, value) {
+      return new _PlaylistSelectView2.default({
+        label: setting.label,
+        description: setting.description,
+        value: value
+      });
+    }
+  };
+
+  var DefaultSettingsView = _ControlGroupView2.default.extend({
+    render: function render() {
+      var _this = this;
+
+      this.controls = [];
+
+      var meta = this.model.meta();
+      var settings = this.model;
+      (0, _underscore.each)(meta, function (setting, name) {
+        if ((0, _underscore.has)(controlFactory, setting.type)) {
+          var control = controlFactory[setting.type](setting, settings.get(name));
+          control.on('change', function (value) {
+            return settings.set(name, value);
+          });
+          _this.addControl(control);
+        }
+      });
+
+      this._super();
+
+      return this;
+    },
+    remove: function remove() {
+      this.controls.forEach(function (control) {
+        return control.destroy();
+      });
+      this.controls = [];
+    }
+  });
+
+  exports.default = DefaultSettingsView;
+  module.exports = exports['default'];
+});
+define('extplug/Plugin',['module', 'exports', 'jquery', 'underscore', 'backbone', 'debug', 'regexp-quote', 'plug/core/Class', './models/Settings', './util/Style', './views/users/settings/DefaultSettingsView'], function (module, exports, _jquery, _underscore, _backbone, _debug, _regexpQuote, _Class, _Settings, _Style, _DefaultSettingsView) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _backbone2 = babelHelpers.interopRequireDefault(_backbone);
 
   var _debug2 = babelHelpers.interopRequireDefault(_debug);
 
-  var _quote = babelHelpers.interopRequireDefault(_regexpQuote);
+  var _regexpQuote2 = babelHelpers.interopRequireDefault(_regexpQuote);
+
+  var _Class2 = babelHelpers.interopRequireDefault(_Class);
+
+  var _Settings2 = babelHelpers.interopRequireDefault(_Settings);
+
+  var _Style2 = babelHelpers.interopRequireDefault(_Style);
+
+  var _DefaultSettingsView2 = babelHelpers.interopRequireDefault(_DefaultSettingsView);
 
   var stubHook = function stubHook() {};
   var hooks = ['enable', 'disable'];
 
-  var Plugin = _Class['default'].extend({
+  var commandsSymbol = Symbol.for('extplug:commands');
+  var stylesSymbol = Symbol.for('extplug:styles');
+
+  var Plugin = _Class2.default.extend({
     init: function init(id, ext) {
       var _this = this;
 
-      _2['default'].extend(this, _Backbone['default'].Events);
+      (0, _underscore.extend)(this, _backbone2.default.Events);
 
       this.id = id;
       this.ext = ext;
 
-      this.debug = (0, _debug2['default'])('extplug:plugin:' + id);
+      this.debug = (0, _debug2.default)('extplug:plugin:' + id);
 
-      var settings = new _Settings['default']({}, { meta: this.settings });
+      var settings = new _Settings2.default({}, { meta: this.settings });
       if (this.settings) {
-        _2['default'].each(this.settings, function (setting, name) {
-          settings.set(name, setting['default']);
+        (0, _underscore.each)(this.settings, function (setting, name) {
+          settings.set(name, setting.default);
         });
-        this._settings = this.settings;
+        this._settings = this.settings; // eslint-disable-line no-underscore-dangle
       }
       this.settings = settings;
 
@@ -3820,7 +4004,7 @@ define('extplug/Plugin',['exports', 'module', 'jquery', 'underscore', 'backbone'
       this.on('disable', this.stopListening);
 
       // Styles API
-      this._styles = [];
+      this[stylesSymbol] = [];
       if (this.style) {
         // declarative `style: {}` API
         this.on('enable', function () {
@@ -3832,11 +4016,11 @@ define('extplug/Plugin',['exports', 'module', 'jquery', 'underscore', 'backbone'
       });
 
       // Chat Commands API
-      this._commands = [];
+      this[commandsSymbol] = [];
       if (this.commands) {
         // declarative `commands: {}` API
         this.on('enable', function () {
-          _2['default'].each(_this.commands, function (method, name) {
+          (0, _underscore.each)(_this.commands, function (method, name) {
             _this.addCommand(name, _this[method].bind(_this));
           });
         });
@@ -3845,11 +4029,11 @@ define('extplug/Plugin',['exports', 'module', 'jquery', 'underscore', 'backbone'
         _this.removeCommands();
       });
     },
-
     $: function $(sel) {
       this.debug('Plugin#$ is deprecated. Use require(\'jquery\') instead.');
-      return (0, _jQuery['default'])(sel || document);
+      return (0, _jquery2.default)(sel || document);
     },
+
 
     // obsolete, but some plugins call _super()
     disable: stubHook,
@@ -3859,13 +4043,11 @@ define('extplug/Plugin',['exports', 'module', 'jquery', 'underscore', 'backbone'
       this.disable();
       this.enable();
     },
-
-    // Styles API
     createStyle: function createStyle() {
       var defaults = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-      var style = new _Style['default'](defaults);
-      this._styles.push(style);
+      var style = new _Style2.default(defaults);
+      this[stylesSymbol].push(style);
       return style;
     },
     Style: function Style(defaults) {
@@ -3873,52 +4055,48 @@ define('extplug/Plugin',['exports', 'module', 'jquery', 'underscore', 'backbone'
       return this.createStyle(defaults);
     },
     removeStyles: function removeStyles() {
-      if (this._styles) {
-        this._styles.forEach(function (style) {
+      if (this[stylesSymbol]) {
+        this[stylesSymbol].forEach(function (style) {
           return style.remove();
         });
       }
-      this._styles = [];
+      this[stylesSymbol] = [];
     },
-
-    // Chat Commands API
     addCommand: function addCommand(name, cb) {
-      var rx = new RegExp('^/' + (0, _quote['default'])(name) + '\\b');
+      var rx = new RegExp('^/' + (0, _regexpQuote2.default)(name) + '\\b');
       var fn = function fn(text) {
         if (rx.test(text)) {
           cb(text.slice(name.length + 2));
         }
       };
-      this._commands.push(fn);
+      this[commandsSymbol].push(fn);
       API.on(API.CHAT_COMMAND, fn);
     },
     removeCommands: function removeCommands() {
-      this._commands.forEach(_2['default'].partial(API.off, API.CHAT_COMMAND), API);
-      this._commands = [];
+      this[commandsSymbol].forEach((0, _underscore.partial)(API.off, API.CHAT_COMMAND), API);
+      this[commandsSymbol] = [];
     },
-
-    // Settings API
     getSettingsView: function getSettingsView() {
-      return new _SettingsView['default']({ model: this.settings });
+      return new _DefaultSettingsView2.default({ model: this.settings });
     }
-
   });
 
-  _2['default'].extend(Plugin, _Backbone['default'].Events);
+  (0, _underscore.extend)(Plugin, _backbone2.default.Events);
 
-  module.exports = Plugin;
+  exports.default = Plugin;
+  module.exports = exports['default'];
 });
-define('extplug/pluginLoader',['exports', './util/request', './models/PluginMeta'], function (exports, _utilRequest, _modelsPluginMeta) {
+define('extplug/pluginLoader',['exports', './models/PluginMeta'], function (exports, _PluginMeta) {
   'use strict';
 
-  Object.defineProperty(exports, '__esModule', {
+  Object.defineProperty(exports, "__esModule", {
     value: true
   });
   exports.load = load;
 
-  var _request = babelHelpers.interopRequireDefault(_utilRequest);
+  var _PluginMeta2 = babelHelpers.interopRequireDefault(_PluginMeta);
 
-  var _PluginMeta = babelHelpers.interopRequireDefault(_modelsPluginMeta);
+  var requirejs = window.requirejs;
 
   function parse(name) {
     var parts = name.split(';');
@@ -3935,6 +4113,7 @@ define('extplug/pluginLoader',['exports', './util/request', './models/PluginMeta
   }
 
   function load(url, cb) {
+    // eslint-disable-line import/prefer-default-export
     var o = parse(url);
     if (o.name) {
       // add module name alias to the plugin URL
@@ -3944,107 +4123,25 @@ define('extplug/pluginLoader',['exports', './util/request', './models/PluginMeta
       // and requirejs will figure everything out.
       // Chopping off the .js extension because require.js adds it
       // since we're actually requiring a module name and not a path.
-      requirejs({ paths: babelHelpers.defineProperty({}, o.name, o.url.replace(/\.js$/, '')) });
+      requirejs({
+        paths: babelHelpers.defineProperty({}, o.name, o.url.replace(/\.js$/, ''))
+      });
     }
     var pluginId = o.name || o.url;
     var onLoad = function onLoad(Plugin) {
       var instance = new Plugin(pluginId, window.extp);
-      var meta = new _PluginMeta['default']({
+      var meta = new _PluginMeta2.default({
         id: pluginId,
         fullUrl: url,
         name: instance.name,
         description: instance.description,
         instance: instance,
-        'class': Plugin
+        class: Plugin
       });
       cb(null, meta);
     };
     requirejs([pluginId], onLoad, cb);
   }
-
-  ;
-});
-define('extplug/package',{
-  "name": "extplug",
-  "version": "0.15.8",
-  "description": "Highly flexible, modular userscript extension for plug.dj.",
-  "dependencies": {
-    "debug": "^2.2.0",
-    "es6-symbol": "^2.0.1",
-    "meld": "^1.3.2",
-    "onecolor": "^2.5.0",
-    "plug-modules": "^4.3.3",
-    "regexp-quote": "0.0.0",
-    "semver-compare": "^1.0.0",
-    "sistyl": "^1.0.0"
-  },
-  "devDependencies": {
-    "babel-core": "^5.8.23",
-    "browserify": "^11.0.1",
-    "del": "^1.2.1",
-    "gulp": "^3.9.0",
-    "gulp-babel": "^5.2.1",
-    "gulp-babel-external-helpers": "^1.0.0",
-    "gulp-concat": "^2.6.0",
-    "gulp-data": "^1.2.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-template": "^3.0.0",
-    "gulp-zip": "^3.0.2",
-    "jscs": "^1.13.1",
-    "merge-stream": "^1.0.0",
-    "mkdirp": "^0.5.1",
-    "requirejs": "^2.1.20",
-    "run-sequence": "^1.1.2",
-    "vinyl-source-stream": "^1.1.0"
-  },
-  "scripts": {
-    "build": "gulp build",
-    "test": "jscs src"
-  },
-  "builtAt": 1441013805933
-});
-define('extplug/plugins/CommandsPlugin',['exports', 'module', '../Plugin', '../package'], function (exports, module, _Plugin, _package2) {
-  'use strict';
-
-  var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
-
-  var _package3 = babelHelpers.interopRequireDefault(_package2);
-
-  // version info
-  var pad = function pad(x) {
-    return x < 10 ? '0' + x : x;
-  };
-  var ba = new Date(_package3['default'].builtAt);
-  var builtAt = ba.getUTCFullYear() + '-' + pad(ba.getUTCMonth() + 1) + '-' + pad(ba.getUTCDate() + 1) + ' ' + pad(ba.getUTCHours() + 1) + ':' + pad(ba.getUTCMinutes() + 1) + ':' + pad(ba.getUTCSeconds() + 1) + ' UTC';
-
-  var CommandsPlugin = _Plugin2['default'].extend({
-    name: 'Chat Commands',
-    description: 'Defines default ExtPlug chat commands.',
-
-    commands: {
-      version: 'showVersion',
-      reloadsettings: 'reloadRoomSettings',
-      disable: 'disableExtPlug'
-    },
-
-    showVersion: function showVersion() {
-      API.chatLog(_package3['default'].name + ' v' + _package3['default'].version + ' (' + builtAt + ')');
-    },
-
-    reloadRoomSettings: function reloadRoomSettings() {
-      API.chatLog('Reloading room settings...');
-      this.ext.roomSettings.once('load', function () {
-        return API.chatLog('...Done!');
-      }).reload();
-    },
-
-    disableExtPlug: function disableExtPlug() {
-      API.chatLog('Disabling ExtPlug! ' + 'You cannot re-enable ExtPlug until the next refresh.');
-      this.ext.disable();
-    }
-  });
-
-  module.exports = CommandsPlugin;
 });
 /** @license MIT License (c) copyright 2011-2013 original author or authors */
 
@@ -4645,18 +4742,175 @@ define('meld',[],function () {
 })(typeof define == 'function' && define.amd ? define : function (factory) { module.exports = factory(); }
 );
 
-define('extplug/views/users/settings/TabMenuView',['exports', 'module', 'plug/views/users/settings/TabMenuView', 'jquery'], function (exports, module, _plugViewsUsersSettingsTabMenuView, _jquery) {
+define('extplug/plugins/EarlyAPIEventsPlugin',['module', 'exports', 'meld', '../Plugin'], function (module, exports, _meld, _Plugin) {
   'use strict';
 
-  var _SettingsTabMenuView = babelHelpers.interopRequireDefault(_plugViewsUsersSettingsTabMenuView);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
+  var _meld2 = babelHelpers.interopRequireDefault(_meld);
 
-  var TabMenuView = _SettingsTabMenuView['default'].extend({
+  var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
+  function nop() {
+    return 'Dummy handler to ensure that plug.dj actually triggers the event';
+  }
+
+  // find default plug.dj API event names
+  var eventKeys = Object.keys(API).filter(function (key) {
+    return key.toUpperCase() === key && typeof API[key] === 'string';
+  });
+
+  var EarlyAPIEventsPlugin = _Plugin2.default.extend({
+    name: 'Early API Events',
+    description: 'Adds "Early" API events. Handlers for these events will always be called ' + 'before other handlers.',
+
+    enable: function enable() {
+      this.advice = _meld2.default.around(API, 'dispatch', this.intercept);
+      eventKeys.forEach(function (key) {
+        // add the API constants for these, too
+        API['BEFORE_' + key] = 'before' + API[key].charAt(0).toUpperCase() + API[key].slice(1);
+        // plug.dj checks if an event is actually attached (through the _events hash)
+        // before dispatching. We might run into situations where there is a BEFORE_
+        // handler, but not a normal one, and we do need to get the BEFORE_ event to
+        // trigger there. So we just pretend like we have handlers for all the things.
+        API.on(API[key], nop);
+      });
+    },
+    disable: function disable() {
+      eventKeys.forEach(function (key) {
+        delete API['BEFORE_' + key];
+        API.off(key, nop);
+      });
+      this.advice.remove();
+    },
+    intercept: function intercept(joinpoint) {
+      var _joinpoint$args = babelHelpers.toArray(joinpoint.args);
+
+      var eventName = _joinpoint$args[0];
+
+      var params = _joinpoint$args.slice(1);
+
+      API.trigger.apply(API, ['before' + eventName.charAt(0).toUpperCase() + eventName.slice(1)].concat(babelHelpers.toConsumableArray(params)));
+
+      return joinpoint.proceed();
+    }
+  });
+
+  exports.default = EarlyAPIEventsPlugin;
+  module.exports = exports['default'];
+});
+define('package.json',{
+  "name": "extplug",
+  "version": "0.16.0",
+  "description": "Highly flexible, modular userscript extension for plug.dj.",
+  "dependencies": {
+    "backbone": "^1.1.2",
+    "debug": "^2.2.0",
+    "es6-symbol": "^2.0.1",
+    "jquery": "^2.1.1",
+    "meld": "^1.3.2",
+    "onecolor": "^2.5.0",
+    "plug-modules": "^4.3.3",
+    "regexp-quote": "0.0.0",
+    "semver-compare": "^1.0.0",
+    "sistyl": "^1.0.0",
+    "underscore": "^1.6.0"
+  },
+  "devDependencies": {
+    "babel-eslint": "^6.1.2",
+    "babel-plugin-external-helpers": "^6.5.0",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-extplug": "^1.0.0",
+    "babel-preset-stage-2": "^6.5.0",
+    "browserify": "^11.0.1",
+    "del": "^1.2.1",
+    "eslint": "^3.0.1",
+    "eslint-config-airbnb-base": "^4.0.0",
+    "eslint-plugin-import": "^1.10.2",
+    "gulp": "^3.9.0",
+    "gulp-babel": "^6.1.2",
+    "gulp-babel-external-helpers": "^2.0.0",
+    "gulp-concat": "^2.6.0",
+    "gulp-data": "^1.2.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-template": "^3.0.0",
+    "gulp-zip": "^3.0.2",
+    "merge-stream": "^1.0.0",
+    "mkdirp": "^0.5.1",
+    "requirejs": "^2.1.20",
+    "run-sequence": "^1.1.2",
+    "vinyl-source-stream": "^1.1.0"
+  },
+  "scripts": {
+    "prepublish": "npm run build",
+    "build": "gulp",
+    "test": "eslint gulpfile.babel.js src test"
+  },
+  "builtAt": 1468930540293
+});
+define('extplug/plugins/CommandsPlugin',['module', 'exports', '../Plugin', '../../package.json'], function (module, exports, _Plugin, _package) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
+
+  var _package2 = babelHelpers.interopRequireDefault(_package);
+
+  // version info
+  var pad = function pad(x) {
+    return x < 10 ? '0' + x : x;
+  };
+  var ba = new Date(_package2.default.builtAt);
+  var builtAt = ba.getUTCFullYear() + '-' + (pad(ba.getUTCMonth() + 1) + '-') + (pad(ba.getUTCDate() + 1) + ' ') + (pad(ba.getUTCHours()) + ':') + (pad(ba.getUTCMinutes()) + ':') + (pad(ba.getUTCSeconds()) + ' UTC');
+
+  var CommandsPlugin = _Plugin2.default.extend({
+    name: 'Chat Commands',
+    description: 'Defines default ExtPlug chat commands.',
+
+    commands: {
+      version: 'showVersion',
+      reloadsettings: 'reloadRoomSettings',
+      disable: 'disableExtPlug'
+    },
+
+    showVersion: function showVersion() {
+      API.chatLog(_package2.default.name + ' v' + _package2.default.version + ' (' + builtAt + ')');
+    },
+    reloadRoomSettings: function reloadRoomSettings() {
+      API.chatLog('Reloading room settings...');
+      this.ext.roomSettings.once('load', function () {
+        return API.chatLog('...Done!');
+      }).reload();
+    },
+    disableExtPlug: function disableExtPlug() {
+      API.chatLog('Disabling ExtPlug! ' + 'You cannot re-enable ExtPlug until the next refresh.');
+      this.ext.disable();
+    }
+  });
+
+  exports.default = CommandsPlugin;
+  module.exports = exports['default'];
+});
+define('extplug/views/users/settings/TabMenuView',['module', 'exports', 'plug/views/users/settings/TabMenuView', 'jquery'], function (module, exports, _TabMenuView, _jquery) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _TabMenuView2 = babelHelpers.interopRequireDefault(_TabMenuView);
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var TabMenuView = _TabMenuView2.default.extend({
     render: function render() {
       this._super();
-      var extPlugTab = (0, _$['default'])('<button />').addClass('ext-plug').text('ExtPlug');
+      var extPlugTab = (0, _jquery2.default)('<button />').addClass('ext-plug').text('ExtPlug');
       this.$el.append(extPlugTab);
       extPlugTab.on('click', this.onClickExt.bind(this));
 
@@ -4664,28 +4918,31 @@ define('extplug/views/users/settings/TabMenuView',['exports', 'module', 'plug/vi
       buttons.css('width', 100 / buttons.length + '%');
       return this;
     },
-
     onClickExt: function onClickExt(e) {
-      var button = (0, _$['default'])(e.target);
+      var button = (0, _jquery2.default)(e.target);
       if (button.hasClass('ext-plug') && !button.hasClass('selected')) {
         this.select('ext-plug');
       }
     }
-
   });
 
-  module.exports = TabMenuView;
+  exports.default = TabMenuView;
+  module.exports = exports['default'];
 });
-define('extplug/views/users/settings/RemoveBoxView',['exports', 'module', 'backbone', 'jquery', 'plug/core/Events', 'plug/views/dialogs/ConfirmDialog', 'plug/events/ShowDialogEvent'], function (exports, module, _backbone, _jquery, _plugCoreEvents, _plugViewsDialogsConfirmDialog, _plugEventsShowDialogEvent) {
+define('extplug/views/users/settings/RemoveBoxView',['module', 'exports', 'backbone', 'jquery', 'plug/core/Events', 'plug/views/dialogs/ConfirmDialog', 'plug/events/ShowDialogEvent'], function (module, exports, _backbone, _jquery, _Events, _ConfirmDialog, _ShowDialogEvent) {
   'use strict';
 
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
 
-  var _ConfirmDialog = babelHelpers.interopRequireDefault(_plugViewsDialogsConfirmDialog);
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
 
-  var _ShowDialogEvent = babelHelpers.interopRequireDefault(_plugEventsShowDialogEvent);
+  var _ConfirmDialog2 = babelHelpers.interopRequireDefault(_ConfirmDialog);
+
+  var _ShowDialogEvent2 = babelHelpers.interopRequireDefault(_ShowDialogEvent);
 
   /**
    * A checkbox setting item.
@@ -4696,8 +4953,8 @@ define('extplug/views/users/settings/RemoveBoxView',['exports', 'module', 'backb
       this.onRemove = this.onRemove.bind(this);
     },
     render: function render() {
-      this.$icon = (0, _$['default'])('<i />').addClass('icon icon-delete');
-      this.$el.append(this.$icon).append((0, _$['default'])('<span />').text(this.model.get('name')));
+      this.$icon = (0, _jquery2.default)('<i />').addClass('icon icon-delete');
+      this.$el.append(this.$icon).append((0, _jquery2.default)('<span />').text(this.model.get('name')));
 
       this.$el.css('cursor', 'default');
       this.$icon.css('cursor', 'pointer').css({ top: '-6px', left: '-4px' });
@@ -4708,44 +4965,50 @@ define('extplug/views/users/settings/RemoveBoxView',['exports', 'module', 'backb
     onRemove: function onRemove() {
       var _this = this;
 
-      _Events['default'].dispatch(new _ShowDialogEvent['default'](_ShowDialogEvent['default'].SHOW, new _ConfirmDialog['default']({
+      _Events2.default.dispatch(new _ShowDialogEvent2.default(_ShowDialogEvent2.default.SHOW, new _ConfirmDialog2.default({
         title: 'Remove Plugin',
         message: 'Are you sure you want to uninstall this plugin?',
         action: function action() {
-          extp.uninstall(_this.model.get('id'));
+          window.extp.uninstall(_this.model.get('id'));
         }
       })));
     }
   });
 
-  module.exports = RemoveBoxView;
+  exports.default = RemoveBoxView;
+  module.exports = exports['default'];
 });
-define('extplug/views/dialogs/InstallPluginDialog',['exports', 'module', 'jquery', 'plug/views/dialogs/Dialog', 'plug/core/Events', 'plug/events/AlertEvent', 'plug/views/spinner/SpinnerView'], function (exports, module, _jquery, _plugViewsDialogsDialog, _plugCoreEvents, _plugEventsAlertEvent, _plugViewsSpinnerSpinnerView) {
+define('extplug/views/dialogs/InstallPluginDialog',['module', 'exports', 'jquery', 'underscore', 'plug/views/dialogs/Dialog', 'plug/core/Events', 'plug/events/AlertEvent', 'plug/views/spinner/SpinnerView'], function (module, exports, _jquery, _underscore, _Dialog, _Events, _AlertEvent, _SpinnerView) {
   'use strict';
 
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-  var _Dialog = babelHelpers.interopRequireDefault(_plugViewsDialogsDialog);
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
+  var _Dialog2 = babelHelpers.interopRequireDefault(_Dialog);
 
-  var _AlertEvent = babelHelpers.interopRequireDefault(_plugEventsAlertEvent);
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
 
-  var _SpinnerView = babelHelpers.interopRequireDefault(_plugViewsSpinnerSpinnerView);
+  var _AlertEvent2 = babelHelpers.interopRequireDefault(_AlertEvent);
 
-  var InstallPluginDialog = _Dialog['default'].extend({
+  var _SpinnerView2 = babelHelpers.interopRequireDefault(_SpinnerView);
+
+  var InstallPluginDialog = _Dialog2.default.extend({
     id: 'dialog-install-plugin',
     className: 'dialog',
+
     render: function render() {
       // don't overlay chat
-      (0, _$['default'])('#dialog-container').addClass('is-preview');
-      this.$input = (0, _$['default'])('<input />').attr({
+      (0, _jquery2.default)('#dialog-container').addClass('is-preview');
+      this.$input = (0, _jquery2.default)('<input />').attr({
         type: 'text',
         placeholder: 'https://'
       });
-      this.$wrap = (0, _$['default'])('<div />').addClass('dialog-input-background').append(this.$input);
+      this.$wrap = (0, _jquery2.default)('<div />').addClass('dialog-input-background').append(this.$input);
       this.$el.append(this.getHeader('Install Plugin')).append(this.getBody().append(this.getMessage('Enter the URL of the plugin you wish to install:')).append(this.$wrap)).append(this.getButtons('Install', true));
-      _.defer(this.deferFocus.bind(this));
+      (0, _underscore.defer)(this.deferFocus.bind(this));
       return this._super();
     },
     deferFocus: function deferFocus() {
@@ -4756,67 +5019,81 @@ define('extplug/views/dialogs/InstallPluginDialog',['exports', 'module', 'jquery
 
       var inp = this.$input;
       if (inp.val().length > 0 && inp.val().length > 0) {
-        var spinner = new _SpinnerView['default']({ size: _SpinnerView['default'].LARGE });
+        var spinner = new _SpinnerView2.default({ size: _SpinnerView2.default.LARGE });
         this.$el.find('.dialog-body').empty().append(spinner.$el);
         spinner.render();
         var url = inp.val();
-        extp.install(url, function (err) {
+        window.extp.install(url, function (err) {
           _this.close();
           if (err) {
-            _Events['default'].dispatch(new _AlertEvent['default'](_AlertEvent['default'].ALERT, 'Install Plugin Error', 'Error: ' + err.message, function () {}));
+            _Events2.default.dispatch(new _AlertEvent2.default(_AlertEvent2.default.ALERT, 'Install Plugin Error', 'Error: ' + err.message, function () {}));
           } else {
-            _Events['default'].dispatch(new _AlertEvent['default'](_AlertEvent['default'].ALERT, 'Install Plugin', 'Plugin installed successfully.', function () {}));
+            _Events2.default.dispatch(new _AlertEvent2.default(_AlertEvent2.default.ALERT, 'Install Plugin', 'Plugin installed successfully.', function () {}));
           }
         });
       }
     },
     close: function close() {
-      (0, _$['default'])('#dialog-container').removeClass('is-preview');
+      (0, _jquery2.default)('#dialog-container').removeClass('is-preview');
       this.$input.off();
       this._super();
     }
   });
 
-  module.exports = InstallPluginDialog;
+  exports.default = InstallPluginDialog;
+  module.exports = exports['default'];
 });
-define('extplug/views/users/settings/footers/GroupFooterView',['exports', 'module', 'backbone'], function (exports, module, _backbone) {
+define('extplug/views/users/settings/footers/GroupFooterView',['module', 'exports', 'jquery', 'backbone'], function (module, exports, _jquery, _backbone) {
   'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
 
   var GroupFooterView = _backbone.View.extend({
     className: 'extplug-group-footer',
 
     render: function render() {
-      this.$left = $('<div />').addClass('left');
-      this.$right = $('<div />').addClass('right');
+      this.$left = (0, _jquery2.default)('<div />').addClass('left');
+      this.$right = (0, _jquery2.default)('<div />').addClass('right');
       this.$el.append(this.$left, this.$right);
 
       return this._super();
     }
   });
 
-  module.exports = GroupFooterView;
+  exports.default = GroupFooterView;
+  module.exports = exports['default'];
 });
-define('extplug/views/users/settings/footers/PluginsFooterView',['exports', 'module', 'plug/core/Events', 'plug/events/ShowDialogEvent', '../../../dialogs/InstallPluginDialog', './GroupFooterView'], function (exports, module, _plugCoreEvents, _plugEventsShowDialogEvent, _dialogsInstallPluginDialog, _GroupFooterView) {
+define('extplug/views/users/settings/footers/PluginsFooterView',['module', 'exports', 'jquery', 'plug/core/Events', 'plug/events/ShowDialogEvent', '../../../dialogs/InstallPluginDialog', './GroupFooterView'], function (module, exports, _jquery, _Events, _ShowDialogEvent, _InstallPluginDialog, _GroupFooterView) {
   'use strict';
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-  var _ShowDialogEvent = babelHelpers.interopRequireDefault(_plugEventsShowDialogEvent);
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
 
-  var _InstallPluginDialog = babelHelpers.interopRequireDefault(_dialogsInstallPluginDialog);
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
+
+  var _ShowDialogEvent2 = babelHelpers.interopRequireDefault(_ShowDialogEvent);
+
+  var _InstallPluginDialog2 = babelHelpers.interopRequireDefault(_InstallPluginDialog);
 
   var _GroupFooterView2 = babelHelpers.interopRequireDefault(_GroupFooterView);
 
-  var PluginsFooterView = _GroupFooterView2['default'].extend({
+  var PluginsFooterView = _GroupFooterView2.default.extend({
     render: function render() {
       var _this = this;
 
       this._super();
-      this.$install = $('<button />').text('Install Plugin');
-      this.$manage = $('<button />').text('Manage');
+      this.$install = (0, _jquery2.default)('<button />').text('Install Plugin');
+      this.$manage = (0, _jquery2.default)('<button />').text('Manage');
 
       this.$install.on('click', function () {
-        _Events['default'].dispatch(new _ShowDialogEvent['default'](_ShowDialogEvent['default'].SHOW, new _InstallPluginDialog['default']()));
+        _Events2.default.dispatch(new _ShowDialogEvent2.default(_ShowDialogEvent2.default.SHOW, new _InstallPluginDialog2.default()));
       });
       this.$manage.on('click', function () {
         return _this.trigger('manage');
@@ -4826,59 +5103,67 @@ define('extplug/views/users/settings/footers/PluginsFooterView',['exports', 'mod
       this.$right.append(this.$manage);
       return this;
     },
-
     remove: function remove() {
       this.$install.off();
       this.$manage.off();
     }
   });
 
-  module.exports = PluginsFooterView;
+  exports.default = PluginsFooterView;
+  module.exports = exports['default'];
 });
-define('extplug/views/users/settings/footers/ManagingFooterView',['exports', 'module', './GroupFooterView'], function (exports, module, _GroupFooterView) {
+define('extplug/views/users/settings/footers/ManagingFooterView',['module', 'exports', 'jquery', './GroupFooterView'], function (module, exports, _jquery, _GroupFooterView) {
   'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
 
   var _GroupFooterView2 = babelHelpers.interopRequireDefault(_GroupFooterView);
 
-  var ManagingFooterView = _GroupFooterView2['default'].extend({
+  var ManagingFooterView = _GroupFooterView2.default.extend({
     render: function render() {
       var _this = this;
 
       this._super();
-      this.$done = $('<button />').text('Done').on('click', function () {
+      this.$done = (0, _jquery2.default)('<button />').text('Done').on('click', function () {
         return _this.trigger('unmanage');
       });
       this.$right.append(this.$done);
       return this;
     },
-
     remove: function remove() {
       this.$done.off();
     }
   });
 
-  module.exports = ManagingFooterView;
+  exports.default = ManagingFooterView;
+  module.exports = exports['default'];
 });
-define('extplug/views/users/settings/PluginsGroupView',['exports', 'module', './CheckboxView', './RemoveBoxView', './footers/PluginsFooterView', './footers/ManagingFooterView', './ControlGroupView'], function (exports, module, _CheckboxView, _RemoveBoxView, _footersPluginsFooterView, _footersManagingFooterView, _ControlGroupView) {
+define('extplug/views/users/settings/PluginsGroupView',['module', 'exports', './CheckboxView', './RemoveBoxView', './footers/PluginsFooterView', './footers/ManagingFooterView', './ControlGroupView'], function (module, exports, _CheckboxView, _RemoveBoxView, _PluginsFooterView, _ManagingFooterView, _ControlGroupView) {
   'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
   var _CheckboxView2 = babelHelpers.interopRequireDefault(_CheckboxView);
 
   var _RemoveBoxView2 = babelHelpers.interopRequireDefault(_RemoveBoxView);
 
-  var _PluginsFooterView = babelHelpers.interopRequireDefault(_footersPluginsFooterView);
+  var _PluginsFooterView2 = babelHelpers.interopRequireDefault(_PluginsFooterView);
 
-  var _ManagingFooterView = babelHelpers.interopRequireDefault(_footersManagingFooterView);
+  var _ManagingFooterView2 = babelHelpers.interopRequireDefault(_ManagingFooterView);
 
   var _ControlGroupView2 = babelHelpers.interopRequireDefault(_ControlGroupView);
 
-  var PluginsGroupView = _ControlGroupView2['default'].extend({
-
+  var PluginsGroupView = _ControlGroupView2.default.extend({
     initialize: function initialize() {
       this.collection.on('reset add remove', this.onUpdate, this);
       this.onUpdate();
     },
-
     render: function render() {
       this.$el.empty();
 
@@ -4887,27 +5172,25 @@ define('extplug/views/users/settings/PluginsGroupView',['exports', 'module', './
 
       return this;
     },
-
     renderFooter: function renderFooter() {
       if (this.footer) {
         this.footer.destroy();
       }
-      this.footer = this.managing ? new _ManagingFooterView['default']() : new _PluginsFooterView['default']();
+      this.footer = this.managing ? new _ManagingFooterView2.default() : new _PluginsFooterView2.default();
       this.footer.on('unmanage', this.unmanage, this);
       this.footer.on('manage', this.manage, this);
       this.footer.render();
       this.$el.append(this.footer.$el);
     },
-
     onUpdate: function onUpdate() {
       var _this = this;
 
       this.controls = this.collection.toArray().map(function (plugin) {
         var box = null;
         if (_this.managing) {
-          box = new _RemoveBoxView2['default']({ model: plugin });
+          box = new _RemoveBoxView2.default({ model: plugin });
         } else {
-          box = new _CheckboxView2['default']({
+          box = new _CheckboxView2.default({
             label: plugin.get('name'),
             description: plugin.get('instance').description || false,
             enabled: plugin.get('enabled')
@@ -4923,7 +5206,6 @@ define('extplug/views/users/settings/PluginsGroupView',['exports', 'module', './
         return box;
       });
     },
-
     manage: function manage() {
       this.managing = true;
       this.onUpdate();
@@ -4934,42 +5216,23 @@ define('extplug/views/users/settings/PluginsGroupView',['exports', 'module', './
       this.onUpdate();
       this.render();
     }
-
   });
 
-  module.exports = PluginsGroupView;
+  exports.default = PluginsGroupView;
+  module.exports = exports['default'];
 });
-define('extplug/views/users/settings/SettingsView',['exports', 'module', 'backbone', './ControlGroupView', './PluginsGroupView', './CheckboxView', './RemoveBoxView', '../../../models/PluginMeta', 'plug/core/Events', 'plug/util/window', 'underscore', 'jquery'], function (exports, module, _backbone, _ControlGroupView, _PluginsGroupView, _CheckboxView, _RemoveBoxView, _modelsPluginMeta, _plugCoreEvents, _plugUtilWindow, _underscore, _jquery) {
+define('extplug/views/users/settings/SettingsView',['module', 'exports', 'jquery', 'underscore', 'backbone', 'plug/util/window', './PluginsGroupView'], function (module, exports, _jquery, _underscore, _backbone, _window, _PluginsGroupView) {
   'use strict';
 
-  var _ControlGroupView2 = babelHelpers.interopRequireDefault(_ControlGroupView);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _window2 = babelHelpers.interopRequireDefault(_window);
 
   var _PluginsGroupView2 = babelHelpers.interopRequireDefault(_PluginsGroupView);
-
-  var _CheckboxView2 = babelHelpers.interopRequireDefault(_CheckboxView);
-
-  var _RemoveBoxView2 = babelHelpers.interopRequireDefault(_RemoveBoxView);
-
-  var _PluginMeta = babelHelpers.interopRequireDefault(_modelsPluginMeta);
-
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
-
-  var _window = babelHelpers.interopRequireDefault(_plugUtilWindow);
-
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
-
-  /**
-   * Wires a control to a setting model, updating the model when the control changes.
-   *
-   * @param {Backbone.View} el Control view.
-   * @param {Backbone.Model} settings Model to reflect the settings to.
-   * @param {string} target Relevant property on the model.
-   */
-  function wireSettingToModel(view, settings, target) {
-    view.on('change', function (value) {
-      settings.set(target, value);
-    });
-  }
 
   var SettingsView = _backbone.View.extend({
     className: 'ext-plug section',
@@ -4982,64 +5245,60 @@ define('extplug/views/users/settings/SettingsView',['exports', 'module', 'backbo
 
       this.plugins.on('change:enabled', this.onEnabledChange, this).on('reset add remove', this.onUpdate, this);
     },
-
     remove: function remove() {
       this.plugins.on('change:enabled', this.onEnabledChange).off('reset add remove', this.onUpdate);
     },
-
     onUpdate: function onUpdate() {
       this.refresh();
       this.render();
     },
-
     onEnabledChange: function onEnabledChange() {
       // TODO only add/remove changed groups
       this.onUpdate();
     },
-
     refresh: function refresh() {
+      var _this = this;
+
       this.groups = [];
       this.addGroup('Plugins', this.createPluginsGroup(), 1000);
       this.addGroup('ExtPlug', this.createExtPlugGroup(), 999);
       this.plugins.forEach(function (plugin) {
         // add plugin settings group for stuff that was already enabled
         if (plugin.get('enabled')) {
-          var pluginSettings = this.createSettingsGroup(plugin);
+          var pluginSettings = _this.createSettingsGroup(plugin);
           if (pluginSettings) {
-            this.addGroup(plugin.get('name'), pluginSettings);
+            _this.addGroup(plugin.get('name'), pluginSettings);
           }
         }
-      }, this);
+      });
     },
-
     render: function render() {
-      var _this = this;
+      var _this2 = this;
 
       if (this.scrollPane) {
         this.scrollPane.destroy();
         (0, _underscore.defer)(function () {
-          var size = _window['default'].getSize();
-          _this.onResize(size.width, size.height);
+          var size = _window2.default.getSize();
+          _this2.onResize(size.width, size.height);
         });
       }
-      this.$container = (0, _$['default'])('<div>').addClass('container');
+      this.$container = (0, _jquery2.default)('<div>').addClass('container');
       this.$el.empty().append(this.$container);
 
       this.sort();
       this.groups.forEach(function (group) {
-        var header = (0, _$['default'])('<div />').addClass('header').append((0, _$['default'])('<span>').text(group.name));
+        var header = (0, _jquery2.default)('<div />').addClass('header').append((0, _jquery2.default)('<span>').text(group.name));
         group.view.render();
-        this.$container.append(header).append(group.view.$el);
-      }, this);
+        _this2.$container.append(header).append(group.view.$el);
+      });
 
       this.$container.jScrollPane();
       this.scrollPane = this.$container.data('jsp');
 
       return this;
     },
-
     createPluginsGroup: function createPluginsGroup() {
-      var pluginsGroup = new _PluginsGroupView2['default']({
+      var pluginsGroup = new _PluginsGroupView2.default({
         collection: this.plugins
       });
       return pluginsGroup;
@@ -5047,33 +5306,34 @@ define('extplug/views/users/settings/SettingsView',['exports', 'module', 'backbo
     createExtPlugGroup: function createExtPlugGroup() {
       return this.ext.getSettingsView();
     },
-
     createSettingsGroup: function createSettingsGroup(pluginMeta) {
       var plugin = pluginMeta.get('instance');
       if (!plugin._settings) {
-        return;
+        // eslint-disable-line no-underscore-dangle
+        return null;
       }
 
       return plugin.getSettingsView();
     },
-
     sort: function sort() {
       this.groups.sort(function (a, b) {
         var c = b.priority - a.priority;
         if (c === 0) {
-          c = a.name > b.name ? 1 : a.name < b.name ? -1 : 0;
+          if (a.name > b.name) {
+            c = 1;
+          } else if (a.name < b.name) {
+            c = -1;
+          }
         }
         return c;
       });
     },
-
     onResize: function onResize(w, h) {
       this.$container.height(h - this.$container.offset().top);
       if (this.scrollPane) {
         this.scrollPane.reinitialise();
       }
     },
-
     addGroup: function addGroup(name, view, priority) {
       this.groups.push({
         name: name,
@@ -5081,102 +5341,107 @@ define('extplug/views/users/settings/SettingsView',['exports', 'module', 'backbo
         priority: typeof priority === 'number' ? priority : 0
       });
     },
-
     getGroup: function getGroup(name) {
       for (var i = 0, l = this.groups.length; i < l; i++) {
         if (this.groups[i].name === name) {
           return this.groups[i].view;
         }
       }
+      return null;
     },
-
     hasGroup: function hasGroup(name) {
       return this.groups.some(function (group) {
         return group.name === name;
       });
     },
-
     removeGroup: function removeGroup(name) {
       for (var i = 0, l = this.groups.length; i < l; i++) {
         if (this.groups[i].name === name) {
           return this.groups.splice(i, 1);
         }
       }
+      return null;
     }
-
   });
 
-  module.exports = SettingsView;
+  exports.default = SettingsView;
+  module.exports = exports['default'];
 });
-define('extplug/plugins/SettingsTabPlugin',['exports', 'module', 'meld', 'plug/core/Events', 'plug/views/users/UserView', 'plug/views/users/settings/SettingsView', '../Plugin', '../views/users/settings/TabMenuView', '../views/users/settings/SettingsView'], function (exports, module, _meld, _plugCoreEvents, _plugViewsUsersUserView, _plugViewsUsersSettingsSettingsView, _Plugin, _viewsUsersSettingsTabMenuView, _viewsUsersSettingsSettingsView) {
+define('extplug/plugins/SettingsTabPlugin',['module', 'exports', 'meld', 'plug/core/Events', 'plug/views/users/UserView', 'plug/views/users/settings/SettingsView', '../Plugin', '../views/users/settings/TabMenuView', '../views/users/settings/SettingsView'], function (module, exports, _meld, _Events, _UserView, _SettingsView, _Plugin, _TabMenuView, _SettingsView3) {
   'use strict';
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-  var _UserView = babelHelpers.interopRequireDefault(_plugViewsUsersUserView);
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
 
-  var _UserSettingsView = babelHelpers.interopRequireDefault(_plugViewsUsersSettingsSettingsView);
+  var _UserView2 = babelHelpers.interopRequireDefault(_UserView);
+
+  var _SettingsView2 = babelHelpers.interopRequireDefault(_SettingsView);
 
   var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
-  var _TabMenuView = babelHelpers.interopRequireDefault(_viewsUsersSettingsTabMenuView);
+  var _TabMenuView2 = babelHelpers.interopRequireDefault(_TabMenuView);
 
-  var _SettingsSectionView = babelHelpers.interopRequireDefault(_viewsUsersSettingsSettingsView);
+  var _SettingsView4 = babelHelpers.interopRequireDefault(_SettingsView3);
 
-  var SettingsTabPlugin = _Plugin2['default'].extend({
-
+  var SettingsTabPlugin = _Plugin2.default.extend({
     enable: function enable() {
       var _this = this;
 
       var userView = this.ext.appView.user;
-      _Events['default'].off('show:user', userView.show);
-      this._userPaneAdvice = (0, _meld.after)(_UserView['default'].prototype, 'show', function (category, sub) {
+      _Events2.default.off('show:user', userView.show);
+      this.userPaneAdvice = (0, _meld.after)(_UserView2.default.prototype, 'show', function (category, sub) {
         if (category === 'settings' && sub === 'ext-plug') {
           _this.view.menu.select(sub);
         }
       });
-      _Events['default'].on('show:user', userView.show, userView);
+      _Events2.default.on('show:user', userView.show, userView);
 
       // Add ExtPlug tab to user settings
-      this._settingsTabAdvice = (0, _meld.around)(_UserSettingsView['default'].prototype, 'getMenu', function () {
-        return new _TabMenuView['default']();
+      this.settingsTabAdvice = (0, _meld.around)(_SettingsView2.default.prototype, 'getMenu', function () {
+        return new _TabMenuView2.default();
       });
-      this._settingsPaneAdvice = (0, _meld.around)(_UserSettingsView['default'].prototype, 'getView', function (joinpoint) {
+      this.settingsPaneAdvice = (0, _meld.around)(_SettingsView2.default.prototype, 'getView', function (joinpoint) {
         if (joinpoint.args[0] === 'ext-plug') {
-          return new _SettingsSectionView['default']({
-            plugins: _this.ext._plugins,
+          return new _SettingsView4.default({
+            plugins: _this.ext.plugins,
             ext: _this.ext
           });
         }
         return joinpoint.proceed();
       });
     },
-
     disable: function disable() {
-      this._settingsTabAdvice.remove();
-      this._settingsPaneAdvice.remove();
+      this.settingsTabAdvice.remove();
+      this.settingsPaneAdvice.remove();
       var userView = this.ext.appView.user;
-      _Events['default'].off('show:user', userView.show);
-      this._userPaneAdvice.remove();
-      _Events['default'].on('show:user', userView.show, userView);
+      _Events2.default.off('show:user', userView.show);
+      this.userPaneAdvice.remove();
+      _Events2.default.on('show:user', userView.show, userView);
     }
-
   });
 
-  module.exports = SettingsTabPlugin;
+  exports.default = SettingsTabPlugin;
+  module.exports = exports['default'];
 });
-define('extplug/plugins/ChatTypePlugin',['exports', 'module', 'meld', 'underscore', 'plug/core/Events', 'plug/views/rooms/chat/ChatView', 'plug/util/util', 'plug/util/emoji', 'plug/store/settings', '../Plugin'], function (exports, module, _meld, _underscore, _plugCoreEvents, _plugViewsRoomsChatChatView, _plugUtilUtil, _plugUtilEmoji, _plugStoreSettings, _Plugin) {
+define('extplug/plugins/ChatTypePlugin',['module', 'exports', 'meld', 'underscore', 'plug/core/Events', 'plug/views/rooms/chat/ChatView', 'plug/util/util', 'plug/util/emoji', 'plug/store/settings', '../Plugin'], function (module, exports, _meld, _underscore, _Events, _ChatView, _util, _emoji, _settings, _Plugin) {
   'use strict';
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-  var _ChatView = babelHelpers.interopRequireDefault(_plugViewsRoomsChatChatView);
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
 
-  var _util = babelHelpers.interopRequireDefault(_plugUtilUtil);
+  var _ChatView2 = babelHelpers.interopRequireDefault(_ChatView);
 
-  var _emoji = babelHelpers.interopRequireDefault(_plugUtilEmoji);
+  var _util2 = babelHelpers.interopRequireDefault(_util);
 
-  var _settings = babelHelpers.interopRequireDefault(_plugStoreSettings);
+  var _emoji2 = babelHelpers.interopRequireDefault(_emoji);
+
+  var _settings2 = babelHelpers.interopRequireDefault(_settings);
 
   var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
@@ -5198,13 +5463,13 @@ define('extplug/plugins/ChatTypePlugin',['exports', 'module', 'meld', 'underscor
    *    because other code might want to _check_ the "type" property and
    *    won't expect to find more than one type.
    */
-  var ChatTypePlugin = _Plugin2['default'].extend({
+  var ChatTypePlugin = _Plugin2.default.extend({
     style: {
       '.badge-box .emoji-outer': {
-        'margin': '7px'
+        margin: '7px'
       },
       '.inline .badge-box .emoji-outer': {
-        'margin': '0 7px'
+        margin: '0 7px'
       }
     },
 
@@ -5214,7 +5479,7 @@ define('extplug/plugins/ChatTypePlugin',['exports', 'module', 'meld', 'underscor
       // chatView.onReceived will still be the old method after adding advice
       // so the event listener should also be swapped out
       this.replaceEventHandler(function () {
-        _this._chatTypeAdvice = (0, _meld.around)(_ChatView['default'].prototype, 'onReceived', _this.onReceived);
+        _this.chatTypeAdvice = (0, _meld.around)(_ChatView2.default.prototype, 'onReceived', _this.onReceived);
       });
     },
     disable: function disable() {
@@ -5223,11 +5488,9 @@ define('extplug/plugins/ChatTypePlugin',['exports', 'module', 'meld', 'underscor
       // remove custom chat type advice, and restore
       // the original event listener
       this.replaceEventHandler(function () {
-        _this2._chatTypeAdvice.remove();
+        _this2.chatTypeAdvice.remove();
       });
     },
-
-    // bound to the ChatView instance
     onReceived: function onReceived(joinpoint) {
       var message = joinpoint.args[0];
       if (message.type.split(' ').indexOf('custom') !== -1) {
@@ -5235,7 +5498,7 @@ define('extplug/plugins/ChatTypePlugin',['exports', 'module', 'meld', 'underscor
         message.type += ' update';
       }
       if (!message.timestamp) {
-        message.timestamp = _util['default'].getChatTimestamp(_settings['default'].settings.chatTimestamps === 24);
+        message.timestamp = _util2.default.getChatTimestamp(_settings2.default.settings.chatTimestamps === 24);
       }
       // add cid if it doesn't exist, to prevent a `.cid-undefined` selector
       // from catching everything
@@ -5250,34 +5513,32 @@ define('extplug/plugins/ChatTypePlugin',['exports', 'module', 'meld', 'underscor
         el.addClass(message.classes);
       }
       if (message.badge) {
-        // emoji badge
         if (/^:(.*?):$/.test(message.badge)) {
+          // emoji badge
           var badgeBox = el.find('.badge-box');
           var emojiName = message.badge.slice(1, -1);
-          if (_emoji['default'].map.colons[emojiName]) {
+          if (_emoji2.default.map.colons[emojiName]) {
             badgeBox.find('i').remove();
-            badgeBox.append(_emoji['default'].replace_colons(message.badge))
+            badgeBox.append(_emoji2.default.replace_colons(message.badge))
             // compatibility class
             .find('.emoji-outer').addClass('extplug-badji');
           }
+        } else if (/^icon-(.*?)$/.test(message.badge)) {
+          // icon badge
+          var _badgeBox = el.find('.badge-box');
+          _badgeBox.find('i').removeClass().addClass('icon').addClass(message.badge);
         }
-        // icon badge
-        else if (/^icon-(.*?)$/.test(message.badge)) {
-            var badgeBox = el.find('.badge-box');
-            badgeBox.find('i').removeClass().addClass('icon').addClass(message.badge);
-          }
       }
       if (message.color) {
         el.find('.msg .text').css('color', message.color);
       }
     },
-
-    // replace callback without affecting calling order
     replaceEventHandler: function replaceEventHandler(fn) {
       var chatView = this.ext.appView.room.chat;
-      var handler = undefined;
+      var handler = void 0;
       if (chatView) {
-        handler = (0, _underscore.find)(_Events['default']._events['chat:receive'], function (e) {
+        handler = (0, _underscore.find)(_Events2.default._events['chat:receive'], // eslint-disable-line no-underscore-dangle
+        function (e) {
           return e.callback === chatView.onReceived;
         });
       }
@@ -5291,43 +5552,48 @@ define('extplug/plugins/ChatTypePlugin',['exports', 'module', 'meld', 'underscor
     }
   });
 
-  module.exports = ChatTypePlugin;
+  exports.default = ChatTypePlugin;
+  module.exports = exports['default'];
 });
-define('extplug/plugins/MoreChatEventsPlugin',['exports', 'module', '../Plugin', 'plug/facades/chatFacade', 'plug/models/currentUser', 'plug/models/currentRoom', 'plug/views/rooms/chat/ChatView', 'plug/core/Events', 'underscore', 'meld', 'jquery'], function (exports, module, _Plugin, _plugFacadesChatFacade, _plugModelsCurrentUser, _plugModelsCurrentRoom, _plugViewsRoomsChatChatView, _plugCoreEvents, _underscore, _meld, _jquery) {
+define('extplug/plugins/MoreChatEventsPlugin',['module', 'exports', 'jquery', 'underscore', 'meld', 'plug/facades/chatFacade', 'plug/models/currentUser', 'plug/models/currentRoom', 'plug/views/rooms/chat/ChatView', 'plug/core/Events', '../Plugin'], function (module, exports, _jquery, _underscore, _meld, _chatFacade, _currentUser, _currentRoom, _ChatView, _Events, _Plugin) {
   'use strict';
 
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _chatFacade2 = babelHelpers.interopRequireDefault(_chatFacade);
+
+  var _currentUser2 = babelHelpers.interopRequireDefault(_currentUser);
+
+  var _currentRoom2 = babelHelpers.interopRequireDefault(_currentRoom);
+
+  var _ChatView2 = babelHelpers.interopRequireDefault(_ChatView);
+
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
+
   var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
-
-  var _chatFacade = babelHelpers.interopRequireDefault(_plugFacadesChatFacade);
-
-  var _currentUser = babelHelpers.interopRequireDefault(_plugModelsCurrentUser);
-
-  var _currentRoom = babelHelpers.interopRequireDefault(_plugModelsCurrentRoom);
-
-  var _ChatView = babelHelpers.interopRequireDefault(_plugViewsRoomsChatChatView);
-
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
-
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
 
   // Adds a bunch of new chat events.
   // "chat:incoming" is fired as soon as a new message is received from the socket.
   //   It gets three arguments: The Message object, a boolean `isSystemMessage`, and
   //   a boolean `isMine` (true if the current user sent the message.)
   function fireIncoming(message, isSystemMessage, isMine) {
-    _Events['default'].trigger('chat:incoming', message, isSystemMessage, isMine);
+    _Events2.default.trigger('chat:incoming', message, isSystemMessage, isMine);
   }
   // "chat:beforereceive" is fired after some initial processing, but before the message
   // is passed to the plug.dj view layer. This is where you probably want to do your
   // modifications to the Message object.
   function fireBeforeReceive(message, isSystemMessage) {
-    _Events['default'].trigger('chat:beforereceive', message, isSystemMessage);
+    _Events2.default.trigger('chat:beforereceive', message, isSystemMessage);
   }
   // "chat:afterreceive" is fired after the message has been rendered. It gets two arguments:
   //   The Message object, and a jQuery object containing the message DOM element.
   function fireAfterReceive(message) {
-    var element = (0, _$['default'])('#chat-messages .cm:last-child');
-    _Events['default'].trigger('chat:afterreceive', message, element);
+    var element = (0, _jquery2.default)('#chat-messages .cm:last-child');
+    _Events2.default.trigger('chat:afterreceive', message, element);
   }
   // "chat:send" is fired when the user sends a message. It takes a single argument: A string
   //   with the text content of the message.
@@ -5335,44 +5601,43 @@ define('extplug/plugins/MoreChatEventsPlugin',['exports', 'module', '../Plugin',
     // ensure that the user is allowed to send a message.
     // this does _not_ check for mutes. Plug will pretend that your message
     // went through if you're muted--so we do the same.
-    if (_currentUser['default'].get('guest') || !_currentRoom['default'].get('joined') || _currentUser['default'].get('level') < _currentRoom['default'].get('minChatLevel') || message[0] === '/') {
+    if (_currentUser2.default.get('guest') || !_currentRoom2.default.get('joined') || _currentUser2.default.get('level') < _currentRoom2.default.get('minChatLevel') || message[0] === '/') {
       return;
     }
-    _Events['default'].trigger('chat:send', message);
+    _Events2.default.trigger('chat:send', message);
   }
 
-  var MoreChatEvents = _Plugin2['default'].extend({
+  var MoreChatEvents = _Plugin2.default.extend({
     name: 'More Chat Events',
     description: 'Adds more chat events for plugins to hook into.',
 
     enable: function enable() {
       var _this = this;
 
-      _Events['default'].on('chat:receive', fireBeforeReceive);
+      _Events2.default.on('chat:receive', fireBeforeReceive);
       // ensure fireBeforeReceive is the first event handler to be called
-      _Events['default']._events['chat:receive'].unshift(_Events['default']._events['chat:receive'].pop());
-      this.incomingAdvice = (0, _meld.before)(_chatFacade['default'], 'onChatReceived', fireIncoming);
+      var receiveHandlers = _Events2.default._events['chat:receive']; // eslint-disable-line no-underscore-dangle
+      receiveHandlers.unshift(receiveHandlers.pop());
+      this.incomingAdvice = (0, _meld.before)(_chatFacade2.default, 'onChatReceived', fireIncoming);
       this.replaceEventHandler(function () {
-        _this.afterReceiveAdvice = (0, _meld.after)(_ChatView['default'].prototype, 'onReceived', function () {
+        _this.afterReceiveAdvice = (0, _meld.after)(_ChatView2.default.prototype, 'onReceived', function () {
           fireAfterReceive.apply(undefined, babelHelpers.toConsumableArray((0, _meld.joinpoint)().args));
         });
       });
-      this.sendAdvice = (0, _meld.before)(_chatFacade['default'], 'sendChat', fireSend);
+      this.sendAdvice = (0, _meld.before)(_chatFacade2.default, 'sendChat', fireSend);
     },
-
     disable: function disable() {
       this.incomingAdvice.remove();
       this.afterReceiveAdvice.remove();
       this.sendAdvice.remove();
-      _Events['default'].off('chat:receive', fireBeforeReceive);
+      _Events2.default.off('chat:receive', fireBeforeReceive);
     },
-
-    // replace callback without affecting calling order
     replaceEventHandler: function replaceEventHandler(fn) {
       var chatView = this.ext.appView.room.chat;
-      var handler = undefined;
+      var handler = void 0;
       if (chatView) {
-        handler = (0, _underscore.find)(_Events['default']._events['chat:receive'], function (e) {
+        handler = (0, _underscore.find)(_Events2.default._events['chat:receive'], // eslint-disable-line no-underscore-dangle
+        function (e) {
           return e.callback === chatView.onReceived;
         });
       }
@@ -5383,11 +5648,15 @@ define('extplug/plugins/MoreChatEventsPlugin',['exports', 'module', '../Plugin',
     }
   });
 
-  module.exports = MoreChatEvents;
+  exports.default = MoreChatEvents;
+  module.exports = exports['default'];
 });
-define('extplug/util/getUserClasses',['exports', 'module'], function (exports, module) {
+define('extplug/util/getUserClasses',['module', 'exports'], function (module, exports) {
   'use strict';
 
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
   var API = window.API;
 
   // CSS classes for room-specific roles
@@ -5432,67 +5701,73 @@ define('extplug/util/getUserClasses',['exports', 'module'], function (exports, m
   getUserClasses.roleClasses = roleClasses;
   getUserClasses.gRoleClasses = gRoleClasses;
 
-  module.exports = getUserClasses;
+  exports.default = getUserClasses;
+  module.exports = exports['default'];
 });
-define('extplug/plugins/UserClassesPlugin',['exports', 'module', '../Plugin', '../util/getUserClasses', 'plug/core/Events', 'plug/models/currentUser', 'plug/views/rooms/users/RoomUserRowView', 'plug/views/rooms/users/WaitListRowView', 'plug/views/users/userRolloverView', 'meld', 'underscore'], function (exports, module, _Plugin, _utilGetUserClasses, _plugCoreEvents, _plugModelsCurrentUser, _plugViewsRoomsUsersRoomUserRowView, _plugViewsRoomsUsersWaitListRowView, _plugViewsUsersUserRolloverView, _meld, _underscore) {
+define('extplug/plugins/UserClassesPlugin',['module', 'exports', 'jquery', 'underscore', 'meld', 'plug/core/Events', 'plug/models/currentUser', 'plug/views/rooms/users/RoomUserRowView', 'plug/views/rooms/users/WaitListRowView', 'plug/views/users/userRolloverView', '../Plugin', '../util/getUserClasses'], function (module, exports, _jquery, _underscore, _meld, _Events, _currentUser, _RoomUserRowView, _WaitListRowView, _userRolloverView, _Plugin, _getUserClasses) {
   'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
+
+  var _currentUser2 = babelHelpers.interopRequireDefault(_currentUser);
+
+  var _RoomUserRowView2 = babelHelpers.interopRequireDefault(_RoomUserRowView);
+
+  var _WaitListRowView2 = babelHelpers.interopRequireDefault(_WaitListRowView);
+
+  var _userRolloverView2 = babelHelpers.interopRequireDefault(_userRolloverView);
 
   var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
-  var _getUserClasses = babelHelpers.interopRequireDefault(_utilGetUserClasses);
-
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
-
-  var _currentUser = babelHelpers.interopRequireDefault(_plugModelsCurrentUser);
-
-  var _UserRowView = babelHelpers.interopRequireDefault(_plugViewsRoomsUsersRoomUserRowView);
-
-  var _WaitListRowView = babelHelpers.interopRequireDefault(_plugViewsRoomsUsersWaitListRowView);
-
-  var _userRolloverView = babelHelpers.interopRequireDefault(_plugViewsUsersUserRolloverView);
+  var _getUserClasses2 = babelHelpers.interopRequireDefault(_getUserClasses);
 
   var r = API.ROLE;
-  var roleClasses = _getUserClasses['default'].roleClasses;
+  var roleClasses = _getUserClasses2.default.roleClasses;
 
-  var UserClasses = _Plugin2['default'].extend({
+
+  var UserClasses = _Plugin2.default.extend({
     name: 'User Classes',
     description: 'Adds some CSS classes for roles and IDs to various places.',
 
     enable: function enable() {
-      this.listenTo(_Events['default'], 'chat:beforereceive', this.onChat);
+      this.listenTo(_Events2.default, 'chat:beforereceive', this.onChat);
 
-      var plugin = this;
       // common advice for user lists
-      var rowAdvice = function rowAdvice() {
+      var rowAdvice = function afterUpdateRow() {
         // `this` is the row view
         var id = this.model.get('id');
         if (id) {
-          this.$el.addClass((0, _getUserClasses['default'])(id).join(' '));
+          this.$el.addClass((0, _getUserClasses2.default)(id).join(' '));
         }
       };
-      this.rowClasses = (0, _meld.after)(_UserRowView['default'].prototype, 'draw', rowAdvice);
-      this.waitListClasses = (0, _meld.after)(_WaitListRowView['default'].prototype, 'render', rowAdvice);
-      this.rolloverClasses = (0, _meld.after)(_userRolloverView['default'], 'showSimple', function () {
+      this.rowClasses = (0, _meld.after)(_RoomUserRowView2.default.prototype, 'draw', rowAdvice);
+      this.waitListClasses = (0, _meld.after)(_WaitListRowView2.default.prototype, 'render', rowAdvice);
+      this.rolloverClasses = (0, _meld.after)(_userRolloverView2.default, 'showSimple', function afterShowSimple() {
         // `this` is the rollover view
         var id = this.user.get('id');
         if (id) {
-          this.$el.addClass((0, _getUserClasses['default'])(id).join(' '));
+          this.$el.addClass((0, _getUserClasses2.default)(id).join(' '));
         }
       });
       this.onUserChange();
       // guest change, mostly
-      this.listenTo(_currentUser['default'], 'change:id change:role change:gRole', this.onUserChange);
+      this.listenTo(_currentUser2.default, 'change:id change:role change:gRole', this.onUserChange);
     },
     disable: function disable() {
       this.rowClasses.remove();
       this.waitListClasses.remove();
       this.rolloverClasses.remove();
     },
-
     onChat: function onChat(msg) {
       var classes = msg.classes ? [msg.classes] : [];
       if (msg.uid) {
-        classes.push.apply(classes, babelHelpers.toConsumableArray((0, _getUserClasses['default'])(msg.uid)));
+        classes.push.apply(classes, babelHelpers.toConsumableArray((0, _getUserClasses2.default)(msg.uid)));
         // additional plugCubed chat-only classes
         // PlugCubed's classes start with `from-` instead of `role-` so we can't
         // just use getUserClasses()
@@ -5522,50 +5797,54 @@ define('extplug/plugins/UserClassesPlugin',['exports', 'module', '../Plugin', '.
 
       msg.classes = classes.join(' ');
     },
-
     onUserChange: function onUserChange() {
       this.setUserViewClass();
       this.setUserFooterClass();
     },
-
     setUserViewClass: function setUserViewClass() {
       (0, _underscore.defer)(function () {
-        $('#user-view').removeClass().addClass('app-left').addClass((0, _getUserClasses['default'])(API.getUser().id).join(' '));
+        (0, _jquery2.default)('#user-view').removeClass().addClass('app-left').addClass((0, _getUserClasses2.default)(API.getUser().id).join(' '));
       });
     },
-
     setUserFooterClass: function setUserFooterClass() {
       (0, _underscore.defer)(function () {
-        var footer = $('#footer-user');
+        var footer = (0, _jquery2.default)('#footer-user');
         var online = footer.hasClass('online');
         var showing = footer.hasClass('showing');
-        footer.removeClass().toggleClass('online', online).toggleClass('showing', showing).addClass((0, _getUserClasses['default'])(API.getUser().id).join(' '));
+        footer.removeClass().toggleClass('online', online).toggleClass('showing', showing).addClass((0, _getUserClasses2.default)(API.getUser().id).join(' '));
       });
     }
   });
 
-  module.exports = UserClasses;
+  exports.default = UserClasses;
+  module.exports = exports['default'];
 });
-define('extplug/plugins/EmojiDataPlugin',['exports', 'module', '../Plugin', 'plug/core/Events', 'plug/util/emoji', 'meld'], function (exports, module, _Plugin, _plugCoreEvents, _plugUtilEmoji, _meld) {
+define('extplug/plugins/EmojiDataPlugin',['module', 'exports', 'jquery', 'meld', 'plug/core/Events', 'plug/util/emoji', '../Plugin'], function (module, exports, _jquery, _meld, _Events, _emoji, _Plugin) {
   'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
+
+  var _emoji2 = babelHelpers.interopRequireDefault(_emoji);
 
   var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
-
-  var _emoji = babelHelpers.interopRequireDefault(_plugUtilEmoji);
-
-  var EmojiDataPlugin = _Plugin2['default'].extend({
+  var EmojiDataPlugin = _Plugin2.default.extend({
     name: 'Emoji Data',
     description: 'Adds CSS classes and HTML5 data attributes to emoji images.',
 
     enable: function enable() {
-      this.advice = (0, _meld.around)(_emoji['default'], 'replacement', function (joinpoint) {
+      this.advice = (0, _meld.around)(_emoji2.default, 'replacement', function (joinpoint) {
         var name = joinpoint.args[2];
         if (!name) {
           // attempt to find the name in the emoji-data map
           var id = joinpoint.args[0];
-          var data = _emoji['default'].data[id];
+          var data = _emoji2.default.data[id];
           if (data) name = data[3][0];
         }
         var html = joinpoint.proceed();
@@ -5575,9 +5854,9 @@ define('extplug/plugins/EmojiDataPlugin',['exports', 'module', '../Plugin', 'plu
         return html;
       });
 
-      this.listenTo(_Events['default'], 'chat:afterreceive', function (msg, el) {
-        el.find('.gemoji-plug').each(function () {
-          var inner = $(this);
+      this.listenTo(_Events2.default, 'chat:afterreceive', function (msg, el) {
+        el.find('.gemoji-plug').each(function addDataAttr() {
+          var inner = (0, _jquery2.default)(this);
           var emojiName = inner.attr('class').match(/gemoji-plug-(\S+)/);
           if (emojiName) {
             inner.attr('data-emoji-name', emojiName[1]).addClass('extplug-emoji-' + name);
@@ -5585,67 +5864,76 @@ define('extplug/plugins/EmojiDataPlugin',['exports', 'module', '../Plugin', 'plu
         });
       });
     },
-
     disable: function disable() {
       this.advice.remove();
     }
   });
 
-  module.exports = EmojiDataPlugin;
+  exports.default = EmojiDataPlugin;
+  module.exports = exports['default'];
 });
-define('extplug/plugins/TooltipsPlugin',['exports', 'module', '../Plugin', 'plug/core/Events', 'jquery'], function (exports, module, _Plugin, _plugCoreEvents, _jquery) {
+define('extplug/plugins/TooltipsPlugin',['module', 'exports', 'jquery', 'plug/core/Events', '../Plugin'], function (module, exports, _jquery, _Events, _Plugin) {
   'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
 
   var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
-
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
-
-  var TooltipsPlugin = _Plugin2['default'].extend({
+  var TooltipsPlugin = _Plugin2.default.extend({
     name: 'Tooltips',
     description: 'Provides super easy tooltips using data attributes.',
 
     enable: function enable() {
-      this._doc = (0, _$['default'])(document).on('mouseenter.extplug.core.tooltips', '[data-tooltip]', this.onEnter).on('mouseleave.extplug.core.tooltips', '[data-tooltip]', this.onLeave);
+      this.document = (0, _jquery2.default)(document).on('mouseenter.extplug.core.tooltips', '[data-tooltip]', this.onEnter).on('mouseleave.extplug.core.tooltips', '[data-tooltip]', this.onLeave);
     },
-
     disable: function disable() {
-      this._doc.off('.extplug.tooltips');
+      this.document.off('.extplug.tooltips');
     },
-
     onEnter: function onEnter(e) {
-      var target = (0, _$['default'])(e.target).closest('[data-tooltip]');
+      var target = (0, _jquery2.default)(e.target).closest('[data-tooltip]');
       var dir = target.attr('data-tooltip-dir');
       var alignLeft = dir && dir.toLowerCase() === 'left';
-      _Events['default'].trigger('tooltip:show', target.attr('data-tooltip'), target, alignLeft);
+      _Events2.default.trigger('tooltip:show', target.attr('data-tooltip'), target, alignLeft);
     },
-    onLeave: function onLeave(e) {
-      _Events['default'].trigger('tooltip:hide');
+    onLeave: function onLeave() {
+      _Events2.default.trigger('tooltip:hide');
     }
-
   });
 
-  module.exports = TooltipsPlugin;
+  exports.default = TooltipsPlugin;
+  module.exports = exports['default'];
 });
-define('extplug/plugins/GuestPlugin',['exports', 'module', 'jquery', 'meld', '../Plugin', 'plug/core/Events', 'plug/actions/users/SaveSettingsAction', 'lang/Lang'], function (exports, module, _jquery, _meld, _Plugin, _plugCoreEvents, _plugActionsUsersSaveSettingsAction, _langLang) {
+define('extplug/plugins/GuestPlugin',['module', 'exports', 'jquery', 'meld', 'plug/core/Events', 'plug/actions/users/SaveSettingsAction', 'plug/models/currentUser', 'lang/Lang', '../Plugin'], function (module, exports, _jquery, _meld, _Events, _SaveSettingsAction, _currentUser, _Lang, _Plugin) {
   'use strict';
 
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
+
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
+
+  var _SaveSettingsAction2 = babelHelpers.interopRequireDefault(_SaveSettingsAction);
+
+  var _currentUser2 = babelHelpers.interopRequireDefault(_currentUser);
+
+  var _Lang2 = babelHelpers.interopRequireDefault(_Lang);
 
   var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
-
-  var _SaveSettingsAction = babelHelpers.interopRequireDefault(_plugActionsUsersSaveSettingsAction);
-
-  var _Lang = babelHelpers.interopRequireDefault(_langLang);
-
-  var GuestPlugin = _Plugin2['default'].extend({
+  var GuestPlugin = _Plugin2.default.extend({
     name: 'Guest UI',
     description: 'Skips the guest walkthrough and adds login and settings ' + 'buttons to the plug.dj footer.',
 
     style: {
+      /* eslint-disable quote-props */
       '.is-guest': {
         '#header-panel-bar': {
           '#chat-button': {
@@ -5700,96 +5988,201 @@ define('extplug/plugins/GuestPlugin',['exports', 'module', 'jquery', 'meld', '..
       // Presumably, this isn't the first time someone has used plug.dj.
       this.skipWalkthrough();
 
-      this.$settings = (0, _$['default'])('<div />').addClass('button settings extplug-guest-settings').attr('data-tooltip', _Lang['default'].userMenu.settings).attr('data-tooltip-dir', 'left').append((0, _$['default'])('<i />').addClass('icon icon-settings-white')).appendTo('#footer-user .buttons').on('click', this.onSettings);
+      this.$settings = (0, _jquery2.default)('<div />').addClass('button settings extplug-guest-settings').attr('data-tooltip', _Lang2.default.userMenu.settings).attr('data-tooltip-dir', 'left').append((0, _jquery2.default)('<i />').addClass('icon icon-settings-white')).appendTo('#footer-user .buttons').on('click', this.onSettings);
 
       // add login button
-      this.$signup = (0, _$['default'])('#footer-user .signup').find('span').text(_Lang['default'].signup.signup).end();
-      this.$login = (0, _$['default'])('<div />').addClass('signup login').append((0, _$['default'])('<span />').text(_Lang['default'].signup.login)).insertAfter(this.$signup).on('click', this.login.bind(this));
+      this.$signup = (0, _jquery2.default)('#footer-user .signup').find('span').text(_Lang2.default.signup.signup).end();
+      this.$login = (0, _jquery2.default)('<div />').addClass('signup login').append((0, _jquery2.default)('<span />').text(_Lang2.default.signup.login)).insertAfter(this.$signup).on('click', this.login.bind(this));
 
       // disable saving settings to the server when not logged in
-      this.ssaAdvice = (0, _meld.around)(_SaveSettingsAction['default'].prototype, 'execute', function () {
+      this.ssaAdvice = (0, _meld.around)(_SaveSettingsAction2.default.prototype, 'execute', function () {
         // do nothing \o/
       });
 
-      this.$roomBar = (0, _$['default'])('<div />').addClass('extplug-room-bar-overlay').appendTo('#room-bar').on('click', function (e) {
+      this.$roomBar = (0, _jquery2.default)('<div />').addClass('extplug-room-bar-overlay').appendTo('#room-bar').on('click', function (e) {
         e.stopPropagation();
-        if ((0, _$['default'])('#room-settings').is(':visible')) {
-          _Events['default'].trigger('hide:settings');
+        if ((0, _jquery2.default)('#room-settings').is(':visible')) {
+          _Events2.default.trigger('hide:settings');
         } else {
-          _Events['default'].trigger('show:settings');
+          _Events2.default.trigger('show:settings');
         }
       });
 
-      this._enabled = true;
+      this.guestEnabled = true;
     },
-
     disable: function disable() {
-      if (this._enabled) {
+      if (this.guestEnabled) {
         this.ssaAdvice.remove();
         this.$settings.remove();
         this.$roomBar.remove();
         this.$login.remove();
-        this.$signup.find('span').text(_Lang['default'].signup.signupFree);
+        this.$signup.find('span').text(_Lang2.default.signup.signupFree);
         this.$settings = this.$login = this.$signup = null;
       }
 
-      this._enabled = false;
+      this.guestEnabled = false;
     },
-
     skipWalkthrough: function skipWalkthrough() {
       var roomView = this.ext.appView.room;
+      _currentUser2.default.off('change:walkthrough', roomView.onWTChange);
       roomView.onWTFinish();
     },
-
     login: function login() {
       var app = this.ext.appView;
       app.showSignUp();
       app.signup.swap('login');
       // show email login by default
-      (0, _$['default'])('.sign-up-overlay .box').addClass('show-email');
-      (0, _$['default'])('.email-login input.email').focus();
+      (0, _jquery2.default)('.sign-up-overlay .box').addClass('show-email');
+      (0, _jquery2.default)('.email-login input.email').focus();
     },
-
     onSettings: function onSettings(e) {
       e.stopPropagation();
-      _Events['default'].trigger('tooltip:hide').trigger('show:user', 'settings', 'extplug');
+      _Events2.default.trigger('tooltip:hide').trigger('show:user', 'settings', 'extplug');
     }
-
   });
 
-  module.exports = GuestPlugin;
+  exports.default = GuestPlugin;
+  module.exports = exports['default'];
 });
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define('semver-compare',[],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.semvercmp = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-module.exports = function cmp (a, b) {
-    var pa = a.split('.');
-    var pb = b.split('.');
-    for (var i = 0; i < 3; i++) {
-        var na = Number(pa[i]);
-        var nb = Number(pb[i]);
-        if (na > nb) return 1;
-        if (nb > na) return -1;
-        if (!isNaN(na) && isNaN(nb)) return 1;
-        if (isNaN(na) && !isNaN(nb)) return -1;
-    }
-    return 0;
-};
-
-},{}]},{},[1])(1)
-});
-define('extplug/hooks/waitlist',['exports', 'plug/models/booth', 'plug/collections/waitlist', 'plug/collections/users', 'underscore'], function (exports, _plugModelsBooth, _plugCollectionsWaitlist, _plugCollectionsUsers, _underscore) {
+define('extplug/plugins/SocketEventsPlugin',['module', 'exports', 'underscore', 'meld', 'plug/core/Events', 'plug/facades/chatFacade', 'plug/models/currentRoom', 'plug/models/currentUser', '../Plugin'], function (module, exports, _underscore, _meld, _Events, _chatFacade, _currentRoom, _currentUser, _Plugin) {
   'use strict';
 
-  Object.defineProperty(exports, '__esModule', {
+  Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.install = install;
-  exports.uninstall = uninstall;
 
-  var _booth = babelHelpers.interopRequireDefault(_plugModelsBooth);
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
 
-  var _waitlist = babelHelpers.interopRequireDefault(_plugCollectionsWaitlist);
+  var _chatFacade2 = babelHelpers.interopRequireDefault(_chatFacade);
 
-  var _users = babelHelpers.interopRequireDefault(_plugCollectionsUsers);
+  var _currentRoom2 = babelHelpers.interopRequireDefault(_currentRoom);
+
+  var _currentUser2 = babelHelpers.interopRequireDefault(_currentUser);
+
+  var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
+
+  var CHAT_INTERCEPT_STRING = 'ExtPlugSocketIntercept' + Math.random();
+
+  // gives the user all permissions client-side temporarily, to make sure that
+  // a chat message will actually be passed to the socket.
+  function sudo(cb) {
+    var originalUser = _currentUser2.default.toJSON();
+    _currentUser2.default.set({
+      id: 1,
+      guest: false,
+      level: 50,
+      role: 5,
+      gRole: 5
+    }, { silent: true });
+
+    var originalRoom = (0, _underscore.pick)(_currentRoom2.default.toJSON(), 'joined', 'minChatLevel');
+    _currentRoom2.default.set({
+      joined: true,
+      minChatLevel: 0
+    }, { silent: true });
+
+    // this forces the chat slowmode cooldown timer to always return 0, thus
+    // working around slowmode
+    var originalMax = Math.max;
+    Math.max = function () {
+      return 0;
+    };
+
+    cb();
+
+    Math.max = originalMax;
+    _currentRoom2.default.set(originalRoom, { silent: true });
+    _currentUser2.default.set(originalUser, { silent: true });
+  }
+
+  function getSocket() {
+    var send = WebSocket.prototype.send;
+    var socket = void 0;
+    WebSocket.prototype.send = function sendIntercept(data) {
+      if (data.indexOf(CHAT_INTERCEPT_STRING)) {
+        socket = this;
+        WebSocket.prototype.send = send;
+      }
+    };
+    sudo(function () {
+      _chatFacade2.default.sendChat(CHAT_INTERCEPT_STRING);
+    });
+
+    // restore even if it didn't work
+    WebSocket.prototype.send = send;
+
+    return socket;
+  }
+
+  var SocketEventsPlugin = _Plugin2.default.extend({
+    enable: function enable() {
+      var plugin = this;
+      this.socket = getSocket();
+
+      if (this.socket) {
+        this.onConnect();
+      }
+
+      // make sure we still get an instance if the server reconnects, or
+      // if ExtPlug loads before plug.dj connects, by overriding the WebSocket
+      // constructor
+      var WS = WebSocket;
+      window.WebSocket = function WebSocketIntercept(arg) {
+        plugin.debug('instance', arg);
+        var ws = new WS(arg);
+        // wait for plug.dj to add handlers
+        (0, _underscore.defer)(function () {
+          // find the socket object again, this new connection might be
+          // instantiated by a plugin or another extension, and that should not
+          // be intercepted
+          plugin.socket = getSocket();
+          plugin.onConnect();
+        });
+        return ws;
+      };
+      WebSocket.prototype = WS.prototype;
+
+      this.WS = WS;
+    },
+    disable: function disable() {
+      if (this.WS) window.WebSocket = this.WS;
+      if (this.advice) this.advice.remove();
+
+      this.WS = null;
+      this.advice = null;
+      this.socket = null;
+    },
+    onConnect: function onConnect() {
+      var _this = this;
+
+      if (this.advice) this.advice.remove();
+
+      this.debug('patching', this.socket);
+
+      this.advice = (0, _meld.before)(this.socket, 'onmessage', function (e) {
+        if (e.data !== 'h') {
+          _this.debug('receive', e.data);
+          JSON.parse(e.data).forEach(function (message) {
+            _Events2.default.trigger('socket:' + message.a, message.p);
+          });
+        }
+      });
+    }
+  });
+
+  exports.default = SocketEventsPlugin;
+  module.exports = exports['default'];
+});
+define('extplug/plugins/WaitlistEventsPlugin',['module', 'exports', 'underscore', 'plug/models/booth', '../Plugin'], function (module, exports, _underscore, _booth, _Plugin) {
+  'use strict';
+
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+
+  var _booth2 = babelHelpers.interopRequireDefault(_booth);
+
+  var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
   var events = {
     WAIT_LIST_LEAVE: 'waitListLeave',
@@ -5797,8 +6190,8 @@ define('extplug/hooks/waitlist',['exports', 'plug/models/booth', 'plug/collectio
   };
 
   function onChange() {
-    var newList = _booth['default'].get('waitingDJs');
-    var oldList = _booth['default'].previous('waitingDJs');
+    var newList = _booth2.default.get('waitingDJs');
+    var oldList = _booth2.default.previous('waitingDJs');
     var left = (0, _underscore.difference)(oldList, newList);
     var entered = (0, _underscore.difference)(newList, oldList);
 
@@ -5810,193 +6203,172 @@ define('extplug/hooks/waitlist',['exports', 'plug/models/booth', 'plug/collectio
     });
   }
 
-  function install() {
-    _booth['default'].on('change:waitingDJs', onChange);
-    (0, _underscore.extend)(API, events);
-  }
+  var WaitlistEvents = _Plugin2.default.extend({
+    name: 'Waitlist Events',
+    description: 'Adds events for when users join or leave the waitlist.',
 
-  ;
+    enable: function enable() {
+      _booth2.default.on('change:waitingDJs', onChange);
+      (0, _underscore.extend)(API, events);
+    },
+    disable: function disable() {
+      _booth2.default.off('change:waitingDJs', onChange);
+      Object.keys(events).forEach(function (n) {
+        delete API[n];
+      });
+    }
+  });
 
-  function uninstall() {
-    _booth['default'].off('change:waitingDJs', onChange);
-    Object.keys(events).forEach(function (n) {
-      delete API[n];
-    });
-  }
-
-  ;
+  exports.default = WaitlistEvents;
+  module.exports = exports['default'];
 });
-define('extplug/hooks/api-early',['exports', 'meld'], function (exports, _meld) {
+define('extplug/plugins/PlaybackEventsPlugin',['module', 'exports', 'jquery', 'plug/core/Events', '../Plugin'], function (module, exports, _jquery, _Events, _Plugin) {
   'use strict';
 
-  Object.defineProperty(exports, '__esModule', {
+  Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.install = install;
-  exports.uninstall = uninstall;
 
-  var _meld2 = babelHelpers.interopRequireDefault(_meld);
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
 
-  function intercept(joinpoint) {
-    var _joinpoint$args = babelHelpers.toArray(joinpoint.args);
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
 
-    var eventName = _joinpoint$args[0];
+  var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
-    var params = _joinpoint$args.slice(1);
+  var PlaybackEventsPlugin = _Plugin2.default.extend({
+    name: 'Playback Events',
+    description: 'Add internal events for some playback-related actions: ' + 'refresh, snooze, toggling HD video.',
 
-    API.trigger.apply(API,
-    // userLeave → beforeUserLeave
-    ['before' + eventName.charAt(0).toUpperCase() + eventName.slice(1)].concat(babelHelpers.toConsumableArray(params)));
+    init: function init(id, ext) {
+      this._super(id, ext);
 
-    return joinpoint.proceed();
-  }
-
-  function nop() {
-    return 'Dummy handler to ensure that plug.dj actually triggers the event';
-  }
-
-  // find default plug.dj API event names
-  var eventKeys = Object.keys(API).filter(function (key) {
-    return key.toUpperCase() === key && typeof API[key] === 'string';
+      this.onRefresh = this.onRefresh.bind(this);
+      this.onHd = this.onHd.bind(this);
+      this.onSnooze = this.onSnooze.bind(this);
+    },
+    enable: function enable() {
+      (0, _jquery2.default)('#playback .refresh.button').on('click', this.onRefresh);
+      (0, _jquery2.default)('#playback .hd.button').on('click', this.onHd);
+      (0, _jquery2.default)('#playback .snooze.button').on('click', this.onSnooze);
+    },
+    disable: function disable() {
+      (0, _jquery2.default)('#playback .refresh.button').off('click', this.onRefresh);
+      (0, _jquery2.default)('#playback .hd.button').off('click', this.onHd);
+      (0, _jquery2.default)('#playback .snooze.button').off('click', this.onSnooze);
+    },
+    onRefresh: function onRefresh() {
+      _Events2.default.trigger('playback:refresh');
+    },
+    onHd: function onHd() {
+      _Events2.default.trigger('playback:hdVideo');
+    },
+    onSnooze: function onSnooze() {
+      _Events2.default.trigger('playback:snooze');
+    }
   });
 
-  var advice = undefined;
-
-  function install() {
-    advice = _meld2['default'].around(API, 'dispatch', intercept);
-    eventKeys.forEach(function (key) {
-      // add the API constants for these, too
-      API['BEFORE_' + key] = 'before' + API[key].charAt(0).toUpperCase() + API[key].slice(1);
-      // plug.dj checks if an event is actually attached (through the _events hash)
-      // before dispatching. We might run into situations where there is a BEFORE_
-      // handler, but not a normal one, and we do need to get the BEFORE_ event to
-      // trigger there. So we just pretend like we have handlers for all the things.
-      API.on(API[key], nop);
-    });
-  }
-
-  ;
-
-  function uninstall() {
-    eventKeys.forEach(function (key) {
-      delete API['BEFORE_' + key];
-      API.off(key, nop);
-    });
-    advice.remove();
-  }
-
-  ;
+  exports.default = PlaybackEventsPlugin;
+  module.exports = exports['default'];
 });
-define('extplug/hooks/playback',['exports', 'plug/core/Events'], function (exports, _plugCoreEvents) {
+define('extplug/store/settings',['module', 'exports', '../models/Settings'], function (module, exports, _Settings) {
   'use strict';
 
-  Object.defineProperty(exports, '__esModule', {
+  Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.install = install;
-  exports.uninstall = uninstall;
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
+  var _Settings2 = babelHelpers.interopRequireDefault(_Settings);
 
-  function onRefresh() {
-    _Events['default'].trigger('playback:refresh');
-  }
-  function onHd() {
-    _Events['default'].trigger('playback:hdVideo');
-  }
-  function onSnooze() {
-    _Events['default'].trigger('playback:snooze');
-  }
-
-  function install() {
-    $('#playback .refresh.button').on('click', onRefresh);
-    $('#playback .hd.button').on('click', onHd);
-    $('#playback .snooze.button').on('click', onSnooze);
-  }
-
-  ;
-
-  function uninstall() {
-    $('#playback .refresh.button').off('click', onRefresh);
-    $('#playback .hd.button').off('click', onHd);
-    $('#playback .snooze.button').off('click', onSnooze);
-  }
-
-  ;
+  exports.default = new _Settings2.default();
+  module.exports = exports['default'];
 });
-define('extplug/hooks/settings',['exports', 'meld', 'plug/store/settings', '../store/settings'], function (exports, _meld, _plugStoreSettings, _storeSettings) {
-  // Mirrors plug.dj settings to the ExtPlug settings model, firing
-  // change events.
-
+define('extplug/plugins/PlugSettingsPlugin',['module', 'exports', 'jquery', 'underscore', 'meld', 'plug/store/settings', '../Plugin', '../store/settings'], function (module, exports, _jquery, _underscore, _meld, _settings, _Plugin, _settings3) {
   'use strict';
 
-  Object.defineProperty(exports, '__esModule', {
+  Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.install = install;
-  exports.uninstall = uninstall;
 
-  var _plugSettings = babelHelpers.interopRequireDefault(_plugStoreSettings);
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
 
-  var _extMirror = babelHelpers.interopRequireDefault(_storeSettings);
+  var _settings2 = babelHelpers.interopRequireDefault(_settings);
 
-  var advice = undefined;
+  var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
-  function install() {
-    advice = (0, _meld.before)(_plugSettings['default'], 'save', _extMirror['default'].update);
-  }
+  var _settings4 = babelHelpers.interopRequireDefault(_settings3);
 
-  ;
+  var PlugSettingsPlugin = _Plugin2.default.extend({
+    name: 'Plug.dj Settings Sync',
+    description: 'Mirrors plug.dj settings to the ExtPlug settings model, firing change events.',
 
-  function uninstall() {
-    advice.remove();
-  }
+    enable: function enable() {
+      this.advice = (0, _meld.before)(_settings2.default, 'save', this.sync.bind(this));
+      this.sync();
+    },
+    disable: function disable() {
+      this.advice.remove();
+      this.advice = null;
+    },
+    sync: function sync() {
+      var newSettings = (0, _underscore.extend)({}, _settings2.default.settings);
+      var muted = (0, _jquery2.default)('#volume .icon').hasClass('icon-volume-off');
+      // when you mute a song using the volume button, plug.dj does not change the associated setting.
+      // here we fake a volume of 0% anyway if the volume is muted, so ExtPlug modules can just
+      // use volume throughout and have it work.
+      if (newSettings.volume !== 0 && muted) {
+        newSettings.volume = 0;
+      }
+      newSettings.muted = muted;
+      _settings4.default.set(newSettings);
+    }
+  });
 
-  ;
+  exports.default = PlugSettingsPlugin;
+  module.exports = exports['default'];
 });
-define('extplug/hooks/popout-style',['exports', 'jquery', 'plug/core/Events', 'plug/views/rooms/popout/PopoutView'], function (exports, _jquery, _plugCoreEvents, _plugViewsRoomsPopoutPopoutView) {
+define('extplug/plugins/PopoutStylePlugin',['module', 'exports', 'jquery', 'underscore', 'plug/core/Events', 'plug/views/rooms/popout/PopoutView', '../Plugin'], function (module, exports, _jquery, _underscore, _Events, _PopoutView, _Plugin) {
   'use strict';
 
-  Object.defineProperty(exports, '__esModule', {
+  Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.install = install;
-  exports.uninstall = uninstall;
 
-  var _$ = babelHelpers.interopRequireDefault(_jquery);
+  var _jquery2 = babelHelpers.interopRequireDefault(_jquery);
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
 
-  var _popoutView = babelHelpers.interopRequireDefault(_plugViewsRoomsPopoutPopoutView);
+  var _PopoutView2 = babelHelpers.interopRequireDefault(_PopoutView);
 
-  function sync() {
-    _.defer(function () {
-      _popoutView['default'].$document.find('head').append((0, _$['default'])('.extplug-style').clone());
-    });
-  }
+  var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
-  function install() {
-    _Events['default'].on('popout:show', sync);
-  }
+  var PopoutStylePlugin = _Plugin2.default.extend({
+    name: 'Popout Style',
+    description: 'Synchronises custom stylesheets between popout chat and the main window.',
 
-  ;
+    enable: function enable() {
+      _Events2.default.on('popout:show', this.sync, this);
+    },
+    disable: function disable() {
+      _Events2.default.off('popout:show', this.sync);
+    },
+    sync: function sync() {
+      (0, _underscore.defer)(function () {
+        var stylesheets = (0, _jquery2.default)('.extplug-style').clone();
+        _PopoutView2.default.$document.find('head').append(stylesheets);
+      });
+    }
+  });
 
-  function uninstall() {
-    _Events['default'].off('popout:show', sync);
-  }
-
-  ;
+  exports.default = PopoutStylePlugin;
+  module.exports = exports['default'];
 });
-define('extplug/hooks/index',['exports', 'module', './waitlist', './api-early', './playback', './settings', './popout-style'], function (exports, module, _waitlist, _apiEarly, _playback, _settings, _popoutStyle) {
+define('extplug/styles/badge',['module', 'exports'], function (module, exports) {
   'use strict';
 
-  module.exports = [_waitlist, _apiEarly, _playback, _settings, _popoutStyle];
-});
-define('extplug/styles/badge',['exports', 'module'], function (exports, module) {
-  // the red ExtPlug badge in the top left corner
-  'use strict';
-
-  module.exports = {
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.default = {
     '#app-menu .button i:after': {
       // double quoted ):
       'content': '"EXT"',
@@ -6011,13 +6383,15 @@ define('extplug/styles/badge',['exports', 'module'], function (exports, module) 
       'float': 'right'
     }
   };
+  module.exports = exports['default'];
 });
-define('extplug/styles/inline-chat',['exports', 'module'], function (exports, module) {
-  // inline chat messages show the message contents immediately after
-  // the username instead of below it.
+define('extplug/styles/inline-chat',['module', 'exports'], function (module, exports) {
   'use strict';
 
-  module.exports = {
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.default = {
     '#chat-messages .cm.inline': {
       'min-height': '0',
 
@@ -6040,8 +6414,13 @@ define('extplug/styles/inline-chat',['exports', 'module'], function (exports, mo
           'transform': 'scale(0.5)'
         }
       },
-      '.from': { 'display': 'inline' },
-      '.text': { 'display': 'inline', 'margin-left': '5px' },
+      '.from': {
+        'display': 'inline'
+      },
+      '.text': {
+        'display': 'inline',
+        'margin-left': '5px'
+      },
       '.delete-button': {
         'padding': '3px 10px',
         'top': '3px'
@@ -6058,11 +6437,15 @@ define('extplug/styles/inline-chat',['exports', 'module'], function (exports, mo
       'border-radius': '0px'
     }
   };
+  module.exports = exports['default'];
 });
-define('extplug/styles/settings-pane',['exports', 'module'], function (exports, module) {
+define('extplug/styles/settings-pane',['module', 'exports'], function (module, exports) {
   'use strict';
 
-  module.exports = {
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.default = {
     '#user-view #user-settings': {
       // unlike plug.dj's own settings, ExtPlug settings are grouped
       // in separate DOM elements (separate backbone views, even)
@@ -6184,17 +6567,28 @@ define('extplug/styles/settings-pane',['exports', 'module'], function (exports, 
       }
     }
   };
+  module.exports = exports['default'];
 });
-define('extplug/styles/install-plugin-dialog',['exports', 'module'], function (exports, module) {
+define('extplug/styles/install-plugin-dialog',['module', 'exports'], function (module, exports) {
   'use strict';
 
-  module.exports = {
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
+  exports.default = {
     '#dialog-install-plugin': {
       // magic numbers! stolen from other plug.dj dialogs
-      '.dialog-body': { 'height': '137px' },
-      '.message': { 'top': '21px' },
+      '.dialog-body': {
+        'height': '137px'
+      },
+      '.message': {
+        'top': '21px'
+      },
       // centered spinner
-      '.spinner': { 'top': '50%', 'left': '50%' },
+      '.spinner': {
+        'top': '50%',
+        'left': '50%'
+      },
       // Plugin URL input, center-aligned and wide
       '.dialog-input-background': {
         'top': '67px',
@@ -6207,53 +6601,68 @@ define('extplug/styles/install-plugin-dialog',['exports', 'module'], function (e
       }
     }
   };
+  module.exports = exports['default'];
 });
-define('extplug/ExtPlug',['exports', 'module', 'plug/core/Events', 'plug/views/app/ApplicationView', 'plug/models/currentUser', './store/settings', './models/RoomSettings', './models/PluginMeta', './collections/PluginsCollection', './Plugin', './pluginLoader', './plugins/CommandsPlugin', './plugins/SettingsTabPlugin', './plugins/ChatTypePlugin', './plugins/MoreChatEventsPlugin', './plugins/UserClassesPlugin', './plugins/EmojiDataPlugin', './plugins/TooltipsPlugin', './plugins/GuestPlugin', './package', 'underscore', 'semver-compare', './hooks/index', './styles/badge', './styles/inline-chat', './styles/settings-pane', './styles/install-plugin-dialog'], function (exports, module, _plugCoreEvents, _plugViewsAppApplicationView, _plugModelsCurrentUser, _storeSettings, _modelsRoomSettings, _modelsPluginMeta, _collectionsPluginsCollection, _Plugin, _pluginLoader, _pluginsCommandsPlugin, _pluginsSettingsTabPlugin, _pluginsChatTypePlugin, _pluginsMoreChatEventsPlugin, _pluginsUserClassesPlugin, _pluginsEmojiDataPlugin, _pluginsTooltipsPlugin, _pluginsGuestPlugin, _package2, _underscore, _semverCompare, _hooksIndex, _stylesBadge, _stylesInlineChat, _stylesSettingsPane, _stylesInstallPluginDialog) {
+define('extplug/ExtPlug',['module', 'exports', 'underscore', 'plug/core/Events', 'plug/views/app/ApplicationView', 'plug/models/currentUser', './models/RoomSettings', './collections/PluginsCollection', './Plugin', './pluginLoader', './plugins/EarlyAPIEventsPlugin', './plugins/CommandsPlugin', './plugins/SettingsTabPlugin', './plugins/ChatTypePlugin', './plugins/MoreChatEventsPlugin', './plugins/UserClassesPlugin', './plugins/EmojiDataPlugin', './plugins/TooltipsPlugin', './plugins/GuestPlugin', './plugins/SocketEventsPlugin', './plugins/WaitlistEventsPlugin', './plugins/PlaybackEventsPlugin', './plugins/PlugSettingsPlugin', './plugins/PopoutStylePlugin', '../package.json', './styles/badge', './styles/inline-chat', './styles/settings-pane', './styles/install-plugin-dialog'], function (module, exports, _underscore, _Events, _ApplicationView, _currentUser, _RoomSettings, _PluginsCollection, _Plugin, _pluginLoader, _EarlyAPIEventsPlugin, _CommandsPlugin, _SettingsTabPlugin, _ChatTypePlugin, _MoreChatEventsPlugin, _UserClassesPlugin, _EmojiDataPlugin, _TooltipsPlugin, _GuestPlugin, _SocketEventsPlugin, _WaitlistEventsPlugin, _PlaybackEventsPlugin, _PlugSettingsPlugin, _PopoutStylePlugin, _package, _badge, _inlineChat, _settingsPane, _installPluginDialog) {
   'use strict';
 
-  var _Events = babelHelpers.interopRequireDefault(_plugCoreEvents);
+  Object.defineProperty(exports, "__esModule", {
+    value: true
+  });
 
-  var _ApplicationView = babelHelpers.interopRequireDefault(_plugViewsAppApplicationView);
+  var _ = babelHelpers.interopRequireWildcard(_underscore);
 
-  var _currentUser = babelHelpers.interopRequireDefault(_plugModelsCurrentUser);
+  var _Events2 = babelHelpers.interopRequireDefault(_Events);
 
-  var _settings = babelHelpers.interopRequireDefault(_storeSettings);
+  var _ApplicationView2 = babelHelpers.interopRequireDefault(_ApplicationView);
 
-  var _RoomSettings = babelHelpers.interopRequireDefault(_modelsRoomSettings);
+  var _currentUser2 = babelHelpers.interopRequireDefault(_currentUser);
 
-  var _PluginMeta = babelHelpers.interopRequireDefault(_modelsPluginMeta);
+  var _RoomSettings2 = babelHelpers.interopRequireDefault(_RoomSettings);
 
-  var _PluginsCollection = babelHelpers.interopRequireDefault(_collectionsPluginsCollection);
+  var _PluginsCollection2 = babelHelpers.interopRequireDefault(_PluginsCollection);
 
   var _Plugin2 = babelHelpers.interopRequireDefault(_Plugin);
 
-  var _CommandsPlugin = babelHelpers.interopRequireDefault(_pluginsCommandsPlugin);
+  var pluginLoader = babelHelpers.interopRequireWildcard(_pluginLoader);
 
-  var _SettingsTabPlugin = babelHelpers.interopRequireDefault(_pluginsSettingsTabPlugin);
+  var _EarlyAPIEventsPlugin2 = babelHelpers.interopRequireDefault(_EarlyAPIEventsPlugin);
 
-  var _ChatTypePlugin = babelHelpers.interopRequireDefault(_pluginsChatTypePlugin);
+  var _CommandsPlugin2 = babelHelpers.interopRequireDefault(_CommandsPlugin);
 
-  var _MoreChatEventsPlugin = babelHelpers.interopRequireDefault(_pluginsMoreChatEventsPlugin);
+  var _SettingsTabPlugin2 = babelHelpers.interopRequireDefault(_SettingsTabPlugin);
 
-  var _UserClassesPlugin = babelHelpers.interopRequireDefault(_pluginsUserClassesPlugin);
+  var _ChatTypePlugin2 = babelHelpers.interopRequireDefault(_ChatTypePlugin);
 
-  var _EmojiDataPlugin = babelHelpers.interopRequireDefault(_pluginsEmojiDataPlugin);
+  var _MoreChatEventsPlugin2 = babelHelpers.interopRequireDefault(_MoreChatEventsPlugin);
 
-  var _TooltipsPlugin = babelHelpers.interopRequireDefault(_pluginsTooltipsPlugin);
+  var _UserClassesPlugin2 = babelHelpers.interopRequireDefault(_UserClassesPlugin);
 
-  var _GuestPlugin = babelHelpers.interopRequireDefault(_pluginsGuestPlugin);
+  var _EmojiDataPlugin2 = babelHelpers.interopRequireDefault(_EmojiDataPlugin);
 
-  var _semvercmp = babelHelpers.interopRequireDefault(_semverCompare);
+  var _TooltipsPlugin2 = babelHelpers.interopRequireDefault(_TooltipsPlugin);
 
-  var _hooks = babelHelpers.interopRequireDefault(_hooksIndex);
+  var _GuestPlugin2 = babelHelpers.interopRequireDefault(_GuestPlugin);
 
-  var _badgeStyles = babelHelpers.interopRequireDefault(_stylesBadge);
+  var _SocketEventsPlugin2 = babelHelpers.interopRequireDefault(_SocketEventsPlugin);
 
-  var _inlineChatStyles = babelHelpers.interopRequireDefault(_stylesInlineChat);
+  var _WaitlistEventsPlugin2 = babelHelpers.interopRequireDefault(_WaitlistEventsPlugin);
 
-  var _settingsPaneStyles = babelHelpers.interopRequireDefault(_stylesSettingsPane);
+  var _PlaybackEventsPlugin2 = babelHelpers.interopRequireDefault(_PlaybackEventsPlugin);
 
-  var _pluginDialogStyles = babelHelpers.interopRequireDefault(_stylesInstallPluginDialog);
+  var _PlugSettingsPlugin2 = babelHelpers.interopRequireDefault(_PlugSettingsPlugin);
+
+  var _PopoutStylePlugin2 = babelHelpers.interopRequireDefault(_PopoutStylePlugin);
+
+  var packageMeta = babelHelpers.interopRequireWildcard(_package);
+
+  var _badge2 = babelHelpers.interopRequireDefault(_badge);
+
+  var _inlineChat2 = babelHelpers.interopRequireDefault(_inlineChat);
+
+  var _settingsPane2 = babelHelpers.interopRequireDefault(_settingsPane);
+
+  var _installPluginDialog2 = babelHelpers.interopRequireDefault(_installPluginDialog);
 
   // LocalStorage key name for extplug
   var LS_NAME = 'extPlugins';
@@ -6262,8 +6671,9 @@ define('extplug/ExtPlug',['exports', 'module', 'plug/core/Events', 'plug/views/a
   function jsonParse(str) {
     try {
       return JSON.parse(str) || {};
-    } catch (e) {}
-    return {};
+    } catch (e) {
+      return {};
+    }
   }
 
   /**
@@ -6278,13 +6688,13 @@ define('extplug/ExtPlug',['exports', 'module', 'plug/core/Events', 'plug/views/a
    * @return {ApplicationView} The ApplicationView instance of this page.
    */
   function getApplicationView() {
-    var evts = _Events['default']._events['show:room'];
+    var evts = _Events2.default._events['show:room']; // eslint-disable-line no-underscore-dangle
     // Backbone event handlers have a .ctx property, containing what they will be bound to.
     // And ApplicationView adds a handler that's bound to itself!
-    var appView = undefined;
+    var appView = void 0;
     if (evts) {
-      appView = _underscore.find(evts, function (event) {
-        return event.ctx instanceof _ApplicationView['default'];
+      appView = _.find(evts, function (event) {
+        return event.ctx instanceof _ApplicationView2.default;
       });
     }
     return appView && appView.ctx;
@@ -6298,80 +6708,81 @@ define('extplug/ExtPlug',['exports', 'module', 'plug/core/Events', 'plug/views/a
    *
    * @constructor
    */
-  var ExtPlug = _Plugin2['default'].extend({
+  var ExtPlug = _Plugin2.default.extend({
     name: 'ExtPlug',
+
     settings: {
-      corsProxy: { type: 'boolean', 'default': true, label: 'Use CORS proxy' }
-    },
-    init: function init() {
-      this._super('extplug', this);
-
-      this._core = [new _CommandsPlugin['default']('chat-commands', this), new _SettingsTabPlugin['default']('settings-tab', this), new _MoreChatEventsPlugin['default']('more-chat-events', this), new _ChatTypePlugin['default']('custom-chat-type', this), new _UserClassesPlugin['default']('user-classes', this), new _EmojiDataPlugin['default']('emoji-data', this), new _TooltipsPlugin['default']('tooltips', this)];
-
-      this._guest = new _GuestPlugin['default']('guest', this);
-    },
-
-    /**
-     * Register an ExtPlug plugin by require.js module name.
-     * This can be anything that is accepted by require.js, including
-     * modules using require.js plugins or modules on remote URLs.
-     */
-    registerPlugin: function registerPlugin(id, cb) {
-      var _this = this;
-
-      _pluginLoader.load(id, function (e, meta) {
-        if (e) return cb && cb(e);
-        _this._plugins.add(meta);
-        var instance = meta.get('instance');
-        var state = _this._getPluginSettings(meta.get('id'));
-        instance.settings.set(state.settings);
-        instance.settings.on('change', function () {
-          _this._savePluginSettings(meta.get('id'));
-        });
-        if (state.enabled) {
-          _underscore.defer(function () {
-            meta.enable();
-          });
-        }
-        if (cb) cb(null);
-      });
-      return this;
-    },
-
-    /**
-     * Disables and removes an ExtPlug plugin.
-     */
-    unregisterPlugin: function unregisterPlugin(id) {
-      var plugin = this._plugins.findWhere({ id: id });
-      if (plugin) {
-        plugin.disable();
-        this._plugins.remove(plugin);
+      corsProxy: {
+        type: 'boolean',
+        default: true,
+        label: 'Use CORS proxy'
       }
     },
 
+    init: function init() {
+      this._super('extplug', this);
+
+      this.corePlugins = [new _EarlyAPIEventsPlugin2.default('extplug:early-api', this), new _CommandsPlugin2.default('extplug:chat-commands', this), new _SettingsTabPlugin2.default('extplug:settings-tab', this), new _MoreChatEventsPlugin2.default('extplug:more-chat-events', this), new _ChatTypePlugin2.default('extplug:custom-chat-type', this), new _UserClassesPlugin2.default('extplug:user-classes', this), new _EmojiDataPlugin2.default('extplug:emoji-data', this), new _TooltipsPlugin2.default('extplug:tooltips', this), new _SocketEventsPlugin2.default('extplug:socket-events', this), new _WaitlistEventsPlugin2.default('extplug:waitlist-events', this), new _PlaybackEventsPlugin2.default('extplug:playback-events', this), new _PlugSettingsPlugin2.default('extplug:plug-settings', this), new _PopoutStylePlugin2.default('extplug:popout-style', this)];
+
+      this.guestPlugin = new _GuestPlugin2.default('extplug:guest', this);
+
+      // Alias for compatibility with old versions.
+      Object.defineProperty(this, '_plugins', {
+        get: function get() {
+          return this.plugins;
+        }
+      });
+    },
+    registerPlugin: function registerPlugin(id, cb) {
+      var _this = this;
+
+      pluginLoader.load(id, function (e, meta) {
+        if (e) {
+          if (cb) cb(e);
+          return;
+        }
+
+        _this.plugins.add(meta);
+        var instance = meta.get('instance');
+        var state = _this.getPluginSettings(meta.get('id'));
+        instance.settings.set(state.settings);
+        instance.settings.on('change', function () {
+          _this.savePluginSettings(meta.get('id'));
+        });
+        if (state.enabled) {
+          _.defer(function () {
+            return meta.enable();
+          });
+        }
+        if (cb) {
+          cb(null);
+        }
+      });
+      return this;
+    },
+    unregisterPlugin: function unregisterPlugin(id) {
+      var plugin = this.plugins.findWhere({ id: id });
+      if (plugin) {
+        plugin.disable();
+        this.plugins.remove(plugin);
+      }
+    },
     getPlugin: function getPlugin(id) {
-      var meta = this._plugins.get(id);
+      var meta = this.plugins.get(id);
       return meta ? meta.get('instance') : null;
     },
-
-    /**
-     * Installs a plugin. This is basically registerPlugin(), but it also
-     * remembers the plugin name so it can be loaded again automatically
-     * on following ExtPlug runs.
-     */
     install: function install(id, cb) {
       this.registerPlugin(id, function (e) {
-        if (e) return cb(e);
+        if (e) {
+          cb(e);
+          return;
+        }
         var json = jsonParse(localStorage.getItem(LS_NAME));
         json.installed = (json.installed || []).concat([id]);
         localStorage.setItem(LS_NAME, JSON.stringify(json));
         cb(null);
       });
     },
-
-    /**
-     * Disables and removes a plugin forever.
-     */
     uninstall: function uninstall(id) {
       this.unregisterPlugin(id);
       var json = jsonParse(localStorage.getItem(LS_NAME));
@@ -6383,18 +6794,14 @@ define('extplug/ExtPlug',['exports', 'module', 'plug/core/Events', 'plug/views/a
         }
       }
     },
-
-    /**
-     * Loads installed plugins.
-     */
-    _loadInstalled: function _loadInstalled() {
+    loadInstalledPlugins: function loadInstalledPlugins() {
       var _this2 = this;
 
       var _jsonParse = jsonParse(localStorage.getItem(LS_NAME));
 
       var installed = _jsonParse.installed;
 
-      if (_underscore.isArray(installed)) {
+      if (_.isArray(installed)) {
         (function () {
           var l = installed.length;
           var i = 0;
@@ -6402,10 +6809,10 @@ define('extplug/ExtPlug',['exports', 'module', 'plug/core/Events', 'plug/views/a
           var done = function done() {
             if (errors.length) {
               errors.forEach(function (e) {
-                _Events['default'].trigger('notify', 'icon-chat-system', 'Plugin error: ' + e.message);
+                _Events2.default.trigger('notify', 'icon-chat-system', 'Plugin error: ' + e.message);
               });
             } else if (i > 0) {
-              _Events['default'].trigger('notify', 'icon-plug-dj', 'ExtPlug: loaded ' + i + ' plugins.');
+              _Events2.default.trigger('notify', 'icon-plug-dj', 'ExtPlug: loaded ' + i + ' plugins.');
             }
           };
           installed.forEach(function (name) {
@@ -6419,35 +6826,18 @@ define('extplug/ExtPlug',['exports', 'module', 'plug/core/Events', 'plug/views/a
         })();
       }
     },
-
-    /**
-     * Checks if ExtPlug has been initialised before.
-     */
     isFirstRun: function isFirstRun() {
       return localStorage.getItem(LS_NAME) == null;
     },
-    /**
-     * Things that should only happen the first time ExtPlug
-     * is initialised.
-     */
     onFirstRun: function onFirstRun() {
       localStorage.setItem(LS_NAME, JSON.stringify({
-        version: _package2.version,
+        version: packageMeta.version,
         installed: ['autowoot/build/autowoot.js;extplug/autowoot/main', 'chat-notifications/build/chat-notifications.js;' + 'extplug/chat-notifications/main', 'compact-history/build/compact-history.js;' + 'extplug/compact-history/main', 'hide-badges/build/hide-badges.js;extplug/hide-badges/main', 'meh-icons/build/meh-icons.js;extplug/meh-icons/main', 'room-styles/build/room-styles.js;extplug/room-styles/main', 'show-deleted/build/show-deleted.js;extplug/show-deleted/main'].map(function (path) {
           return 'https://extplug.github.io/' + path;
         }),
         plugins: {}
       }));
     },
-
-    /**
-     * Initializes ExtPlug.
-     *
-     * This attaches events and finds some common DOM elements. Also, adds
-     * the ExtPlug tab to the user settings area.
-     *
-     * @return {ExtPlug} `this`.
-     */
     enable: function enable() {
       var _this3 = this;
 
@@ -6456,153 +6846,84 @@ define('extplug/ExtPlug',['exports', 'module', 'plug/core/Events', 'plug/views/a
       /**
        * Internal map of registered plugins.
        */
-      this._plugins = new _PluginsCollection['default']();
-      this._plugins.on('change:enabled', function (plugin, enabled) {
-        _this3._savePluginSettings(plugin.get('id'));
+      this.plugins = new _PluginsCollection2.default();
+      this.plugins.on('change:enabled', function (plugin) {
+        _this3.savePluginSettings(plugin.get('id'));
       });
 
       if (this.isFirstRun()) this.onFirstRun();
 
       this.upgrade();
 
-      _settings['default'].update();
       this.appView = getApplicationView();
 
-      // install extra events
-      _hooks['default'].forEach(function (hook) {
-        hook.install();
-      });
-
-      this._core.forEach(function (plugin) {
+      this.corePlugins.forEach(function (plugin) {
         plugin.enable();
       });
 
       // ExtPlug styles
-      this.createStyle().set(_badgeStyles['default']).set(_inlineChatStyles['default']).set(_settingsPaneStyles['default']).set(_pluginDialogStyles['default']);
+      this.createStyle().set(_badge2.default).set(_inlineChat2.default).set(_settingsPane2.default).set(_installPluginDialog2.default);
 
       // room settings
-      this.roomSettings = new _RoomSettings['default'](this);
+      this.roomSettings = new _RoomSettings2.default(this);
 
-      this._loadInstalled();
-      _Events['default'].trigger('notify', 'icon-plug-dj', 'ExtPlug v' + _package2.version + ' loaded');
+      this.loadInstalledPlugins();
+      _Events2.default.trigger('notify', 'icon-plug-dj', 'ExtPlug v' + packageMeta.version + ' loaded');
 
-      if (_currentUser['default'].get('guest')) {
-        this._guest.enable();
-        _currentUser['default'].once('change:guest', function () {
-          _this3._guest.disable();
+      if (_currentUser2.default.get('guest')) {
+        this.guestPlugin.enable();
+        _currentUser2.default.once('change:guest', function () {
+          _this3.guestPlugin.disable();
         });
       }
 
       return this;
     },
-
-    /**
-     * Deinitializes and cleans up ExtPlug.
-     *
-     * Everything should be unloaded here, so the Plug.DJ page looks like nothing ever happened.
-     */
     disable: function disable() {
-      this._plugins.off().forEach(function (mod) {
+      this.plugins.off().forEach(function (mod) {
         mod.disable();
       });
-      this._core.forEach(function (plugin) {
+      this.corePlugins.forEach(function (plugin) {
         plugin.disable();
       });
-      _hooks['default'].forEach(function (hook) {
-        hook.uninstall();
-      });
 
-      this._guest.disable();
+      this.guestPlugin.disable();
 
       // remove room settings handling
       this.roomSettings.dispose();
       this.trigger('deinit');
       this._super();
     },
-
-    /**
-     * Persists plugin settings to localStorage.
-     * @private
-     */
-    _savePluginSettings: function _savePluginSettings(id) {
+    savePluginSettings: function savePluginSettings(id) {
       var json = jsonParse(localStorage.getItem(LS_NAME));
-      var plugin = this._plugins.findWhere({ id: id });
+      var plugin = this.plugins.findWhere({ id: id });
       var settings = plugin.get('instance').settings;
-      if (!json.plugins) json.plugins = {};
-      json.plugins[id] = { enabled: plugin.get('enabled'), settings: settings };
+
+      if (!json.plugins) {
+        json.plugins = {};
+      }
+
+      json.plugins[id] = {
+        enabled: plugin.get('enabled'),
+        settings: settings
+      };
+
       localStorage.setItem(LS_NAME, JSON.stringify(json));
     },
-
-    /**
-     * Retrieves plugin settings from localStorage.
-     */
-    _getPluginSettings: function _getPluginSettings(id) {
+    getPluginSettings: function getPluginSettings(id) {
       var settings = jsonParse(localStorage.getItem(LS_NAME)).plugins;
       if (settings && id in settings) {
         return settings[id];
       }
       return { enabled: false, settings: {} };
     },
-
-    /**
-     * Upgrades old ExtPlug version settings.
-     */
     upgrade: function upgrade() {
-      var stored = jsonParse(localStorage.getItem(LS_NAME));
-
-      // "hide-badges" was added in 0.10.0
-      if ((0, _semvercmp['default'])(stored.version, '0.10.0') < 0) {
-        stored.version = '0.10.0';
-        var plugin = 'extplug/plugins/hide-badges/main';
-        if (stored.installed.indexOf(plugin) === -1) {
-          stored.installed.push(plugin);
-        }
-      }
-
-      // "rollover-blurbs" was removed from core in 0.12.0
-      if ((0, _semvercmp['default'])(stored.version, '0.12.0') < 0) {
-        stored.version = '0.12.0';
-        replace('extplug/plugins/rollover-blurbs/main', 'https://extplug.github.io/rollover-blurb/build/rollover-blurb.js', 'extplug/rollover-blurb/main');
-      }
-
-      if ((0, _semvercmp['default'])(stored.version, '0.13.0') < 0) {
-        stored.version = '0.13.0';
-        replace('extplug/plugins/autowoot/main', 'https://extplug.github.io/autowoot/build/autowoot.js', 'extplug/autowoot/main');
-        replace('extplug/plugins/chat-notifications/main', 'https://extplug.github.io/chat-notifications/build/chat-notifications.js', 'extplug/chat-notifications/main');
-        replace('extplug/plugins/compact-history/main', 'https://extplug.github.io/compact-history/build/compact-history.js', 'extplug/compact-history/main');
-        replace('extplug/plugins/hide-badges/main', 'https://extplug.github.io/hide-badges/build/hide-badges.js', 'extplug/hide-badges/main');
-        replace('extplug/plugins/meh-icon/main', 'https://extplug.github.io/meh-icons/build/meh-icons.js;' + 'extplug/meh-icons/main');
-        replace('extplug/plugins/room-styles/main', 'https://extplug.github.io/room-styles/build/room-styles.js', 'extplug/room-styles/main');
-
-        // full-size video was removed in favour of plug's Video Only mode
-        var fullSizeVideo = 'extplug/plugins/full-size-video/main';
-        stored.installed = _underscore.without(stored.installed, fullSizeVideo);
-        delete stored.plugins[fullSizeVideo];
-      }
-      if ((0, _semvercmp['default'])(stored.version, '0.13.1') < 0) {
-        stored.version = '0.13.1';
-        // show-deleted was added to core in 0.13
-        var showDeleted = 'https://extplug.github.io/show-deleted/build/show-deleted.js;' + 'extplug/show-deleted/main';
-        if (stored.installed.indexOf(showDeleted) === -1) {
-          stored.installed.push(showDeleted);
-        }
-      }
-
-      localStorage.setItem(LS_NAME, JSON.stringify(stored));
-
-      function replace(oldPlugin, url, name) {
-        var i = stored.installed.indexOf(oldPlugin);
-        if (i !== -1) {
-          stored.installed.splice(i, 1, url + ';' + name);
-          // move settings
-          stored.plugins[name] = stored.plugins[oldPlugin];
-          delete stored.plugins[oldPlugin];
-        }
-      }
+      // Empty
     }
   });
 
-  module.exports = ExtPlug;
+  exports.default = ExtPlug;
+  module.exports = exports['default'];
 });
 
 require(["extplug/main"]);
