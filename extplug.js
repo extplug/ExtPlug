@@ -588,7 +588,7 @@ var hasAttributes = function (m, attributes) {
 function Context(target) {
   this._nameMapping = {};
   this._notFound = [];
-  this._detectives = [];
+  this._detectives = {};
   this._ran = false;
   this.target = target
   if (!target) try {
@@ -1237,7 +1237,7 @@ var plugModules = {
     return _.isFunction(m.onMediaChange) && _.isFunction(m.onStartTimeChange);
   },
   'plug/models/currentRoom': function (m) {
-    return m instanceof Backbone.Model && _.isArray(m.get('fx'));
+    return m instanceof Backbone.Model && 'fx' in m.attributes;
   },
   'plug/models/currentScore': function (m) {
     return _.isFunction(m.vote) && _.isFunction(m.grab) && _.isFunction(m.advance);
@@ -4803,7 +4803,7 @@ define('extplug/plugins/EarlyAPIEventsPlugin',['module', 'exports', 'meld', '../
 });
 define('package.json',{
   "name": "extplug",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "backbone": "^1.1.2",
@@ -4812,7 +4812,7 @@ define('package.json',{
     "jquery": "^2.1.1",
     "meld": "^1.3.2",
     "onecolor": "^2.5.0",
-    "plug-modules": "^4.3.3",
+    "plug-modules": "^4.3.4",
     "regexp-quote": "0.0.0",
     "semver-compare": "^1.0.0",
     "sistyl": "^1.0.0",
@@ -4848,7 +4848,7 @@ define('package.json',{
     "build": "gulp",
     "test": "eslint gulpfile.babel.js src test"
   },
-  "builtAt": 1468930540293
+  "builtAt": 1470042874699
 });
 define('extplug/plugins/CommandsPlugin',['module', 'exports', '../Plugin', '../../package.json'], function (module, exports, _Plugin, _package) {
   'use strict';
