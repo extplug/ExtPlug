@@ -1,5 +1,7 @@
 import plugModules from 'plug-modules';
 
+const EXTPLUG_MODULE = 'extplug/__internalExtPlug__';
+
 function waitFor(cond, fn) {
   const i = setInterval(() => {
     if (cond()) {
@@ -24,11 +26,13 @@ function appViewExists() {
 plugModules.run();
 plugModules.register();
 
-window.require(['extplug/ExtPlug'], ExtPlug => {
-  waitFor(appViewExists, () => {
-    const ext = new ExtPlug();
-    window.extp = ext;
+waitFor(appViewExists, () => {
+  window.define('extplug', [EXTPLUG_MODULE], ExtPlug => new ExtPlug());
 
+  window.requirejs(['extplug'], ext => {
+    window.requirejs.undef(EXTPLUG_MODULE);
+
+    window.extp = ext;
     ext.enable();
   });
 });

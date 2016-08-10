@@ -31,6 +31,9 @@ import inlineChatStyles from './styles/inline-chat';
 import settingsPaneStyles from './styles/settings-pane';
 import pluginDialogStyles from './styles/install-plugin-dialog';
 
+// Enable compatibility with AMD-based plugins.
+import './util/compatibility';
+
 // LocalStorage key name for extplug
 const LS_NAME = 'extPlugins';
 
