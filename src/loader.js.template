@@ -16,6 +16,7 @@
     var require = window.requirejs;
     var define = window.define;
     <%= code %>
+    require(['extplug/loader']);
   }
   else {
     setTimeout(load, 20);

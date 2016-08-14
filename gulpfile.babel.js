@@ -1,19 +1,19 @@
+import * as path from 'path';
+import * as fs from 'fs';
+import gulp from 'gulp';
 import babel from 'gulp-babel';
 import babelHelpers from 'gulp-babel-external-helpers';
-import browserify from 'browserify';
 import concat from 'gulp-concat';
 import data from 'gulp-data';
 import del from 'del';
-import fs from 'fs';
-import gulp from 'gulp';
 import merge from 'merge-stream';
 import mkdirp from 'mkdirp';
 import rename from 'gulp-rename';
 import rjs from 'requirejs';
 import runseq from 'run-sequence';
-import source from 'vinyl-source-stream';
 import template from 'gulp-template';
 import zip from 'gulp-zip';
+import webpack from 'webpack';
 import packg from './package.json';
 
 gulp.task('clean-lib', cb => {
@@ -36,80 +36,88 @@ gulp.task('babel', () =>
     .pipe(gulp.dest('lib/'))
 );
 
-const nodelib = (entry, standalone, name = `${standalone}.js`) => {
-  const opts = {
-    entries: `./node_modules/${entry}`,
+function createWebpackConfig(options) {
+  return {
+    context: path.join(__dirname, './src'),
+    entry: ['./ExtPlug'],
+    watch: !!options.watch,
+
+    module: {
+      loaders: [
+        { test: /\.json$/, loader: 'json' },
+        {
+          test: /\.js$/,
+          exclude: /node_modules/,
+          loader: 'babel',
+          query: {
+            presets: 'extplug',
+            plugins: 'external-helpers',
+          },
+        },
+      ],
+    },
+
+    output: {
+      path: path.join(__dirname, './build'),
+      filename: 'source.js',
+      library: 'extplug/__internalExtPlug__',
+      libraryTarget: 'amd',
+    },
+
+    resolve: {
+      alias: {
+        extplug: path.join(__dirname, './src'),
+      },
+    },
+
+    externals: [
+      'jquery',
+      'underscore',
+      'backbone',
+      'plug-modules',
+      'lang/Lang',
+      (context, request, cb) => {
+        if (/^plug\//.test(request)) {
+          cb(null, `amd plug-modules!${request}`);
+        } else {
+          cb();
+        }
+      },
+    ],
   };
-  if (standalone) {
-    opts.standalone = standalone;
-  }
+}
 
-  return () => browserify(opts)
-    .bundle()
-    .pipe(source(name))
-    .pipe(gulp.dest('build/_deps/'));
-};
+gulp.task('build:source', done => {
+  webpack(createWebpackConfig({}), done);
+});
 
-gulp.task('lib-debug', nodelib('debug/browser.js', 'debug'));
-gulp.task('lib-semvercmp', nodelib('semver-compare/index.js', 'semvercmp'));
-gulp.task('lib-symbol', nodelib('es6-symbol/implement.js', false, 'es6-symbol.js'));
-gulp.task('lib-regexp-quote', nodelib('regexp-quote/regexp-quote.js', 'regexp-quote'));
-gulp.task('lib-sistyl', nodelib('sistyl/lib/sistyl.js', 'sistyl'));
-
-gulp.task('dependencies', [
-  'lib-debug',
-  'lib-semvercmp',
-  'lib-sistyl',
-  'lib-symbol',
-  'lib-regexp-quote',
-]);
-
-gulp.task('rjs', done => {
-  const npm = 'node_modules/';
-  packg.builtAt = Date.now();
-  const packgString = JSON.stringify(packg, null, 2);
-  delete packg.builtAt;
+gulp.task('build:loader', ['babel'], done => {
   rjs.optimize({
     baseUrl: './',
-    name: 'extplug/main',
-    include: ['extplug/ExtPlug'],
+    name: 'extplug/loader',
     paths: {
-      // plug-modules defines, these are defined at runtime
-      // so the r.js optimizer can't find them
-      plug: 'empty:',
-      lang: 'empty:',
-      backbone: 'empty:',
       jquery: 'empty:',
       underscore: 'empty:',
-      meld: `${npm}meld/meld`,
-      sistyl: 'build/_deps/sistyl',
-      extplug: 'lib',
-      'plug-modules': `${npm}plug-modules/plug-modules`,
-      debug: 'build/_deps/debug',
-      onecolor: `${npm}onecolor/one-color-all`,
-      'regexp-quote': 'build/_deps/regexp-quote',
-      'semver-compare': 'build/_deps/semvercmp',
+      backbone: 'empty:',
+      plug: 'empty:',
+      'extplug/loader': 'lib/main',
+      'plug-modules': 'node_modules/plug-modules/plug-modules',
     },
-    rawText: {
-      'package.json': `define(${packgString})`,
-      'extplug/package': `define(${packgString})`,
-    },
-    insertRequire: ['extplug/main'],
     optimize: 'none',
     out(text) {
       mkdirp('build', e => {
         if (e) {
           done(e);
         } else {
-          fs.writeFile('build/build.rjs.js', text, done);
+          fs.writeFile('build/loader.js', text, done);
         }
       });
     },
   });
 });
 
-gulp.task('concat', () =>
-  gulp.src(['build/_deps/es6-symbol.js', 'lib/_babelHelpers.js', 'build/build.rjs.js'])
+gulp.task('concat', ['babel', 'build:loader', 'build:source'], () =>
+  gulp.src(['lib/_babelHelpers.js', 'build/loader.js', 'build/source.js'])
     .pipe(concat('extplug.code.js'))
     .pipe(gulp.dest('build/'))
 );
@@ -174,9 +182,7 @@ gulp.task('userscript', ['userscript-meta'], () =>
 
 gulp.task('default', cb => {
   runseq(
-    'clean',
-    ['babel', 'dependencies'],
-    'rjs',
+    'clean-build',
     'build',
     ['chrome', 'firefox', 'userscript'],
     cb
