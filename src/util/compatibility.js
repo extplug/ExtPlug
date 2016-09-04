@@ -1,7 +1,7 @@
 import * as meld from 'meld';
 import Plugin from '../Plugin';
 import settings from '../store/settings';
-import * as request from './request';
+import request from './request';
 import getUserClasses from './getUserClasses';
 import Style from './Style';
 
