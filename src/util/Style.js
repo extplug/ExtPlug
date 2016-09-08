@@ -9,6 +9,7 @@ const Style = Class.extend({
   init(defaults) {
     this.sistyl = new Sistyl(defaults);
     this.timeout = null;
+    this.rawStyles = [];
 
     this.refresh = this.refresh.bind(this);
     this.id = _.uniqueId('eps-');
@@ -21,6 +22,15 @@ const Style = Class.extend({
       this.el.clone().appendTo(popoutView.$document.find('head'));
     }
     this.refresh();
+  },
+
+  raw(text) {
+    this.rawStyles.push(text);
+
+    // throttle updates
+    clearTimeout(this.timeout);
+    this.timeout = setTimeout(this.refresh, 1);
+    return this;
   },
 
   $() {
@@ -58,9 +68,8 @@ const Style = Class.extend({
   },
 
   toString() {
-    return this.sistyl.toString();
+    return `${this.sistyl} \n ${this.rawStyles.join('\n\n')}`;
   },
-
 });
 
 export default Style;

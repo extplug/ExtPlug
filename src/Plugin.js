@@ -8,6 +8,10 @@ import Settings from './models/Settings';
 import Style from './util/Style';
 import SettingsView from './views/users/settings/DefaultSettingsView';
 
+function isWebpackStyle(v) {
+  return Array.isArray(v) && typeof v.i === 'function';
+}
+
 const stubHook = () => {};
 const hooks = ['enable', 'disable'];
 
@@ -99,7 +103,14 @@ const Plugin = Class.extend({
 
   // Styles API
   createStyle(defaults = {}) {
-    const style = new Style(defaults);
+    const style = new Style();
+    if (typeof defaults === 'string') {
+      style.raw(defaults);
+    } else if (isWebpackStyle(defaults)) {
+      style.raw(defaults.toString());
+    } else {
+      style.set(defaults);
+    }
     this[stylesSymbol].push(style);
     return style;
   },
