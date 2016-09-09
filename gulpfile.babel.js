@@ -84,13 +84,13 @@ function createWebpackConfig(options) {
 
     plugins: [
       options.minify && new webpack.optimize.UglifyJsPlugin(),
-    ].filter(Boolean)
+    ].filter(Boolean),
   };
 }
 
 gulp.task('build:source', done => {
   webpack(createWebpackConfig({
-    minify: !!env.minify
+    minify: !!env.minify,
   }), done);
 });
 
