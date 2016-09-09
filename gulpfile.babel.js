@@ -1,6 +1,9 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import gulp from 'gulp';
+import { env } from 'gulp-util';
+import gulpif from 'gulp-if';
+import uglify from 'gulp-uglify';
 import babel from 'gulp-babel';
 import babelHelpers from 'gulp-babel-external-helpers';
 import concat from 'gulp-concat';
@@ -18,7 +21,6 @@ import packg from './package.json';
 
 gulp.task('clean-lib', () => del('lib'));
 gulp.task('clean-build', () => del('build'));
-
 gulp.task('clean', ['clean-lib', 'clean-build']);
 
 gulp.task('babel', () =>
@@ -79,11 +81,17 @@ function createWebpackConfig(options) {
         }
       },
     ],
+
+    plugins: [
+      options.minify && new webpack.optimize.UglifyJsPlugin(),
+    ].filter(Boolean)
   };
 }
 
 gulp.task('build:source', done => {
-  webpack(createWebpackConfig({}), done);
+  webpack(createWebpackConfig({
+    minify: !!env.minify
+  }), done);
 });
 
 gulp.task('build:loader', ['babel'], done => {
@@ -126,6 +134,15 @@ gulp.task('build', ['concat'], () =>
       });
     }))
     .pipe(template())
+    .pipe(gulpif(!!env.minify, uglify({
+      compress: {
+        screw_ie8: true,
+        pure_getters: true,
+        unsafe: true,
+      },
+      output: { screw_ie8: true },
+      mangle: { toplevel: true },
+    })))
     .pipe(rename('extplug.js'))
     .pipe(gulp.dest('build/'))
 );
