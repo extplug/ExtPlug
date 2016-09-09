@@ -16,13 +16,8 @@ import zip from 'gulp-zip';
 import webpack from 'webpack';
 import packg from './package.json';
 
-gulp.task('clean-lib', cb => {
-  del('lib', cb);
-});
-
-gulp.task('clean-build', cb => {
-  del('build', cb);
-});
+gulp.task('clean-lib', () => del('lib'));
+gulp.task('clean-build', () => del('build'));
 
 gulp.task('clean', ['clean-lib', 'clean-build']);
 
