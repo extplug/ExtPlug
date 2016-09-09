@@ -1,4 +1,4 @@
-import * as _ from 'underscore';
+import { defer, each, find, isArray } from 'underscore';
 
 import Events from 'plug/core/Events';
 import ApplicationView from 'plug/views/app/ApplicationView';
@@ -26,10 +26,7 @@ import PopoutStylePlugin from './plugins/PopoutStylePlugin';
 
 import * as packageMeta from '../package.json';
 
-import badgeStyles from './styles/badge';
-import inlineChatStyles from './styles/inline-chat';
-import settingsPaneStyles from './styles/settings-pane';
-import pluginDialogStyles from './styles/install-plugin-dialog';
+import * as style from './styles';
 
 // Enable compatibility with AMD-based plugins.
 import './util/compatibility';
@@ -63,7 +60,7 @@ function getApplicationView() {
   // And ApplicationView adds a handler that's bound to itself!
   let appView;
   if (evts) {
-    appView = _.find(evts, event => event.ctx instanceof ApplicationView);
+    appView = find(evts, event => event.ctx instanceof ApplicationView);
   }
   return appView && appView.ctx;
 }
@@ -136,7 +133,7 @@ const ExtPlug = Plugin.extend({
         this.savePluginSettings(meta.get('id'));
       });
       if (state.enabled) {
-        _.defer(() => meta.enable());
+        defer(() => meta.enable());
       }
       if (cb) {
         cb(null);
@@ -199,7 +196,7 @@ const ExtPlug = Plugin.extend({
    */
   loadInstalledPlugins() {
     const { installed } = jsonParse(localStorage.getItem(LS_NAME));
-    if (_.isArray(installed)) {
+    if (isArray(installed)) {
       const l = installed.length;
       let i = 0;
       const errors = [];
@@ -283,12 +280,7 @@ const ExtPlug = Plugin.extend({
       plugin.enable();
     });
 
-    // ExtPlug styles
-    this.createStyle()
-      .set(badgeStyles)
-      .set(inlineChatStyles)
-      .set(settingsPaneStyles)
-      .set(pluginDialogStyles);
+    each(style, c => this.createStyle(c));
 
     // room settings
     this.roomSettings = new RoomSettings(this);

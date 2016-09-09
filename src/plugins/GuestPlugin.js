@@ -5,64 +5,14 @@ import SaveSettingsAction from 'plug/actions/users/SaveSettingsAction';
 import currentUser from 'plug/models/currentUser';
 import Lang from 'lang/Lang';
 import Plugin from '../Plugin';
+import style from './GuestPlugin.css';
 
 const GuestPlugin = Plugin.extend({
   name: 'Guest UI',
   description: 'Skips the guest walkthrough and adds login and settings ' +
                'buttons to the plug.dj footer.',
 
-  style: {
-    /* eslint-disable quote-props */
-    '.is-guest': {
-      '#header-panel-bar': {
-        '#chat-button': {
-          'width': '33%',
-          'span': { 'display': 'none' },
-        },
-        '#users-button': {
-          'left': '33%',
-          'width': '34%',
-        },
-        '#waitlist-button': {
-          'left': '67%',
-          'width': '33%',
-        },
-        '#friends-button': { 'display': 'none' },
-      },
-      '#user-lists': {
-        // even the staff one doesn't work for guest users!
-        '.button.staff, .button.ignored': { 'display': 'none' },
-      },
-      '#footer-user': {
-        '.signup': { 'width': '40%' },
-        '.signup.login': {
-          'margin-left': 'calc(40% + 1px)',
-          'width': 'calc(40% - 1px)',
-          'background': '#555d70',
-        },
-        '.buttons': {
-          'display': 'block',
-          '.button': { 'display': 'none' },
-          '.button.extplug-guest-settings': {
-            'display': 'block',
-            'margin-left': '80%',
-          },
-        },
-      },
-      '#user-menu .item:not(.settings)': {
-        'display': 'none',
-      },
-      '#room-bar': {
-        '.extplug-room-bar-overlay': {
-          'height': 'inherit',
-          'width': 'inherit',
-          'position': 'absolute',
-          'z-index': 10,
-        },
-      },
-    },
-    /* eslint-enable quote-props */
-  },
+  style,
 
   enable() {
     // Presumably, this isn't the first time someone has used plug.dj.

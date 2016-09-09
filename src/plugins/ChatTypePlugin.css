@@ -1,0 +1,6 @@
+.badge-box .emoji-outer {
+  margin: 7px;
+}
+.inline .badge-box .emoji-outer {
+  margin: 0 7px;
+}

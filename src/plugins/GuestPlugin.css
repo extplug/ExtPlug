@@ -1,0 +1,58 @@
+.is-guest {
+  & #header-panel-bar {
+    & #chat-button {
+      width: 33%;
+      & span {
+        display: none;
+      }
+    }
+    & #users-button {
+      left: 33%;
+      width: 34%;
+    }
+    & #waitlist-button {
+      left: 67%;
+      width: 33%;
+    }
+    & #friends-button {
+      display: none;
+    }
+  }
+  & #user-lists {
+    /* even the staff button doesn't work for guest users! */
+    @nest & .button.staff, & .button.ignored {
+      display: none;
+    }
+  }
+  & #footer-user {
+    & .signup {
+      width: 40%;
+    }
+    & .signup.login {
+      margin-left: calc(40% + 1px);
+      width: calc(40% - 1px);
+      background: #555d70;
+    }
+    & .buttons {
+      display: block;
+      & .button {
+        display: none;
+      }
+      & .button.extplug-guest-settings {
+        display: block;
+        margin-left: 80%;
+      }
+    }
+  }
+  & #user-menu .item:not(.settings) {
+    display: none;
+  }
+  & #room-bar {
+    & .extplug-room-bar-overlay {
+      height: inherit;
+      width: inherit;
+      position: absolute;
+      z-index: 10;
+    }
+  }
+}

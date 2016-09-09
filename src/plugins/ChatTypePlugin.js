@@ -6,6 +6,7 @@ import util from 'plug/util/util';
 import emoji from 'plug/util/emoji';
 import settings from 'plug/store/settings';
 import Plugin from '../Plugin';
+import style from './ChatTypePlugin.css';
 
 /**
  * The ChatType Plugin adds a bunch of useful options to chat message
@@ -26,14 +27,7 @@ import Plugin from '../Plugin';
  *    won't expect to find more than one type.
  */
 const ChatTypePlugin = Plugin.extend({
-  style: {
-    '.badge-box .emoji-outer': {
-      margin: '7px',
-    },
-    '.inline .badge-box .emoji-outer': {
-      margin: '0 7px',
-    },
-  },
+  style,
 
   enable() {
     // chatView.onReceived will still be the old method after adding advice

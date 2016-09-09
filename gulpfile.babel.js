@@ -17,6 +17,7 @@ import runseq from 'run-sequence';
 import template from 'gulp-template';
 import zip from 'gulp-zip';
 import webpack from 'webpack';
+import cssnext from 'postcss-cssnext';
 import packg from './package.json';
 
 gulp.task('clean-lib', () => del('lib'));
@@ -41,6 +42,7 @@ function createWebpackConfig(options) {
 
     module: {
       loaders: [
+        { test: /\.css$/, loader: 'css!postcss' },
         { test: /\.json$/, loader: 'json' },
         {
           test: /\.js$/,
@@ -85,6 +87,10 @@ function createWebpackConfig(options) {
     plugins: [
       options.minify && new webpack.optimize.UglifyJsPlugin(),
     ].filter(Boolean),
+
+    postcss() {
+      return [cssnext()];
+    },
   };
 }
 

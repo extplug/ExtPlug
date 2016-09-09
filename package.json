@@ -20,6 +20,7 @@
     "babel-loader": "^6.2.5",
     "babel-plugin-external-helpers": "^6.5.0",
     "babel-preset-extplug": "^2.0.0",
+    "css-loader": "^0.25.0",
     "del": "^2.2.2",
     "eslint": "^3.0.1",
     "eslint-config-airbnb-base": "^7.0.0",
@@ -38,6 +39,8 @@
     "json-loader": "^0.5.4",
     "merge-stream": "^1.0.0",
     "mkdirp": "^0.5.1",
+    "postcss-cssnext": "^2.8.0",
+    "postcss-loader": "^0.13.0",
     "requirejs": "^2.1.20",
     "run-sequence": "^1.1.2",
     "webpack": "^1.13.1"
