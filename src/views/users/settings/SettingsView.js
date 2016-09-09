@@ -126,7 +126,7 @@ const SettingsView = View.extend({
   },
 
   getGroup(name) {
-    for (let i = 0, l = this.groups.length; i < l; i++) {
+    for (let i = 0, l = this.groups.length; i < l; i += 1) {
       if (this.groups[i].name === name) {
         return this.groups[i].view;
       }
@@ -139,7 +139,7 @@ const SettingsView = View.extend({
   },
 
   removeGroup(name) {
-    for (let i = 0, l = this.groups.length; i < l; i++) {
+    for (let i = 0, l = this.groups.length; i < l; i += 1) {
       if (this.groups[i].name === name) {
         return this.groups.splice(i, 1);
       }

@@ -217,7 +217,8 @@ const ExtPlug = Plugin.extend({
       installed.forEach(name => {
         this.registerPlugin(name, e => {
           if (e) errors.push(e);
-          if (++i >= l) {
+          i += 1;
+          if (i >= l) {
             done();
           }
         });

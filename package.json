@@ -23,7 +23,7 @@
     "babel-preset-stage-2": "^6.5.0",
     "del": "^1.2.1",
     "eslint": "^3.0.1",
-    "eslint-config-airbnb-base": "^4.0.0",
+    "eslint-config-airbnb-base": "^7.0.0",
     "eslint-plugin-import": "^1.10.2",
     "gulp": "^3.9.0",
     "gulp-babel": "^6.1.2",
