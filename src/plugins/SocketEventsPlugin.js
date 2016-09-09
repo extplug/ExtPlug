@@ -39,12 +39,21 @@ function sudo(cb) {
 }
 
 function getSocket() {
+  // If RCS is loaded and already has a reference to the WebSocket, just use
+  // that.
+  if (window.rcs && window.rcs.plugSock &&
+      window.rcs.plugSock.sock instanceof WebSocket) {
+    return window.rcs.plugSock.sock;
+  }
+
   const send = WebSocket.prototype.send;
   let socket;
   WebSocket.prototype.send = function sendIntercept(data) {
-    if (data.indexOf(CHAT_INTERCEPT_STRING)) {
+    if (this.url.indexOf('plug.dj') !== -1 && data.indexOf(CHAT_INTERCEPT_STRING) !== -1) {
       socket = this;
       WebSocket.prototype.send = send;
+    } else {
+      send.call(this, data);
     }
   };
   sudo(() => {
