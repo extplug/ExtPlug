@@ -3124,6 +3124,10 @@ define("extplug/__internalExtPlug__", ["plug-modules!plug/models/currentUser","j
 
 	  var _DefaultSettingsView2 = babelHelpers.interopRequireDefault(_DefaultSettingsView);
 
+	  function isWebpackStyle(v) {
+	    return Array.isArray(v) && typeof v.i === 'function';
+	  }
+
 	  var stubHook = function stubHook() {};
 	  var hooks = ['enable', 'disable'];
 
@@ -3217,7 +3221,14 @@ define("extplug/__internalExtPlug__", ["plug-modules!plug/models/currentUser","j
 	    createStyle: function createStyle() {
 	      var defaults = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
-	      var style = new _Style2.default(defaults);
+	      var style = new _Style2.default();
+	      if (typeof defaults === 'string') {
+	        style.raw(defaults);
+	      } else if (isWebpackStyle(defaults)) {
+	        style.raw(defaults.toString());
+	      } else {
+	        style.set(defaults);
+	      }
 	      this[stylesSymbol].push(style);
 	      return style;
 	    },
@@ -3840,6 +3851,7 @@ define("extplug/__internalExtPlug__", ["plug-modules!plug/models/currentUser","j
 	    init: function init(defaults) {
 	      this.sistyl = new _sistyl.Sistyl(defaults);
 	      this.timeout = null;
+	      this.rawStyles = [];
 
 	      this.refresh = this.refresh.bind(this);
 	      this.id = _underscore2.default.uniqueId('eps-');
@@ -3850,6 +3862,14 @@ define("extplug/__internalExtPlug__", ["plug-modules!plug/models/currentUser","j
 	        this.el.clone().appendTo(_PopoutView2.default.$document.find('head'));
 	      }
 	      this.refresh();
+	    },
+	    raw: function raw(text) {
+	      this.rawStyles.push(text);
+
+	      // throttle updates
+	      clearTimeout(this.timeout);
+	      this.timeout = setTimeout(this.refresh, 1);
+	      return this;
 	    },
 	    $: function $() {
 	      var el = this.el;
@@ -3881,7 +3901,7 @@ define("extplug/__internalExtPlug__", ["plug-modules!plug/models/currentUser","j
 	      this.$().remove();
 	    },
 	    toString: function toString() {
-	      return this.sistyl.toString();
+	      return this.sistyl + ' \n ' + this.rawStyles.join('\n\n');
 	    }
 	  });
 
@@ -5294,7 +5314,7 @@ define("extplug/__internalExtPlug__", ["plug-modules!plug/models/currentUser","j
 
 	module.exports = {
 		"name": "extplug",
-		"version": "0.16.1",
+		"version": "0.17.0",
 		"description": "Highly flexible, modular userscript extension for plug.dj.",
 		"dependencies": {
 			"backbone": "^1.1.2",
@@ -6530,12 +6550,20 @@ define("extplug/__internalExtPlug__", ["plug-modules!plug/models/currentUser","j
 	  }
 
 	  function getSocket() {
+	    // If RCS is loaded and already has a reference to the WebSocket, just use
+	    // that.
+	    if (window.rcs && window.rcs.plugSock && window.rcs.plugSock.sock instanceof WebSocket) {
+	      return window.rcs.plugSock.sock;
+	    }
+
 	    var send = WebSocket.prototype.send;
 	    var socket = void 0;
 	    WebSocket.prototype.send = function sendIntercept(data) {
-	      if (data.indexOf(CHAT_INTERCEPT_STRING)) {
+	      if (this.url.indexOf('plug.dj') !== -1 && data.indexOf(CHAT_INTERCEPT_STRING) !== -1) {
 	        socket = this;
 	        WebSocket.prototype.send = send;
+	      } else {
+	        send.call(this, data);
 	      }
 	    };
 	    sudo(function () {
