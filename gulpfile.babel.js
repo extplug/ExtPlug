@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import gulp from 'gulp';
+import babel from 'gulp-babel';
 import { env } from 'gulp-util';
 import gulpif from 'gulp-if';
 import uglify from 'gulp-uglify';
@@ -87,7 +88,18 @@ gulp.task('build:source', done => {
   }), done);
 });
 
-gulp.task('build:loader', done => {
+gulp.task('build:loader:transform', () =>
+  gulp.src('src/main.js')
+    .pipe(babel({
+      presets: [
+        ['extplug', { amd: true }],
+      ],
+    }))
+    .pipe(rename('init.js'))
+    .pipe(gulp.dest('build'))
+);
+
+gulp.task('build:loader', ['build:loader:transform'], done => {
   rjs.optimize({
     baseUrl: './',
     name: 'extplug/loader',
@@ -95,8 +107,7 @@ gulp.task('build:loader', done => {
       jquery: 'empty:',
       underscore: 'empty:',
       backbone: 'empty:',
-      plug: 'empty:',
-      'extplug/loader': 'lib/main',
+      'extplug/loader': 'build/init',
       'plug-modules': 'node_modules/plug-modules/plug-modules',
     },
     optimize: 'none',
