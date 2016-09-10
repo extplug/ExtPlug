@@ -4,8 +4,6 @@ import gulp from 'gulp';
 import { env } from 'gulp-util';
 import gulpif from 'gulp-if';
 import uglify from 'gulp-uglify';
-import babel from 'gulp-babel';
-import babelHelpers from 'gulp-babel-external-helpers';
 import concat from 'gulp-concat';
 import data from 'gulp-data';
 import del from 'del';
@@ -24,16 +22,6 @@ gulp.task('clean-lib', () => del('lib'));
 gulp.task('clean-build', () => del('build'));
 gulp.task('clean', ['clean-lib', 'clean-build']);
 
-gulp.task('babel', () =>
-  gulp.src('src/**/*.js')
-    .pipe(babel({
-      presets: ['extplug'],
-      plugins: ['external-helpers'],
-    }))
-    .pipe(babelHelpers('_babelHelpers.js', 'var'))
-    .pipe(gulp.dest('lib/'))
-);
-
 function createWebpackConfig(options) {
   return {
     context: path.join(__dirname, './src'),
@@ -50,7 +38,6 @@ function createWebpackConfig(options) {
           loader: 'babel',
           query: {
             presets: 'extplug',
-            plugins: 'external-helpers',
           },
         },
       ],
@@ -100,7 +87,7 @@ gulp.task('build:source', done => {
   }), done);
 });
 
-gulp.task('build:loader', ['babel'], done => {
+gulp.task('build:loader', done => {
   rjs.optimize({
     baseUrl: './',
     name: 'extplug/loader',
@@ -125,8 +112,8 @@ gulp.task('build:loader', ['babel'], done => {
   });
 });
 
-gulp.task('concat', ['babel', 'build:loader', 'build:source'], () =>
-  gulp.src(['lib/_babelHelpers.js', 'build/loader.js', 'build/source.js'])
+gulp.task('concat', ['build:loader', 'build:source'], () =>
+  gulp.src(['build/loader.js', 'build/source.js'])
     .pipe(concat('extplug.code.js'))
     .pipe(gulp.dest('build/'))
 );

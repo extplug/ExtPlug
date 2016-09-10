@@ -26,8 +26,6 @@
     "eslint-config-airbnb-base": "^7.0.0",
     "eslint-plugin-import": "^1.10.2",
     "gulp": "^3.9.0",
-    "gulp-babel": "^6.1.2",
-    "gulp-babel-external-helpers": "^2.0.0",
     "gulp-concat": "^2.6.0",
     "gulp-data": "^1.2.0",
     "gulp-if": "^2.0.1",
