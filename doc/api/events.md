@@ -49,8 +49,8 @@ user interactions and all socket events get dispatched to the Event bus.
 ## The Event Bus
 
 The Event bus is a single object, located at `require('plug/core/Events')`. It's
-a clone of [Backbone.Events](http://backbonejs.org/#Events) and supports all the
-Backbone.Events methods. The most important ones are also included below.
+a clone of [Backbone.Events] and supports all the Backbone.Events methods. The
+most important ones are also included below.
 
 ### Events.dispatch(eventInstance)
 
@@ -59,7 +59,7 @@ You'll mostly dispatch existing Event Classes, which are described below. If you
 are working on a simple plugin, it is probably easier to just use the
 `trigger()` and `on()` methods instead.
 
-```javascript
+```js
 // Dispatching events
 const Events = require('plug/core/Events');
 const DJEvent = require('plug/events/DJEvent');
@@ -72,19 +72,19 @@ Events.dispatch(new DJEvent(
 ### Events.trigger(eventName, ...data)
 
 Triggers an event. The `data` parameters will be passed on to every handler. See
-[Backbone.Events.trigger](http://backbonejs.org/#Events-trigger) for more.
+[Backbone.Events.trigger] for more.
 
-```javascript
+```js
 Events.trigger('tooltip:show', 'Tooltip contents');
 Events.trigger('notify', 'icon-class', 'Notification Text');
 ```
 
 ### Events.on(eventName, handler, [bind])
 
-Adds an event listener. The `handler` will be called when `eventName` is triggered.
-See [Backbone.Events.on](http://backbonejs.org/#Events-on) for more.
+Adds an event listener. The `handler` will be called when `eventName` is
+triggered. See [Backbone.Events.on] for more.
 
-```javascript
+```js
 Events.on('notify', (cls, text) => {
   console.log('notification', cls, text);
 });
@@ -92,10 +92,9 @@ Events.on('notify', (cls, text) => {
 
 ### Events.off(eventName, handler)
 
-Removes an event listener. See [Backbone.Events.off](http://backbonejs.org/#Events-off)
-for more.
+Removes an event listener. See [Backbone.Events.off] for more.
 
-```
+```js
 function handler() { console.log('Handled!'); }
 
 Events.on('log', handler);
@@ -111,32 +110,38 @@ extra information, which is sometimes useful.
 
 ### Event
 
-All Event Classes inherit from the base `Event` class, defined in `plug/events/Event`.
-Many event classes encompass several different event types. For example, the `AlertEvent`
-can be used for Alert dialogs, but also for Confirmation dialogs. Even more interesting
-is the `ModerationEvent`, which contains event types for wait list management, chat
-deletion, and banning and muting users. Internally, the event type is used as the event
-name in the `Backbone.Events` instance.
+All Event Classes inherit from the base `Event` class, defined in
+`plug/events/Event`. Many event classes encompass several different event types.
+For example, the `AlertEvent` can be used for Alert dialogs, but also for
+Confirmation dialogs. Even more interesting is the `ModerationEvent`, which
+contains event types for wait list management, chat deletion, and banning and
+muting users.
 
 Event types are defined as static constants on the event class. Examples include
 `DJEvent.JOIN`, `PlaylistActionEvent.SHUFFLE`, and `FriendEvent.UNFRIEND`.
-Event Classes are instantiated by passing an event type and sometimes extra information.
+Event Classes are instantiated by passing an event type and sometimes extra
+information.
 
-```javascript
+```js
 // an event without extra data.
 const DJEvent = require('plug/events/DJEvent');
 let joinBoothEvent = new DJEvent(DJEvent.JOIN);
-// Events.dispatch(joinBoothEvent) will make the current user join the wait list.
+// Events.dispatch(joinBoothEvent) will make the current user join the waitlist.
 
 // an event with a data parameter
 const PlaylistActionEvent = require('plug/events/PlaylistActionEvent');
-let shufflePlaylistEvent = new PlaylistActionEvent(PlaylistActionEvent.SHUFFLE, playlistId);
-// Events.dispatch(shufflePlaylistEvent) will shuffle the playlist with id `playlistId`.
+let shufflePlaylistEvent = new PlaylistActionEvent(
+  PlaylistActionEvent.SHUFFLE,
+  playlistId
+);
+// Events.dispatch(shufflePlaylistEvent) will shuffle the playlist with id
+// `playlistId`.
 ```
 
 ### Event Listing
 
-#### AlertEvent
+<a id="alertevent"></a>
+#### new AlertEvent(type, title, message, action)
 
 `AlertEvent`s are used to display plug.dj-styled alert and confirmation boxes.
 AlertEvents take at least three parameters: `title`, `message` and `action`.
@@ -158,7 +163,7 @@ The `ALERT` type shows an alert box with a single confirmation button.
  * `forceAction` - Execute the action even if the user closed the dialog without
    pressing OK. `ALERT` dialogs only.
 
-```javascript
+```js
 let event = new AlertEvent(
   AlertEvent.ALERT,
   'Something happened!',
@@ -174,7 +179,7 @@ The `CONFIRM` type shows an alert box with a confirmation button and an abort
 button. The given action is only executed when the confirmation button is
 pressed, and not when the abort button or the close button are pressed.
 
-```javascript
+```js
 let event = new AlertEvent(
   AlertEvent.CONFIRM,
   'Confirm title (also used as the OK Button text, keep it short)',
@@ -185,26 +190,28 @@ let event = new AlertEvent(
 );
 ```
 
-#### ChatFacadeEvent
+<a id="chatfacadeevent"></a>
+#### new ChatFacadeEvent(type)
 
-`ChatFacadeEvent`s are used by the buttons above the chat, such as the toggle buttons for
-emoji and mention sounds. The chat view and the popped-out chat view both listen for
-these events.
+`ChatFacadeEvent`s are used by the buttons above the chat, such as the toggle
+buttons for emoji and mention sounds. The chat view and the popped-out chat view
+both listen for these events.
 
 ##### ChatFacadeEvent.CLEAR
 
-Clears the chat display. This only affects your view of the chat: the messages will not
-actually be deleted.
+Clears the chat display. This only affects your view of the chat: the messages
+will not actually be deleted.
 
-```javascript
+```js
 let event = new ChatFacadeEvent(ChatFacadeEvent.CLEAR);
 ```
 
 ##### ChatFacadeEvent.EMOJI
 
-Enables or disables emoji display. Pass `true` to enable emoji, or `false` to disable emoji.
+Enables or disables emoji display. Pass `true` to enable emoji, or `false` to
+disable emoji.
 
-```javascript
+```js
 // do not display emoji as images, but just as :text:
 let disable = new ChatFacadeEvent(ChatFacadeEvent.EMOJI, false);
 // haha, just kidding, why would anyone want to disable emoji?
@@ -214,36 +221,39 @@ let enable = new ChatFacadeEvent(ChatFacadeEvent.EMOJI, true);
 
 ##### ChatFacadeEvent.MENTIONS
 
-Enables or disables mentions-only mode. In mentions-only mode, only messages that contain
-your `@username` will be displayed. Pass `true` to enable mentions-only mode (and hide all
-other messages), or `false` to disable mentions-only mode (and show all messages).
+Enables or disables mentions-only mode. In mentions-only mode, only messages
+that contain your `@username` will be displayed. Pass `true` to enable
+mentions-only mode (and hide all other messages), or `false` to disable
+mentions-only mode (and show all messages).
 
-```javascript
+```js
 // I do not want to be distracted.
 let event = new ChatFacadeEvent(ChatFacadeEvent.MENTIONS, true);
 ```
 
 ##### ChatFacadeEvent.SOUND
 
-Enables or disables the mention sound. Pass `true` to enable the sound and get a Ding! when
-someone @-mentions you, or `false` to disable the sound.
+Enables or disables the mention sound. Pass `true` to enable the sound and get
+a Ding! when someone @-mentions you, or `false` to disable the sound.
 
-```javascript
+```js
 // I do not want to be distracted.
 let event = new ChatFacadeEvent(ChatFacadeEvent.SOUND, false);
 ```
 
 ##### ChatFacadeEvent.TIMESTAMP
 
-Sets the chat messages timestamp display style. Pass `false` to disable timestamps on messages,
-`12` to use 12-hour, AM/PM style timestamps (1:37PM), or `24` to use 24-hour notation (13:37).
+Sets the chat messages timestamp display style. Pass `false` to disable
+timestamps on messages, `12` to use 12-hour, AM/PM style timestamps (1:37PM),
+or `24` to use 24-hour notation (13:37).
 
-```javascript
+```js
 // set to 24-hour time display
 let event = new ChatFacadeEvent(ChatFacadeEvent.TIMESTAMP, 24);
 ```
 
-#### CustomRoomEvent
+<a id="customroomevent"></a>
+#### new CustomRoomEvent(type, path)
 
 The `CustomRoomEvent` is used to load additional JavaScript for specific rooms.
 Partnered rooms like Tastycat and Mineplex get their own bit of JavaScript that
@@ -260,7 +270,8 @@ need to load additional JavaScript yourself, there's a global `requirejs`
 function at your disposal which loads files perfectly, and also gives you error
 handling and stuff.
 
-#### DJEvent
+<a id="djevent"></a>
+#### new DJEvent(type)
 
 The `DJEvent` relates to the DJ booth or wait list. It's used to let the current
 user join or leave the wait list, and to make the current user skip their own
@@ -270,7 +281,7 @@ plays.
 
 Joins the wait list. No parameters.
 
-```javascript
+```js
 let event = new DJEvent(DJEvent.JOIN);
 ```
 
@@ -279,7 +290,7 @@ let event = new DJEvent(DJEvent.JOIN);
 Leaves the wait list. No parameters. Note that this does *not* ask the user for
 confirmation, even though clicking the "Leave wait list" button does.
 
-```javascript
+```js
 let event = new DJEvent(DJEvent.LEAVE);
 ```
 
@@ -287,11 +298,12 @@ let event = new DJEvent(DJEvent.LEAVE);
 
 Skips the current song, **if** the current user is DJing. No parameters.
 
-```javascript
+```js
 let event = new DJEvent(DJEvent.SKIP);
 ```
 
-#### FriendEvent
+<a id="friendevent"></a>
+#### new FriendEvent(type, userId)
 
 `FriendEvent`s relate to friendship requests. They are used to accept or ignore
 requests, and to remove friends. All FriendEvents take a single parameter:
@@ -304,7 +316,7 @@ requests, and to remove friends. All FriendEvents take a single parameter:
 Removes a user from your friends. Note that it does *not* ask the user for
 confirmation.
 
-```javascript
+```js
 let stupidFriend = 1234567; // random user id
 let event = new FriendEvent(FriendEvent.UNFRIEND, stupidFriend);
 ```
@@ -318,7 +330,7 @@ confirmed; otherwise, you will send a *new* request to the user. Thus, if you
 "accept" a friend request from a user who has not sent you a request, you will
 *send* a request instead.
 
-```javascript
+```js
 let niceUser = 1234567;
 let event = new FriendEvent(FriendEvent.ACCEPT, niceUser);
 ```
@@ -327,12 +339,13 @@ let event = new FriendEvent(FriendEvent.ACCEPT, niceUser);
 
 Ignores a friend request from the given user ID.
 
-```javascript
+```js
 let stupidUser = 1234567;
 let event = new FriendEvent(FriendEvent.IGNORE, stupidUser);
 ```
 
-#### HistorySyncEvent
+<a id="historysyncevent"></a>
+#### new HistorySyncEvent(type)
 
 A `HistorySyncEvent` fetches the play history of the current room or the current
 user, loads it into the appropriate collections, and updates the UI. These
@@ -343,7 +356,7 @@ parameters.
 
 Reloads the room history.
 
-```javascript
+```js
 let event = new HistorySyncEvent(HistorySyncEvent.ROOM);
 ```
 
@@ -351,19 +364,22 @@ let event = new HistorySyncEvent(HistorySyncEvent.ROOM);
 
 Reloads the current user's play history.
 
-```javascript
+```js
 let event = new HistorySyncEvent(HistorySyncEvent.USER);
 ```
 
-#### ImportSoundCloudEvent
+<a id="importsoundcloudevent"></a>
+#### new ImportSoundCloudEvent(type, ...)
 
 TODO
 
-#### ImportYouTubeEvent
+<a id="importyoutubeevent"></a>
+#### new ImportYouTubeEvent(type, ...)
 
 TODO
 
-#### MediaActionEvent
+<a id="mediaactionevent"></a>
+#### new MediaActionEvent(type, ...)
 
 All user interaction with media in playlists is handled by `MediaActionEvent`s.
 Basically, everything that might get a button in a media row in the playlists
@@ -373,7 +389,8 @@ They depend heavily on the plug.dj DOM structure. As such, they aren't
 particularly useful for programmatic use. Instead, use the other `Media*Event`s,
 or use the appropriate View classes directly.
 
-#### MediaDeleteEvent
+<a id="mediadeleteevent"></a>
+#### new MediaDeleteEvent(type, playlistId, ids)
 
 ##### MediaDeleteEvent.DELETE
 
@@ -383,14 +400,15 @@ Deletes media from a playlist. Takes two parameters:
  * `ids` - An Array of media IDs to remove from the playlist. Note that you can
    *not* pass a single media ID.
 
-```javascript
+```js
 let playlist = 1234567;
 let ids = [ 12345678, 12345679, 12345680 ];
 
 let event = new MediaDeleteEvent(MediaDeleteEvent.DELETE, playlist, ids);
 ```
 
-#### MediaGrabEvent
+<a id="mediagrabevent"></a>
+#### new MediaGrabEvent(type, playlistId, historyId)
 
 ##### MediaGrabEvent.GRAB
 
@@ -403,14 +421,15 @@ playing.) Takes two parameters:
    collections, as well as the `currentMedia` model. If you just want to add
    media to a playlist, use `MediaInsertEvent` instead.
 
-```javascript
+```js
 let playlistId = 1234567;
 let historyId = currentMedia.get('historyID');
 
 let event = new MediaGrabEvent(MediaGrabEvent.GRAB, playlistId, historyId);
 ```
 
-#### MediaInsertEvent
+<a id="mediainsertevent"></a>
+#### new MediaInsertEvent(type, playlist, items, append, confirmCount)
 
 ##### MediaInsertEvent.INSERT
 
@@ -422,7 +441,7 @@ Inserts media into a playlist. Takes four parameters:
  * `confirmCount` - Amount of items, used for display in the "Media added"
    notification.
 
-```javascript
+```js
 let playlist = playlists.findWhere({ name: 'My Playlist' });
 let items = [ new Media(...), new Media(...) ];
 
@@ -435,7 +454,8 @@ let event = new MediaInsertEvent(
 );
 ```
 
-#### MediaMoveEvent
+<a id="mediamoveevent"></a>
+#### new MediaMoveEvent(type)
 
 Handles moving media around within the *currently visible* playlist. That's
 the playlist that is currently opened in the playlists panel. Note that the
@@ -452,7 +472,7 @@ two parameters:
  * `beforeId` - Media ID to move the items to, or `0` to move the items to the
    very end of the playlist.
 
-```javascript
+```js
 let items = currentPlaylist.slice(10, 20);
 let beforeId = currentPlaylist.get(50).get('id');
 
@@ -467,11 +487,12 @@ let event = new MediaMoveEvent(MediaMoveEvent.MOVE, items, 0);
 
 Shuffles the *currently visible* playlist. Does not take any parameters.
 
-```javascript
+```js
 let event = new MediaMoveEvent(MediaMoveEvent.SHUFFLE);
 ```
 
-#### MediaUpdateEvent
+<a id="mediaupdateevent"></a>
+#### new MediaUpdateEvent(type, media, author, title)
 
 ##### MediaUpdateEvent.UPDATE
 
@@ -481,7 +502,7 @@ Updates media metadata (author and title). Takes three parameters:
  * `author` - The new media author string.
  * `title` - The new media title string.
 
-```javascript
+```js
 let media = getMediaInstanceSomehow();
 let event = new MediaUpdateEvent(
   MediaUpdateEvent.UPDATE,
@@ -491,69 +512,87 @@ let event = new MediaUpdateEvent(
 );
 ```
 
-#### ModerateEvent
+<a id="moderateevent"></a>
+#### new ModerateEvent(type, ...)
 
 TODO
 
-#### PlaylistActionEvent
+<a id="playlistactionevent"></a>
+#### new PlaylistActionEvent(type, ...)
 
 TODO
 
-#### PlaylistCreateEvent
+<a id="playlistcreateevent"></a>
+#### new PlaylistCreateEvent(type, ...)
 
 TODO
 
-#### PlaylistRenameEvent
+<a id="playlistrenameevent"></a>
+#### new PlaylistRenameEvent(type, ...)
 
 TODO
 
-#### PreviewEvent
+<a id="previewevent"></a>
+#### new PreviewEvent(type, ...)
 
 TODO
 
-#### RelatedBackEvent
+<a id="relatedbackevent"></a>
+#### new RelatedBackEvent(type, ...)
 
 TODO
 
-#### RestrictedSearchEvent
+<a id="restrictedsearchevent"></a>
+#### new RestrictedSearchEvent(type, ...)
 
 TODO
 
-#### RoomCreateEvent
+<a id="roomcreateevent"></a>
+#### new RoomCreateEvent(type, ...)
 
 TODO
 
-#### RoomEvent
+<a id="roomevent"></a>
+#### new RoomEvent(type, ...)
 
 TODO
 
-#### ShowDialogEvent
+<a id="showdialogevent"></a>
+#### new ShowDialogEvent(type, ...)
 
 TODO
 
-#### ShowUserRolloverEvent
+<a id="showuserrolloverevent"></a>
+#### new ShowUserRolloverEvent(type, ...)
 
 TODO
 
-#### StoreEvent
+<a id="storeevent"></a>
+#### new StoreEvent(type, ...)
 
 TODO
 
-#### UserEvent
+<a id="userevent"></a>
+#### new UserEvent(type, ...)
 
 TODO
 
-#### UserListEvent
+<a id="userlistevent"></a>
+#### new UserListEvent(type, ...)
 
 TODO
 
 ## Event Names
 
 Some events don't have separate event classes, but are plainly `.trigger`-ed on
-the `Events` object. To trigger these events, use
-`Events.trigger(eventName, ...data)`. To listen for these events, use
-`Events.on(eventName, cb)`.
+the `Events` object. To trigger these events, use `Events.trigger(eventName,
+...data)`. To listen for these events, use `Events.on(eventName, cb)`.
 
 ### Event Listing
 
 TODO
+
+[Backbone.Events]: http://backbonejs.org/#Events
+[Backbone.Events.trigger]: http://backbonejs.org/#Events-trigger
+[Backbone.Events.on]: http://backbonejs.org/#Events-on
+[Backbone.Events.off]: http://backbonejs.org/#Events-off
