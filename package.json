@@ -47,6 +47,6 @@
   "scripts": {
     "prepublish": "npm run build",
     "build": "gulp",
-    "test": "eslint gulpfile.babel.js src test"
+    "test": "eslint gulpfile.js src test"
   }
 }
