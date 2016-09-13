@@ -111,10 +111,10 @@ const SocketEventsPlugin = Plugin.extend({
 
     this.debug('patching', this.socket);
 
-    this.advice = before(this.socket, 'onmessage', e => {
+    this.advice = before(this.socket, 'onmessage', (e) => {
       if (e.data !== 'h') {
         this.debug('receive', e.data);
-        JSON.parse(e.data).forEach(message => {
+        JSON.parse(e.data).forEach((message) => {
           Events.trigger(`socket:${message.a}`, message.p);
         });
       }

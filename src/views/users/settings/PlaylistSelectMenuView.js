@@ -39,7 +39,7 @@ const PlaylistSelectMenuView = GrabMenu.extend({
 
     // show the check mark in front of the selected playlist instead of the
     // active one
-    this.rows.forEach(row => {
+    this.rows.forEach((row) => {
       if (row.model) {
         if (row.model.get('id') === this.options.selected.get('id')) {
           row.$el.append($('<i />').addClass('icon icon-check-purple'));

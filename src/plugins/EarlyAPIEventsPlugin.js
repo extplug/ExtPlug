@@ -16,7 +16,7 @@ const EarlyAPIEventsPlugin = Plugin.extend({
 
   enable() {
     this.advice = meld.around(API, 'dispatch', this.intercept);
-    eventKeys.forEach(key => {
+    eventKeys.forEach((key) => {
       // add the API constants for these, too
       API[`BEFORE_${key}`] = `before${API[key].charAt(0).toUpperCase()}${API[key].slice(1)}`;
       // plug.dj checks if an event is actually attached (through the _events hash)
@@ -28,7 +28,7 @@ const EarlyAPIEventsPlugin = Plugin.extend({
   },
 
   disable() {
-    eventKeys.forEach(key => {
+    eventKeys.forEach((key) => {
       delete API[`BEFORE_${key}`];
       API.off(key, nop);
     });

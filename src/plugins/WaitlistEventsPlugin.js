@@ -13,10 +13,10 @@ function onChange() {
   const left = difference(oldList, newList);
   const entered = difference(newList, oldList);
 
-  left.forEach(uid => {
+  left.forEach((uid) => {
     API.dispatch(API.WAIT_LIST_LEAVE, API.getUser(uid));
   });
-  entered.forEach(uid => {
+  entered.forEach((uid) => {
     API.dispatch(API.WAIT_LIST_JOIN, API.getUser(uid));
   });
 }
@@ -32,7 +32,7 @@ const WaitlistEvents = Plugin.extend({
 
   disable() {
     booth.off('change:waitingDJs', onChange);
-    Object.keys(events).forEach(n => {
+    Object.keys(events).forEach((n) => {
       delete API[n];
     });
   },

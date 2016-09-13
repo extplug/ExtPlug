@@ -82,7 +82,7 @@ function createWebpackConfig(options) {
   };
 }
 
-gulp.task('build:source', done => {
+gulp.task('build:source', (done) => {
   webpack(createWebpackConfig({
     minify: !!env.minify,
   }), done);
@@ -99,7 +99,7 @@ gulp.task('build:loader:transform', () =>
     .pipe(gulp.dest('build'))
 );
 
-gulp.task('build:loader', ['build:loader:transform'], done => {
+gulp.task('build:loader', ['build:loader:transform'], (done) => {
   rjs.optimize({
     baseUrl: './',
     name: 'extplug/loader',
@@ -112,7 +112,7 @@ gulp.task('build:loader', ['build:loader:transform'], done => {
     },
     optimize: 'none',
     out(text) {
-      mkdirp('build', e => {
+      mkdirp('build', (e) => {
         if (e) {
           done(e);
         } else {
@@ -170,7 +170,7 @@ gulp.task('chrome-pack', () =>
     .pipe(gulp.dest('build/'))
 );
 
-gulp.task('chrome', cb => {
+gulp.task('chrome', (cb) => {
   runseq('chrome-unpacked', 'chrome-pack', cb);
 });
 
@@ -196,7 +196,7 @@ gulp.task('userscript', ['userscript-meta'], () =>
     .pipe(gulp.dest('build/'))
 );
 
-gulp.task('default', cb => {
+gulp.task('default', (cb) => {
   runseq(
     'clean-build',
     'build',

@@ -33,7 +33,7 @@ export function load(url, cb) { // eslint-disable-line import/prefer-default-exp
     });
   }
   const pluginId = o.name || o.url;
-  const onLoad = Plugin => {
+  const onLoad = (Plugin) => {
     const instance = new Plugin(pluginId, window.extp);
     const meta = new PluginMeta({
       id: pluginId,

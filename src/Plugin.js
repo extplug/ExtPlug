@@ -42,7 +42,7 @@ const Plugin = Class.extend({
     // dis/enable hooks used to require _super() calls which were easy to
     // forget. now, we attach events if the methods have been defined.
     // it's all a bit ugly but...
-    hooks.forEach(hookName => {
+    hooks.forEach((hookName) => {
       if (this[hookName] !== stubHook) {
         this.on(hookName, this[hookName], this);
         // prevent overwriting dis/enable hooks later
@@ -128,7 +128,7 @@ const Plugin = Class.extend({
   // Chat Commands API
   addCommand(name, cb) {
     const rx = new RegExp(`^/${quote(name)}\\b`);
-    const fn = text => {
+    const fn = (text) => {
       if (rx.test(text)) {
         cb(text.slice(name.length + 2));
       }

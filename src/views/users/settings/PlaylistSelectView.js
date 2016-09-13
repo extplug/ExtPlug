@@ -29,7 +29,7 @@ const PlaylistSelectView = View.extend({
       selected: this.value,
     });
     menu.show(this.$selected);
-    menu.on('select', playlist => {
+    menu.on('select', (playlist) => {
       this.value = playlist;
       this.$selected.text(this.value.get('name'));
       this.trigger('change', playlist.get('id'));

@@ -9,7 +9,7 @@ const EmojiDataPlugin = Plugin.extend({
   description: 'Adds CSS classes and HTML5 data attributes to emoji images.',
 
   enable() {
-    this.advice = around(emoji, 'replacement', joinpoint => {
+    this.advice = around(emoji, 'replacement', (joinpoint) => {
       let name = joinpoint.args[2];
       if (!name) {
         // attempt to find the name in the emoji-data map

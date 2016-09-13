@@ -26,7 +26,7 @@ const RoomSettings = Backbone.Model.extend({
 
     if (m) {
       const url = util.h2t(m[1]);
-      getJson(url).then(settings => {
+      getJson(url).then((settings) => {
         if (unload) {
           this.unload();
         } else {
@@ -34,7 +34,7 @@ const RoomSettings = Backbone.Model.extend({
         }
         this.set(settings);
         this.trigger('load', settings);
-      }).fail(e => {
+      }).fail((e) => {
         this.unload();
         let message = '';
         if (e.status === 0) {

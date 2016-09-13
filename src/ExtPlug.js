@@ -202,7 +202,7 @@ const ExtPlug = Plugin.extend({
       const errors = [];
       const done = () => {
         if (errors.length) {
-          errors.forEach(e => {
+          errors.forEach((e) => {
             Events.trigger('notify', 'icon-chat-system',
                            `Plugin error: ${e.message}`);
           });
@@ -211,8 +211,8 @@ const ExtPlug = Plugin.extend({
                          `ExtPlug: loaded ${i} plugins.`);
         }
       };
-      installed.forEach(name => {
-        this.registerPlugin(name, e => {
+      installed.forEach((name) => {
+        this.registerPlugin(name, (e) => {
           if (e) errors.push(e);
           i += 1;
           if (i >= l) {
@@ -266,7 +266,7 @@ const ExtPlug = Plugin.extend({
      * Internal map of registered plugins.
      */
     this.plugins = new PluginsCollection();
-    this.plugins.on('change:enabled', plugin => {
+    this.plugins.on('change:enabled', (plugin) => {
       this.savePluginSettings(plugin.get('id'));
     });
 
@@ -276,7 +276,7 @@ const ExtPlug = Plugin.extend({
 
     this.appView = getApplicationView();
 
-    this.corePlugins.forEach(plugin => {
+    this.corePlugins.forEach((plugin) => {
       plugin.enable();
     });
 
@@ -304,10 +304,10 @@ const ExtPlug = Plugin.extend({
    * Everything should be unloaded here, so the Plug.DJ page looks like nothing ever happened.
    */
   disable() {
-    this.plugins.off().forEach(mod => {
+    this.plugins.off().forEach((mod) => {
       mod.disable();
     });
-    this.corePlugins.forEach(plugin => {
+    this.corePlugins.forEach((plugin) => {
       plugin.disable();
     });
 

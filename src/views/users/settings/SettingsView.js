@@ -38,7 +38,7 @@ const SettingsView = View.extend({
     this.groups = [];
     this.addGroup('Plugins', this.createPluginsGroup(), 1000);
     this.addGroup('ExtPlug', this.createExtPlugGroup(), 999);
-    this.plugins.forEach(plugin => {
+    this.plugins.forEach((plugin) => {
       // add plugin settings group for stuff that was already enabled
       if (plugin.get('enabled')) {
         const pluginSettings = this.createSettingsGroup(plugin);
@@ -61,7 +61,7 @@ const SettingsView = View.extend({
     this.$el.empty().append(this.$container);
 
     this.sort();
-    this.groups.forEach(group => {
+    this.groups.forEach((group) => {
       const header = $('<div />').addClass('header').append(
         $('<span>').text(group.name)
       );

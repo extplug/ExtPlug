@@ -44,7 +44,7 @@ const GuestPlugin = Plugin.extend({
 
     this.$roomBar = $('<div />').addClass('extplug-room-bar-overlay')
       .appendTo('#room-bar')
-      .on('click', e => {
+      .on('click', (e) => {
         e.stopPropagation();
         if ($('#room-settings').is(':visible')) {
           Events.trigger('hide:settings');

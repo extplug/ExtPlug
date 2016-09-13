@@ -31,7 +31,7 @@ const PluginsGroupView = ControlGroupView.extend({
   },
 
   onUpdate() {
-    this.controls = this.collection.toArray().map(plugin => {
+    this.controls = this.collection.toArray().map((plugin) => {
       let box = null;
       if (this.managing) {
         box = new RemoveBoxView({ model: plugin });
@@ -42,7 +42,7 @@ const PluginsGroupView = ControlGroupView.extend({
           enabled: plugin.get('enabled'),
         });
       }
-      box.on('change', enabled => {
+      box.on('change', (enabled) => {
         if (enabled) {
           plugin.get('instance').enable();
         } else {
