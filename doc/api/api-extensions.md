@@ -10,13 +10,12 @@ The plug.dj client-side API can not do nearly as much as the internal modules
 that are made available by `plug-modules`, but it is much simpler, and at least
 somewhat stable. Try to use the `API` variable when you can.
 
-Official documentation for the plug.dj API is available on the
-[Support website](http://support.plug.dj/hc/en-us/sections/200353347-Front-End-API).
-This document contains enhancements applied by ExtPlug.
+Official documentation for the plug.dj API is available on the [Support
+website][plug.dj API]. This document contains enhancements applied by ExtPlug.
 
 ## Contents
 
- * ["Early" Events](#early-events)
+  * ["Early" Events](#early-events)
 
 ### "Early" Events
 
@@ -47,3 +46,5 @@ API.on(API.BEFORE_USER_LEAVE, user => {
 You shouldn't use the `API.BEFORE_*` events if the `API.*` work for your
 purposes (which is most of the time), so you don't accidentally interfere with
 plugins that _do_ really need the earlier notice.
+
+[plug.dj API]: http://support.plug.dj/hc/en-us/sections/200353347-Front-End-API
