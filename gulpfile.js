@@ -3,10 +3,10 @@ const fs = require('fs');
 const gulp = require('gulp');
 const babel = require('gulp-babel');
 const env = require('gulp-util').env;
+const through2 = require('through2');
 const gulpif = require('gulp-if');
 const uglify = require('gulp-uglify');
 const concat = require('gulp-concat');
-const data = require('gulp-data');
 const del = require('del');
 const merge = require('merge-stream');
 const mkdirp = require('mkdirp');
@@ -130,14 +130,19 @@ gulp.task('concat', ['build:loader', 'build:source'], () =>
 );
 
 gulp.task('build', ['concat'], () =>
-  gulp.src('src/loader.js.template')
-    .pipe(data((file, cb) => {
-      fs.readFile('build/extplug.code.js', 'utf8', (e, c) => {
-        if (e) cb(e);
-        else cb(null, { code: c });
+  gulp.src('src/loader.template.js', { buffer: true })
+    .pipe(through2.obj((file, enc, cb) => {
+      fs.readFile('build/extplug.code.js', 'utf8', (e, code) => {
+        if (e) {
+          cb(e);
+        } else {
+          file.contents = new Buffer(
+            file.contents.toString().replace('CODE', () => code)
+          );
+          cb(null, file);
+        }
       });
     }))
-    .pipe(template())
     .pipe(gulpif(!!env.minify, uglify({
       compress: {
         screw_ie8: true,

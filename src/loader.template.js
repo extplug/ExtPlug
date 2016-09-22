@@ -7,7 +7,17 @@
  * to run (i.e. for the API variable to exist) while we're at it.
  */
 
-;(function load() {
+/* eslint-disable no-var, vars-on-top */
+(function load() {
+  var isReady = window.require &&
+    window.define &&
+    window.API &&
+    // wait for plug.dj to finish rendering
+    // the previous checks are not enough: the AppView can take a long time to
+    // load because of external twitter & fb dependencies, whereas the API
+    // modules load quickly
+    window.jQuery && window.jQuery('#room').length > 0;
+
   // Stub out some libraries used by plug.dj that may not load in time otherwise
   // (e.g. because of adblockers or because plug.dj's loading sequence has race
   // conditions)
@@ -15,27 +25,20 @@
   window.Intercom = window.Intercom || {};
   window.amplitude = window.amplitude || { __VERSION__: true };
 
-  if (isReady()) {
+  if (isReady) {
     // Tampermonkey doesn't appear to find some of the global functions by
     // default, so we redefine them here as local vars.
+    /* eslint-disable no-unused-vars */
     var requirejs = window.requirejs;
     var require = window.requirejs;
     var define = window.define;
-    <%= code %>
+    /* eslint-enable no-unused-vars */
+
+    CODE; // eslint-disable-line
+
     require(['extplug/loader']);
-  }
-  else {
+  } else {
     setTimeout(load, 20);
   }
-
-  function isReady() {
-    return window.require &&
-      window.define &&
-      window.API &&
-      // wait for plug.dj to finish rendering
-      // the previous checks are not enough: the AppView can take a long time to
-      // load because of external twitter & fb dependencies, whereas the API
-      // modules load quickly
-      window.jQuery && window.jQuery('#room').length > 0;
-  }
 }());
+/* eslint-enable no-var, vars-on-top */
