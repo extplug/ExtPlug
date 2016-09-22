@@ -8,6 +8,12 @@
  */
 
 ;(function load() {
+  // Stub out some libraries used by plug.dj that may not load in time otherwise
+  // (e.g. because of adblockers or because plug.dj's loading sequence has race
+  // conditions)
+  window.gapi = window.gapi || {};
+  window.Intercom = window.Intercom || {};
+  window.amplitude = window.amplitude || { __VERSION__: true };
 
   if (isReady()) {
     // Tampermonkey doesn't appear to find some of the global functions by
@@ -32,5 +38,4 @@
       // modules load quickly
       window.jQuery && window.jQuery('#room').length > 0;
   }
-
 }());
