@@ -1,5 +1,5 @@
 import jQuery from 'jquery';
-import { each, extend, partial } from 'underscore';
+import { each, extend, has, partial } from 'underscore';
 import Backbone from 'backbone';
 import debug from 'debug';
 import quote from 'regexp-quote';
@@ -16,6 +16,19 @@ const stylesSymbol = Symbol.for('extplug:styles');
 
 const hooks = ['enable', 'disable'];
 
+function configProp(instance, prop) {
+  // Prototype properties defined by Backbone-style `.extend()`s
+  if (has(instance.constructor.prototype, prop)) {
+    return instance[prop];
+  }
+  // Static properties for ES6 classes.
+  if (has(instance.constructor, prop)) {
+    return instance.constructor[prop];
+  }
+  // Give up otherwise.
+  return null;
+}
+
 export default class Plugin {
   constructor(id, ext) {
     extend(this, Backbone.Events);
@@ -25,12 +38,15 @@ export default class Plugin {
 
     this.debug = debug(`extplug:plugin:${id}`);
 
-    const settings = new Settings({}, { meta: this.settings });
-    if (this.settings) {
-      each(this.settings, (setting, name) => {
+    const settingsDescriptor = configProp(this, 'settings');
+    const settings = new Settings({}, {
+      meta: settingsDescriptor,
+    });
+    if (settingsDescriptor) {
+      each(settingsDescriptor, (setting, name) => {
         settings.set(name, setting.default);
       });
-      this._settings = this.settings; // eslint-disable-line no-underscore-dangle
+      this._settings = settingsDescriptor; // eslint-disable-line no-underscore-dangle
     }
     this.settings = settings;
 

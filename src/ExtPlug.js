@@ -4,6 +4,9 @@ import Events from 'plug/core/Events';
 import ApplicationView from 'plug/views/app/ApplicationView';
 import currentUser from 'plug/models/currentUser';
 
+// Enable compatibility with AMD-based plugins.
+import './util/compatibility';
+
 import RoomSettings from './models/RoomSettings';
 import PluginsCollection from './collections/PluginsCollection';
 import Plugin from './Plugin';
@@ -27,9 +30,6 @@ import PopoutStylePlugin from './plugins/PopoutStylePlugin';
 import * as packageMeta from '../package.json';
 
 import * as style from './styles';
-
-// Enable compatibility with AMD-based plugins.
-import './util/compatibility';
 
 // LocalStorage key name for extplug
 const LS_NAME = 'extPlugins';
@@ -74,9 +74,9 @@ function getApplicationView() {
  * @constructor
  */
 export default class ExtPlug extends Plugin {
-  name = 'ExtPlug';
+  static pluginName = 'ExtPlug core';
 
-  settings = {
+  static settings = {
     corsProxy: {
       type: 'boolean',
       default: true,

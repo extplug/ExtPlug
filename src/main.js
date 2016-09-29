@@ -1,4 +1,31 @@
 import plugModules from 'plug-modules';
+import { extend, methods } from 'underscore';
+
+/**
+ * Compatibility: Add an extend() method to ES6 classes that behaves like
+ * plug.dj's own Backbone-style `require('plug/core/Class').extend()`.
+ */
+// eslint-disable-next-line no-extend-native
+Function.prototype.extend = function extendClass(props, staticProps) {
+  const Super = this;
+  class Sub extends Super {}
+
+  extend(Sub.prototype, props);
+  extend(Sub, staticProps);
+
+  // Fake super calls.
+  methods(props).forEach((prop) => {
+    Sub.prototype[prop] = function superWrap(...args) {
+      const oldSuper = this._super;
+      this._super = Super.prototype[prop];
+      const result = props[prop].apply(this, args);
+      this._super = oldSuper;
+      return result;
+    };
+  });
+
+  return Sub;
+};
 
 const EXTPLUG_MODULE = 'extplug/__internalExtPlug__';
 
