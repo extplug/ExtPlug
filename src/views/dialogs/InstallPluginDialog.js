@@ -1,14 +1,16 @@
 import $ from 'jquery';
-import { defer } from 'underscore';
+import { defer, extend } from 'underscore';
 import Dialog from 'plug/views/dialogs/Dialog';
 import Events from 'plug/core/Events';
 import AlertEvent from 'plug/events/AlertEvent';
 import SpinnerView from 'plug/views/spinner/SpinnerView';
 
-export default class InstallPluginDialog extends Dialog {
-  id = 'dialog-install-plugin';
-  className = 'dialog';
+const props = {
+  id: 'dialog-install-plugin',
+  className: 'dialog',
+};
 
+export default class InstallPluginDialog extends Dialog {
   render() {
     // don't overlay chat
     $('#dialog-container').addClass('is-preview');
@@ -69,3 +71,5 @@ export default class InstallPluginDialog extends Dialog {
     super.close();
   }
 }
+
+extend(InstallPluginDialog.prototype, props);

@@ -1,11 +1,15 @@
 import $ from 'jquery';
 import Backbone from 'backbone';
-import { each, defer } from 'underscore';
+import { each, extend, defer } from 'underscore';
+
+const props = {
+  className: 'extplug-dropdown',
+};
 
 export default class DropdownView extends Backbone.View {
-  className = 'extplug-dropdown';
+  constructor(options) {
+    super(options);
 
-  initialize() {
     if (!this.options.selected) {
       this.options.selected = Object.keys(this.options.options)[0];
     }
@@ -99,3 +103,5 @@ export default class DropdownView extends Backbone.View {
     return bottom < $(document).height();
   }
 }
+
+extend(DropdownView.prototype, props);

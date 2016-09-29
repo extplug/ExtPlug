@@ -1,20 +1,24 @@
 import Events from 'plug/core/Events';
 import { View } from 'backbone';
-import { omit } from 'underscore';
+import { extend, omit } from 'underscore';
 import $ from 'jquery';
 
 const KEY_ENTER = 13;
 
+const props = {
+  className: 'item extplug-input',
+};
+
 export default class InputView extends View {
-  className = 'item extplug-input';
+  constructor(options) {
+    super(options);
 
-  initialize(o) {
-    this.label = o.label;
-    this.description = o.description;
-    this.value = o.value;
+    this.label = options.label;
+    this.description = options.description;
+    this.value = options.value;
 
-    o.type = o.type || 'text';
-    this.attributes = omit(o, 'label', 'value', 'description');
+    options.type = options.type || 'text';
+    this.attributes = omit(options, 'label', 'value', 'description');
   }
 
   render() {
@@ -61,3 +65,5 @@ export default class InputView extends View {
     this.trigger('change', this.$input.val());
   }
 }
+
+extend(InputView.prototype, props);

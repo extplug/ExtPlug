@@ -1,15 +1,19 @@
 import $ from 'jquery';
-import { defer } from 'underscore';
+import { defer, extend } from 'underscore';
 import { View } from 'backbone';
 import window from 'plug/util/window';
 import PluginsGroupView from './PluginsGroupView';
 
-export default class SettingsView extends View {
-  className = 'ext-plug section';
+const props = {
+  className: 'ext-plug section',
+};
 
-  initialize(o) {
-    this.plugins = o.plugins;
-    this.ext = o.ext;
+export default class SettingsView extends View {
+  constructor(options) {
+    super(options);
+
+    this.plugins = options.plugins;
+    this.ext = options.ext;
 
     this.refresh();
 
@@ -147,3 +151,5 @@ export default class SettingsView extends View {
     return null;
   }
 }
+
+extend(SettingsView.prototype, props);

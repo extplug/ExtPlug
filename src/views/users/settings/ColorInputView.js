@@ -1,10 +1,13 @@
+import { extend } from 'underscore';
 import $ from 'jquery';
 import onecolor from 'onecolor';
 import InputView from './InputView';
 
-export default class ColorInputView extends InputView {
-  className = 'item extplug-input extplug-color-input';
+const props = {
+  className: 'item extplug-input extplug-color-input',
+};
 
+export default class ColorInputView extends InputView {
   render() {
     super.render();
     this.$color = $('<div />')
@@ -43,3 +46,5 @@ export default class ColorInputView extends InputView {
     return color ? this.$input.val() : '';
   }
 }
+
+extend(ColorInputView.prototype, props);

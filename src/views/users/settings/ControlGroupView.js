@@ -1,8 +1,12 @@
+import { extend } from 'underscore';
 import $ from 'jquery';
 import { View } from 'backbone';
 
+const props = {
+  className: 'extplug control-group',
+};
+
 export default class ControlGroupView extends View {
-  className = 'extplug control-group';
   controls = [];
 
   render() {
@@ -23,3 +27,5 @@ export default class ControlGroupView extends View {
     return this;
   }
 }
+
+extend(ControlGroupView.prototype, props);

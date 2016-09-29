@@ -1,6 +1,6 @@
 import Backbone from 'backbone';
 import $ from 'jquery';
-import { defer } from 'underscore';
+import { defer, extend } from 'underscore';
 
 function template(o) {
   return `
@@ -19,10 +19,14 @@ function template(o) {
   `;
 }
 
-export default class SliderView extends Backbone.View {
-  className = 'extplug-slider cap';
+const props = {
+  className: 'extplug-slider cap',
+};
 
-  initialize() {
+export default class SliderView extends Backbone.View {
+  constructor(options) {
+    super(options);
+
     this.onStart = this.onStart.bind(this);
     this.onMove = this.onMove.bind(this);
     this.onStop = this.onStop.bind(this);
@@ -75,3 +79,5 @@ export default class SliderView extends Backbone.View {
     }
   }
 }
+
+extend(SliderView.prototype, props);

@@ -1,9 +1,12 @@
+import { extend } from 'underscore';
 import $ from 'jquery';
 import { View } from 'backbone';
 
-export default class GroupFooterView extends View {
-  className = 'extplug-group-footer';
+const props = {
+  className: 'extplug-group-footer',
+};
 
+export default class GroupFooterView extends View {
   render() {
     this.$left = $('<div />').addClass('left');
     this.$right = $('<div />').addClass('right');
@@ -12,3 +15,5 @@ export default class GroupFooterView extends View {
     return super.render();
   }
 }
+
+extend(GroupFooterView.prototype, props);

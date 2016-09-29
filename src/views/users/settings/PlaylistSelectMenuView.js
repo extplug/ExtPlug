@@ -1,3 +1,4 @@
+import { extend } from 'underscore';
 import $ from 'jquery';
 import Media from 'plug/models/Media';
 import { constructor as GrabMenu } from 'plug/views/grabs/grabMenu';
@@ -5,9 +6,11 @@ import Lang from 'lang/Lang';
 
 const fakeMedia = [new Media()];
 
-export default class PlaylistSelectMenuView extends GrabMenu {
-  className = 'pop-menu extplug-playlist-select-menu';
+const props = {
+  className: 'pop-menu extplug-playlist-select-menu',
+};
 
+export default class PlaylistSelectMenuView extends GrabMenu {
   // don't hide automatically on mouse leave
   onMouseLeave() {
   }
@@ -58,3 +61,5 @@ export default class PlaylistSelectMenuView extends GrabMenu {
     return this;
   }
 }
+
+extend(PlaylistSelectMenuView.prototype, props);

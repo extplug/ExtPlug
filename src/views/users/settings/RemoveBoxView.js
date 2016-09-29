@@ -1,15 +1,18 @@
+import { extend } from 'underscore';
 import { View } from 'backbone';
 import $ from 'jquery';
 import Events from 'plug/core/Events';
 import ConfirmDialog from 'plug/views/dialogs/ConfirmDialog';
 import ShowDialogEvent from 'plug/events/ShowDialogEvent';
 
+const props = {
+  className: 'item selected',
+};
+
 /**
  * A checkbox setting item.
  */
 export default class RemoveBoxView extends View {
-  className = 'item selected';
-
   render() {
     this.$icon = $('<i />').addClass('icon icon-delete');
     this.$el
@@ -37,3 +40,5 @@ export default class RemoveBoxView extends View {
     ));
   }
 }
+
+extend(RemoveBoxView.prototype, props);

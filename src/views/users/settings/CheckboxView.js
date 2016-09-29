@@ -1,17 +1,22 @@
+import { extend } from 'underscore';
 import Backbone from 'backbone';
 import $ from 'jquery';
 import Events from 'plug/core/Events';
+
+const props = {
+  className: 'item',
+};
 
 /**
  * A checkbox setting item.
  */
 export default class CheckboxView extends Backbone.View {
-  className = 'item';
+  constructor(options) {
+    super(options);
 
-  initialize(o) {
-    this.label = o.label;
-    this.description = o.description;
-    this.enabled = o.enabled || false;
+    this.label = options.label;
+    this.description = options.description;
+    this.enabled = options.enabled || false;
     this.onChange = this.onChange.bind(this);
   }
 
@@ -47,3 +52,5 @@ export default class CheckboxView extends Backbone.View {
     }
   }
 }
+
+extend(CheckboxView.prototype, props);

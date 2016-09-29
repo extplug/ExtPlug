@@ -5,7 +5,9 @@ import ManagingFooterView from './footers/ManagingFooterView';
 import ControlGroupView from './ControlGroupView';
 
 export default class PluginsGroupView extends ControlGroupView {
-  initialize() {
+  constructor(options) {
+    super(options);
+
     this.collection.on('reset add remove', this.onUpdate, this);
     this.onUpdate();
   }

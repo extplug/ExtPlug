@@ -1,15 +1,20 @@
+import { extend } from 'underscore';
 import $ from 'jquery';
 import { View } from 'backbone';
 import playlists from 'plug/collections/playlists';
 import PlaylistSelectMenuView from './PlaylistSelectMenuView';
 
-export default class PlaylistSelectView extends View {
-  className = 'item extplug-playlist-select';
+const props = {
+  className: 'item extplug-playlist-select',
+};
 
-  initialize(o) {
-    this.label = o.label;
-    this.description = o.description;
-    this.value = o.value ? playlists.get(o.value) : playlists.at(0);
+export default class PlaylistSelectView extends View {
+  constructor(options) {
+    super(options);
+
+    this.label = options.label;
+    this.description = options.description;
+    this.value = options.value ? playlists.get(options.value) : playlists.at(0);
   }
 
   render() {
@@ -36,3 +41,5 @@ export default class PlaylistSelectView extends View {
     });
   }
 }
+
+extend(PlaylistSelectView.prototype, props);
