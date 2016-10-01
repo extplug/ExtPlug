@@ -48,5 +48,10 @@
     "prepublish": "npm run build",
     "build": "gulp",
     "test": "eslint gulpfile.js src test"
+  },
+  "greenkeeper": {
+    "ignore": [
+      "jquery"
+    ]
   }
 }
