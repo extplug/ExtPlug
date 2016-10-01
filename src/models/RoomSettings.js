@@ -6,7 +6,7 @@ import Events from 'plug/core/Events';
 import { json as getJson } from '../util/request';
 
 export default class RoomSettings extends Backbone.Model {
-  constructor(ext) {
+  constructor() {
     super({});
 
     this.load = this.load.bind(this);

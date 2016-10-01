@@ -12,7 +12,7 @@ const props = {
 
 export default class PlaylistSelectMenuView extends GrabMenu {
   // don't hide automatically on mouse leave
-  onMouseLeave() {
+  onMouseLeave() { // eslint-disable-line class-methods-use-this
   }
 
   // hide immediately on hide() calls.

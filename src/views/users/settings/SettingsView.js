@@ -8,6 +8,15 @@ const props = {
   className: 'ext-plug section',
 };
 
+function createSettingsGroup(pluginMeta) {
+  const plugin = pluginMeta.get('instance');
+  if (!plugin._settings) { // eslint-disable-line no-underscore-dangle
+    return null;
+  }
+
+  return plugin.getSettingsView();
+}
+
 export default class SettingsView extends View {
   constructor(options) {
     super(options);
@@ -45,7 +54,7 @@ export default class SettingsView extends View {
     this.plugins.forEach((plugin) => {
       // add plugin settings group for stuff that was already enabled
       if (plugin.get('enabled')) {
-        const pluginSettings = this.createSettingsGroup(plugin);
+        const pluginSettings = createSettingsGroup(plugin);
         if (pluginSettings) {
           this.addGroup(plugin.get('name'), pluginSettings);
         }
@@ -89,15 +98,6 @@ export default class SettingsView extends View {
   }
   createExtPlugGroup() {
     return this.ext.getSettingsView();
-  }
-
-  createSettingsGroup(pluginMeta) {
-    const plugin = pluginMeta.get('instance');
-    if (!plugin._settings) { // eslint-disable-line no-underscore-dangle
-      return null;
-    }
-
-    return plugin.getSettingsView();
   }
 
   sort() {

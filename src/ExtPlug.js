@@ -66,6 +66,42 @@ function getApplicationView() {
 }
 
 /**
+ * Checks if ExtPlug has been initialised before.
+ */
+function isFirstRun() {
+  return localStorage.getItem(LS_NAME) == null;
+}
+
+/**
+ * Things that should only happen the first time ExtPlug
+ * is initialised.
+ */
+function onFirstRun() {
+  localStorage.setItem(LS_NAME, JSON.stringify({
+    version: packageMeta.version,
+    installed: [
+      'autowoot/build/autowoot.js;extplug/autowoot/main',
+      'chat-notifications/build/chat-notifications.js;' +
+        'extplug/chat-notifications/main',
+      'compact-history/build/compact-history.js;' +
+        'extplug/compact-history/main',
+      'hide-badges/build/hide-badges.js;extplug/hide-badges/main',
+      'meh-icons/build/meh-icons.js;extplug/meh-icons/main',
+      'room-styles/build/room-styles.js;extplug/room-styles/main',
+      'show-deleted/build/show-deleted.js;extplug/show-deleted/main',
+    ].map(path => `https://extplug.github.io/${path}`),
+    plugins: {},
+  }));
+}
+
+/**
+ * Upgrades old ExtPlug version settings.
+ */
+function upgrade() {
+  // Empty
+}
+
+/**
  * Main ExtPlug extension class.
  *
  * This will be instantiated by ExtPlug later, and can then be accessed
@@ -225,34 +261,6 @@ export default class ExtPlug extends Plugin {
   }
 
   /**
-   * Checks if ExtPlug has been initialised before.
-   */
-  isFirstRun() {
-    return localStorage.getItem(LS_NAME) == null;
-  }
-  /**
-   * Things that should only happen the first time ExtPlug
-   * is initialised.
-   */
-  onFirstRun() {
-    localStorage.setItem(LS_NAME, JSON.stringify({
-      version: packageMeta.version,
-      installed: [
-        'autowoot/build/autowoot.js;extplug/autowoot/main',
-        'chat-notifications/build/chat-notifications.js;' +
-          'extplug/chat-notifications/main',
-        'compact-history/build/compact-history.js;' +
-          'extplug/compact-history/main',
-        'hide-badges/build/hide-badges.js;extplug/hide-badges/main',
-        'meh-icons/build/meh-icons.js;extplug/meh-icons/main',
-        'room-styles/build/room-styles.js;extplug/room-styles/main',
-        'show-deleted/build/show-deleted.js;extplug/show-deleted/main',
-      ].map(path => `https://extplug.github.io/${path}`),
-      plugins: {},
-    }));
-  }
-
-  /**
    * Initializes ExtPlug.
    *
    * This attaches events and finds some common DOM elements. Also, adds
@@ -271,9 +279,10 @@ export default class ExtPlug extends Plugin {
       this.savePluginSettings(plugin.get('id'));
     });
 
-    if (this.isFirstRun()) this.onFirstRun();
-
-    this.upgrade();
+    if (isFirstRun()) {
+      onFirstRun();
+    }
+    upgrade();
 
     this.appView = getApplicationView();
 
@@ -344,18 +353,11 @@ export default class ExtPlug extends Plugin {
   /**
    * Retrieves plugin settings from localStorage.
    */
-  getPluginSettings(id) {
+  getPluginSettings(id) { // eslint-disable-line class-methods-use-this
     const settings = jsonParse(localStorage.getItem(LS_NAME)).plugins;
     if (settings && id in settings) {
       return settings[id];
     }
     return { enabled: false, settings: {} };
-  }
-
-  /**
-   * Upgrades old ExtPlug version settings.
-   */
-  upgrade() {
-    // Empty
   }
 }
