@@ -36,6 +36,7 @@
 
     CODE; // eslint-disable-line
 
+    // eslint-disable-next-line import/no-dynamic-require
     require(['extplug/loader']);
   } else {
     setTimeout(load, 20);

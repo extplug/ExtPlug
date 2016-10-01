@@ -13,6 +13,7 @@
     "import/no-extraneous-dependencies": "off",
     "import/no-unresolved": ["error", {
       "ignore": ["^plug/", "^lang/Lang$"]
-    }]
+    }],
+    "import/extensions": "off"
   }
 }
