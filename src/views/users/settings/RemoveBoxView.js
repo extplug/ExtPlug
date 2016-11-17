@@ -34,7 +34,7 @@ const RemoveBoxView = View.extend({
         action: () => {
           window.extp.uninstall(this.model.get('id'));
         },
-      })
+      }),
     ));
   },
 });

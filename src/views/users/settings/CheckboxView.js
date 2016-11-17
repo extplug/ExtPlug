@@ -21,8 +21,7 @@ const CheckboxView = Backbone.View.extend({
     if (this.description) {
       this.$el
         .on('mouseenter', () =>
-          Events.trigger('tooltip:show', this.description, this.$el)
-        )
+          Events.trigger('tooltip:show', this.description, this.$el))
         .on('mouseleave', () => Events.trigger('tooltip:hide'));
     }
 
