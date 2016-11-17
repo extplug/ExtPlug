@@ -16,9 +16,7 @@ export default function request(url, options) {
   let ajax = $.ajax(url, options);
   // try to work around CORS blocks
   if (mayNeedProxy(url)) {
-    ajax = ajax.then(null, () =>
-      $.ajax(corsproxy + url)
-    );
+    ajax = ajax.then(null, () => $.ajax(corsproxy + url));
   }
   return ajax;
 }

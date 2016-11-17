@@ -13,7 +13,7 @@ const PluginsFooterView = GroupFooterView.extend({
     this.$install.on('click', () => {
       Events.dispatch(new ShowDialogEvent(
         ShowDialogEvent.SHOW,
-        new InstallPluginDialog()
+        new InstallPluginDialog(),
       ));
     });
     this.$manage.on('click', () => this.trigger('manage'));

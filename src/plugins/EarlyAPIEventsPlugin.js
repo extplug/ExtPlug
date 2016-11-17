@@ -4,9 +4,8 @@ import Plugin from '../Plugin';
 function nop() { return 'Dummy handler to ensure that plug.dj actually triggers the event'; }
 
 // find default plug.dj API event names
-const eventKeys = Object.keys(API).filter(key =>
-  key.toUpperCase() === key && typeof API[key] === 'string'
-);
+const eventKeys = Object.keys(API)
+  .filter(key => key.toUpperCase() === key && typeof API[key] === 'string');
 
 const EarlyAPIEventsPlugin = Plugin.extend({
   name: 'Early API Events',
@@ -38,10 +37,11 @@ const EarlyAPIEventsPlugin = Plugin.extend({
   intercept(joinpoint) {
     const [eventName, ...params] = joinpoint.args;
 
-    API.trigger.apply(
+    API.trigger.call(
       API,
       // userLeave → beforeUserLeave
-      [`before${eventName.charAt(0).toUpperCase()}${eventName.slice(1)}`, ...params]
+      `before${eventName.charAt(0).toUpperCase()}${eventName.slice(1)}`,
+      ...params,
     );
 
     return joinpoint.proceed();

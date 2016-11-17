@@ -62,9 +62,8 @@ const SettingsView = View.extend({
 
     this.sort();
     this.groups.forEach((group) => {
-      const header = $('<div />').addClass('header').append(
-        $('<span>').text(group.name)
-      );
+      const header = $('<div />').addClass('header')
+        .append($('<span>').text(group.name));
       group.view.render();
       this.$container
         .append(header)

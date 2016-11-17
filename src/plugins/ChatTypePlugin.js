@@ -98,7 +98,7 @@ const ChatTypePlugin = Plugin.extend({
     if (chatView) {
       handler = find(
         Events._events['chat:receive'], // eslint-disable-line no-underscore-dangle
-        e => e.callback === chatView.onReceived
+        e => e.callback === chatView.onReceived,
       );
     }
     fn();

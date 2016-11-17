@@ -21,7 +21,7 @@ const EmojiDataPlugin = Plugin.extend({
       if (name) {
         return html.replace(
           ' class="emoji-inner',
-          ` data-emoji-name="${name}" class="emoji-inner extplug-emoji-${name}`
+          ` data-emoji-name="${name}" class="emoji-inner extplug-emoji-${name}`,
         );
       }
       return html;

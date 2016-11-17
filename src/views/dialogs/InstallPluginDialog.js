@@ -49,14 +49,14 @@ const InstallPluginDialog = Dialog.extend({
             AlertEvent.ALERT,
             'Install Plugin Error',
             `Error: ${err.message}`,
-            () => {}
+            () => {},
           ));
         } else {
           Events.dispatch(new AlertEvent(
             AlertEvent.ALERT,
             'Install Plugin',
             'Plugin installed successfully.',
-            () => {}
+            () => {},
           ));
         }
       });
