@@ -20,7 +20,7 @@
     "babel-loader": "^6.2.5",
     "babel-plugin-external-helpers": "^6.5.0",
     "babel-preset-extplug": "^2.0.0",
-    "css-loader": "^0.25.0",
+    "css-loader": "^0.26.0",
     "del": "^2.2.2",
     "eslint": "^3.7.0",
     "eslint-config-airbnb-base": "^10.0.1",
