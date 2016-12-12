@@ -20,7 +20,7 @@ const SettingsView = View.extend({
 
   remove() {
     this.plugins
-      .on('change:enabled', this.onEnabledChange)
+      .off('change:enabled', this.onEnabledChange)
       .off('reset add remove', this.onUpdate);
   },
 
