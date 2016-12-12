@@ -18,6 +18,7 @@ const template = require('gulp-template');
 const zip = require('gulp-zip');
 const webpack = require('webpack');
 const cssnext = require('postcss-cssnext');
+const watch = require('gulp-watch');
 const packg = require('./package.json');
 
 gulp.task('clean-lib', () => del('lib'));
@@ -199,6 +200,30 @@ gulp.task('userscript', ['userscript-meta'], () => (
     .pipe(concat('extplug.user.js'))
     .pipe(gulp.dest('build/'))
 ));
+
+gulp.task('watch:chrome', ['default'], () =>
+  watch('src/**/*', () => {
+    runseq('build', 'chrome');
+  })
+);
+
+gulp.task('watch:firefox', ['default'], () =>
+  watch('src/**/*', () => {
+    runseq('build', 'firefox');
+  })
+);
+
+gulp.task('watch:userscript', ['default'], () =>
+  watch('src/**/*', () => {
+    runseq('build', 'userscript');
+  })
+);
+
+gulp.task('watch', ['default'], () =>
+  watch('src/**/*', () => {
+    runseq('build', ['chrome', 'firefox', 'userscript']);
+  })
+);
 
 gulp.task('default', (cb) => {
   runseq(
