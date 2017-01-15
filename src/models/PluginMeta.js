@@ -25,7 +25,14 @@ const PluginMeta = Model.extend({
 
   disable() {
     if (this.get('enabled')) {
-      this.get('instance').disable();
+      try {
+        this.get('instance').disable();
+      } catch (e) {
+        console.error('Error disabling plugin', this.get('id'));
+        console.error(e.stack || e.message || e);
+      } finally {
+        this.set('enabled', false);
+      }
     }
   },
 });
