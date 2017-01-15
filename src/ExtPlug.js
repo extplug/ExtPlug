@@ -154,7 +154,7 @@ const ExtPlug = Plugin.extend({
    */
   loadInstalledPlugins() {
     this.manager.loadInstalledPlugins().then(() => {
-      Events.trigger('notify', 'icon-plug-dj', 'ExtPlug: loaded plugins.');
+      Events.trigger('notify', 'icon-extplug', 'ExtPlug: loaded plugins.');
     }).catch((err) => {
       Events.trigger('notify', 'icon-chat-system', `Plugin error: ${err.message}`);
     });
@@ -166,6 +166,7 @@ const ExtPlug = Plugin.extend({
   isFirstRun() {
     return localStorage.getItem(LS_NAME) == null;
   },
+
   /**
    * Things that should only happen the first time ExtPlug
    * is initialised.
@@ -218,7 +219,7 @@ const ExtPlug = Plugin.extend({
     this.roomSettings = new RoomSettings(this);
 
     this.loadInstalledPlugins();
-    Events.trigger('notify', 'icon-plug-dj', `ExtPlug v${packageMeta.version} loaded`);
+    Events.trigger('notify', 'icon-extplug', `ExtPlug v${packageMeta.version} loaded`);
 
     if (currentUser.get('guest')) {
       this.guestPlugin.enable();

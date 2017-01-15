@@ -42,6 +42,11 @@ function createWebpackConfig(options) {
             presets: 'extplug',
           },
         },
+        {
+          test: /\.png$/,
+          loader: 'url-loader',
+          options: { limit: -1 },
+        },
       ],
     },
 
