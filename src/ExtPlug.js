@@ -34,15 +34,6 @@ import './util/compatibility';
 // LocalStorage key name for extplug
 const LS_NAME = 'extPlugins';
 
-// Try to parse as JSON, defaulting to an empty object.
-function jsonParse(str) {
-  try {
-    return JSON.parse(str) || {};
-  } catch (e) {
-    return {};
-  }
-}
-
 /**
  * Gets a reference to the main Plug.DJ ApplicationView instance.
  *
