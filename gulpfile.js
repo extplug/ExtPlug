@@ -17,7 +17,6 @@ const runseq = require('run-sequence');
 const template = require('gulp-template');
 const zip = require('gulp-zip');
 const webpack = require('webpack');
-const cssnext = require('postcss-cssnext');
 const watch = require('gulp-watch');
 const packg = require('./package.json');
 
@@ -32,14 +31,14 @@ function createWebpackConfig(options) {
     watch: !!options.watch,
 
     module: {
-      loaders: [
-        { test: /\.css$/, loader: 'css!postcss' },
-        { test: /\.json$/, loader: 'json' },
+      rules: [
+        { test: /\.css$/, use: ['css-loader', 'postcss-loader'] },
+        { test: /\.json$/, use: 'json-loader' },
         {
           test: /\.js$/,
           exclude: /node_modules/,
-          loader: 'babel',
-          query: {
+          loader: 'babel-loader',
+          options: {
             presets: 'extplug',
           },
         },
@@ -77,10 +76,6 @@ function createWebpackConfig(options) {
     plugins: [
       options.minify && new webpack.optimize.UglifyJsPlugin(),
     ].filter(Boolean),
-
-    postcss() {
-      return [cssnext()];
-    },
   };
 }
 
