@@ -33,7 +33,7 @@ class PluginLocalStorage {
    * Get an array of installed plugin URLs.
    */
   getInstalledPlugins() {
-    return Promise.resolve(this.data.installed);
+    return Promise.resolve(this.data.installed || []);
   }
 
   /**
@@ -90,6 +90,8 @@ class PluginLocalStorage {
     data.plugins[name] = { enabled, settings };
 
     this.data = data;
+
+    return Promise.resolve();
   }
 }
 
