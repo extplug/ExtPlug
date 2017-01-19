@@ -44,9 +44,9 @@ const PluginsGroupView = ControlGroupView.extend({
       }
       box.on('change', (enabled) => {
         if (enabled) {
-          plugin.get('instance').enable();
+          plugin.enable();
         } else {
-          plugin.get('instance').disable();
+          plugin.disable();
         }
       });
       return box;

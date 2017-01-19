@@ -1,16 +1,10 @@
 import { Collection } from 'backbone';
 import PluginMeta from '../models/PluginMeta';
+import compareBy from '../util/compareBy';
 
 const PluginsCollection = Collection.extend({
   model: PluginMeta,
-  comparator(a, b) {
-    if (a.get('name') > b.get('name')) {
-      return 1;
-    } else if (a.get('name') < b.get('name')) {
-      return -1;
-    }
-    return 0;
-  },
+  comparator: compareBy('name'),
 });
 
 export default PluginsCollection;

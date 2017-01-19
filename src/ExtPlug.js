@@ -1,13 +1,13 @@
-import { defer, each, find, isArray } from 'underscore';
+import { each, find } from 'underscore';
 
 import Events from 'plug/core/Events';
 import ApplicationView from 'plug/views/app/ApplicationView';
 import currentUser from 'plug/models/currentUser';
 
 import RoomSettings from './models/RoomSettings';
-import PluginsCollection from './collections/PluginsCollection';
 import Plugin from './Plugin';
-import * as pluginLoader from './pluginLoader';
+import PluginManager from './PluginManager';
+import PluginLocalStorage from './PluginLocalStorage';
 
 import EarlyAPIEventsPlugin from './plugins/EarlyAPIEventsPlugin';
 import CommandsPlugin from './plugins/CommandsPlugin';
@@ -33,15 +33,6 @@ import './util/compatibility';
 
 // LocalStorage key name for extplug
 const LS_NAME = 'extPlugins';
-
-// Try to parse as JSON, defaulting to an empty object.
-function jsonParse(str) {
-  try {
-    return JSON.parse(str) || {};
-  } catch (e) {
-    return {};
-  }
-}
 
 /**
  * Gets a reference to the main Plug.DJ ApplicationView instance.
@@ -86,6 +77,9 @@ const ExtPlug = Plugin.extend({
 
   init() {
     this._super('extplug', this);
+    this.manager = new PluginManager({
+      storage: new PluginLocalStorage({ version: packageMeta.version }),
+    });
 
     this.corePlugins = [
       new EarlyAPIEventsPlugin('extplug:early-api', this),
@@ -119,43 +113,21 @@ const ExtPlug = Plugin.extend({
    * modules using require.js plugins or modules on remote URLs.
    */
   registerPlugin(id, cb) {
-    pluginLoader.load(id, (e, meta) => {
-      if (e) {
-        if (cb) cb(e);
-        return;
-      }
-
-      this.plugins.add(meta);
-      const instance = meta.get('instance');
-      const state = this.getPluginSettings(meta.get('id'));
-      instance.settings.set(state.settings);
-      instance.settings.on('change', () => {
-        this.savePluginSettings(meta.get('id'));
-      });
-      if (state.enabled) {
-        defer(() => meta.enable());
-      }
-      if (cb) {
-        cb(null);
-      }
-    });
-    return this;
+    this.manager.load(id).then(
+      result => cb(null, result),
+      err => cb(err),
+    );
   },
 
   /**
    * Disables and removes an ExtPlug plugin.
    */
   unregisterPlugin(id) {
-    const plugin = this.plugins.findWhere({ id });
-    if (plugin) {
-      plugin.disable();
-      this.plugins.remove(plugin);
-    }
+    this.manager.unload(id);
   },
 
   getPlugin(id) {
-    const meta = this.plugins.get(id);
-    return meta ? meta.get('instance') : null;
+    return this.manager.getPlugin(id);
   },
 
   /**
@@ -164,63 +136,28 @@ const ExtPlug = Plugin.extend({
    * on following ExtPlug runs.
    */
   install(id, cb) {
-    this.registerPlugin(id, (e) => {
-      if (e) {
-        cb(e);
-        return;
-      }
-      const json = jsonParse(localStorage.getItem(LS_NAME));
-      json.installed = (json.installed || []).concat([id]);
-      localStorage.setItem(LS_NAME, JSON.stringify(json));
-      cb(null);
-    });
+    this.manager.install(id).then(
+      result => cb(null, result),
+      err => cb(err),
+    );
   },
 
   /**
    * Disables and removes a plugin forever.
    */
   uninstall(id) {
-    this.unregisterPlugin(id);
-    const json = jsonParse(localStorage.getItem(LS_NAME));
-    if (json.installed) {
-      const i = json.installed.indexOf(id);
-      if (i !== -1) {
-        json.installed.splice(i, 1);
-        localStorage.setItem(LS_NAME, JSON.stringify(json));
-      }
-    }
+    this.manager.uninstall(id);
   },
 
   /**
    * Loads installed plugins.
    */
   loadInstalledPlugins() {
-    const { installed } = jsonParse(localStorage.getItem(LS_NAME));
-    if (isArray(installed)) {
-      const l = installed.length;
-      let i = 0;
-      const errors = [];
-      const done = () => {
-        if (errors.length) {
-          errors.forEach((e) => {
-            Events.trigger('notify', 'icon-chat-system',
-                           `Plugin error: ${e.message}`);
-          });
-        } else if (i > 0) {
-          Events.trigger('notify', 'icon-plug-dj',
-                         `ExtPlug: loaded ${i} plugins.`);
-        }
-      };
-      installed.forEach((name) => {
-        this.registerPlugin(name, (e) => {
-          if (e) errors.push(e);
-          i += 1;
-          if (i >= l) {
-            done();
-          }
-        });
-      });
-    }
+    this.manager.loadInstalledPlugins().then(() => {
+      Events.trigger('notify', 'icon-extplug', 'ExtPlug: loaded plugins.');
+    }).catch((err) => {
+      Events.trigger('notify', 'icon-chat-system', `Plugin error: ${err.message}`);
+    });
   },
 
   /**
@@ -229,26 +166,20 @@ const ExtPlug = Plugin.extend({
   isFirstRun() {
     return localStorage.getItem(LS_NAME) == null;
   },
+
   /**
    * Things that should only happen the first time ExtPlug
    * is initialised.
    */
   onFirstRun() {
-    localStorage.setItem(LS_NAME, JSON.stringify({
-      version: packageMeta.version,
-      installed: [
-        'autowoot/build/autowoot.js;extplug/autowoot/main',
-        'chat-notifications/build/chat-notifications.js;' +
-          'extplug/chat-notifications/main',
-        'compact-history/build/compact-history.js;' +
-          'extplug/compact-history/main',
-        'hide-badges/build/hide-badges.js;extplug/hide-badges/main',
-        'meh-icons/build/meh-icons.js;extplug/meh-icons/main',
-        'room-styles/build/room-styles.js;extplug/room-styles/main',
-        'show-deleted/build/show-deleted.js;extplug/show-deleted/main',
-      ].map(path => `https://extplug.github.io/${path}`),
-      plugins: {},
-    }));
+    return Promise.all([
+      this.manager.install('https://extplug.github.io/autowoot/build/autowoot.js;extplug/autowoot/main'),
+      this.manager.install('https://extplug.github.io/chat-notifications/build/chat-notifications.js;extplug/chat-notifications/main'),
+      this.manager.install('https://extplug.github.io/hide-badges/build/hide-badges.js;extplug/hide-badges/main'),
+      this.manager.install('https://extplug.github.io/meh-icons/build/meh-icons.js;extplug/meh-icons/main'),
+      this.manager.install('https://extplug.github.io/room-styles/build/room-styles.js;extplug/room-styles/main'),
+      this.manager.install('https://extplug.github.io/show-deleted/build/show-deleted.js;extplug/show-deleted/main'),
+    ]);
   },
 
   /**
@@ -264,10 +195,12 @@ const ExtPlug = Plugin.extend({
 
     /**
      * Internal map of registered plugins.
+     *
+     * TODO Remove this property and add replacement methods and events to
+     * PluginManager.
      */
-    this.plugins = new PluginsCollection();
-    this.plugins.on('change:enabled', (plugin) => {
-      this.savePluginSettings(plugin.get('id'));
+    Object.defineProperty(this, 'plugins', {
+      get: () => this.manager.pluginInstances,
     });
 
     if (this.isFirstRun()) this.onFirstRun();
@@ -286,7 +219,7 @@ const ExtPlug = Plugin.extend({
     this.roomSettings = new RoomSettings(this);
 
     this.loadInstalledPlugins();
-    Events.trigger('notify', 'icon-plug-dj', `ExtPlug v${packageMeta.version} loaded`);
+    Events.trigger('notify', 'icon-extplug', `ExtPlug v${packageMeta.version} loaded`);
 
     if (currentUser.get('guest')) {
       this.guestPlugin.enable();
@@ -304,9 +237,8 @@ const ExtPlug = Plugin.extend({
    * Everything should be unloaded here, so the Plug.DJ page looks like nothing ever happened.
    */
   disable() {
-    this.plugins.off().forEach((mod) => {
-      mod.disable();
-    });
+    this.manager.unloadAll();
+
     this.corePlugins.forEach((plugin) => {
       plugin.disable();
     });
@@ -317,38 +249,6 @@ const ExtPlug = Plugin.extend({
     this.roomSettings.dispose();
     this.trigger('deinit');
     this._super();
-  },
-
-  /**
-   * Persists plugin settings to localStorage.
-   * @private
-   */
-  savePluginSettings(id) {
-    const json = jsonParse(localStorage.getItem(LS_NAME));
-    const plugin = this.plugins.findWhere({ id });
-    const settings = plugin.get('instance').settings;
-
-    if (!json.plugins) {
-      json.plugins = {};
-    }
-
-    json.plugins[id] = {
-      enabled: plugin.get('enabled'),
-      settings,
-    };
-
-    localStorage.setItem(LS_NAME, JSON.stringify(json));
-  },
-
-  /**
-   * Retrieves plugin settings from localStorage.
-   */
-  getPluginSettings(id) {
-    const settings = jsonParse(localStorage.getItem(LS_NAME)).plugins;
-    if (settings && id in settings) {
-      return settings[id];
-    }
-    return { enabled: false, settings: {} };
   },
 
   /**
