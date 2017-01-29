@@ -4,6 +4,7 @@
   "description": "Highly flexible, modular userscript extension for plug.dj.",
   "dependencies": {
     "backbone": "^1.1.2",
+    "bel": "^4.5.1",
     "debug": "^2.2.0",
     "es6-shim": "^0.35.3",
     "es6-symbol": "^3.1.0",

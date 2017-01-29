@@ -1,0 +1,7 @@
+.PluginsView {
+  margin: 0 15px;
+
+  &-search {
+    margin: 15px 0;
+  }
+}

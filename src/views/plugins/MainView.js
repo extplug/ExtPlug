@@ -2,7 +2,11 @@ import TabbedPanelView from 'plug/views/users/TabbedPanelView';
 import Style from '../../util/Style';
 import TabView from './TabView';
 import PluginsView from './PluginsView';
-import style from './style.css';
+
+import styleSearchBar from './SearchBar.css';
+import stylePluginRow from './PluginRow.css';
+import styleMainView from './MainView.css';
+import stylePluginsView from './PluginsView.css';
 
 const MainView = TabbedPanelView.extend({
   className: 'user-content extplug-plugins ExtPlugSettingsView',
@@ -11,7 +15,11 @@ const MainView = TabbedPanelView.extend({
 
   render() {
     this.style = new Style();
-    this.style.raw(style);
+    this.style.raw(styleSearchBar);
+    this.style.raw(styleMainView);
+    this.style.raw(stylePluginRow);
+    this.style.raw(stylePluginsView);
+
     return this._super();
   },
 
