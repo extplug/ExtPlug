@@ -23,6 +23,7 @@ import WaitlistEventsPlugin from './plugins/WaitlistEventsPlugin';
 import PlaybackEventsPlugin from './plugins/PlaybackEventsPlugin';
 import PlugSettingsPlugin from './plugins/PlugSettingsPlugin';
 import PopoutStylePlugin from './plugins/PopoutStylePlugin';
+import UserMenuPlugin from './plugins/UserMenuPlugin';
 
 import * as packageMeta from '../package.json';
 
@@ -76,6 +77,7 @@ const ExtPlug = Plugin.extend({
       new PlaybackEventsPlugin('extplug:playback-events', this),
       new PlugSettingsPlugin('extplug:plug-settings', this),
       new PopoutStylePlugin('extplug:popout-style', this),
+      new UserMenuPlugin('extplug:user-menu', this),
     ];
 
     this.guestPlugin = new GuestPlugin('extplug:guest', this);
