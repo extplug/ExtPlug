@@ -1,9 +1,10 @@
 import Backbone from 'backbone';
 import { debounce } from 'underscore';
+import bel from 'bel';
 
 export default Backbone.View.extend({
   render() {
-    this.$el.append(`
+    this.$el.append(bel`
       <div class="SearchBar">
         <input class="SearchBar-input" type="text" placeholder="Search Plugins">
         <i class="SearchBar-icon icon icon-search"></i>

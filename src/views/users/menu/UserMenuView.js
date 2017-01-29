@@ -1,12 +1,13 @@
 import { around } from 'meld';
 import BaseView from 'plug/views/users/menu/UserMenuView';
+import bel from 'bel';
 
 export default BaseView.extend({
   render() {
     this._super();
-    this.$el.append(`
+    this.$el.append(bel`
       <div class="item extplug-plugins" data-value="extplug-plugins">
-        <i class="icon icon-extplug-plugins" />
+        <i class="icon icon-extplug-plugins"></i>
         <span class="label">Plugins</span>
       </div>
     `);
