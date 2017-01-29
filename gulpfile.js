@@ -27,7 +27,7 @@ gulp.task('clean', ['clean-lib', 'clean-build']);
 function createWebpackConfig(options) {
   return {
     context: path.join(__dirname, './src'),
-    entry: ['./ExtPlug'],
+    entry: ['es6-symbol', 'es6-shim', './ExtPlug'],
     watch: !!options.watch,
 
     module: {
