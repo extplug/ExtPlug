@@ -1,7 +1,7 @@
 import OriginalMenuView from 'plug/views/users/menu/UserMenuView';
 import Plugin from '../Plugin';
 import OverrideMenuView from '../views/users/menu/UserMenuView';
-import PluginsView from '../views/plugins/PluginsView';
+import ExtPlugView from '../views/plugins/MainView';
 
 /**
  * Plugin to add the ExtPlug menu item to the user menu.
@@ -39,7 +39,7 @@ export default Plugin.extend({
     const userView = this.getUserView();
     userView.clear();
     userView.section = 'extplug-plugins';
-    userView.view = new PluginsView();
+    userView.view = new ExtPlugView();
     userView.$el.append(userView.view.$el);
     userView.view.render();
   },

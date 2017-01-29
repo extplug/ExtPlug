@@ -1,0 +1,39 @@
+.extplug-tab-menu {
+  position: relative;
+  padding-bottom: 15px;
+  height: 40px;
+  display: flex;
+
+  & button {
+    /* Positioning */
+    flex-grow: 1;
+    display: block;
+    height: 100%;
+
+    /* Colors */
+    background: #282c35;
+    color: #808691;
+    box-shadow: inset 1px 0 0 0 #0A0A0A;
+
+    /* Text overflow */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    /* etc */
+    font: 18px 'Open Sans', sans-serif;
+    font-weight: 400;
+    cursor: pointer;
+
+    &:hover {
+      background: #323742;
+      color: #eee;
+    }
+
+    &.selected {
+      background: #925aff;
+      color: #eee;
+      cursor: default;
+    }
+  }
+}
