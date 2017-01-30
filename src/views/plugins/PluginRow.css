@@ -33,6 +33,7 @@
 
   &-buttons {
     width: 125px;
+    flex-shrink: 0; /* Don't shrink smaller than 125px. */
     height: 100%;
     display: flex;
     flex-direction: column;
