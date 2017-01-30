@@ -39,7 +39,12 @@ function createWebpackConfig(options) {
           exclude: /node_modules/,
           loader: 'babel-loader',
           options: {
-            presets: 'extplug',
+            presets: [
+              ['extplug', { amd: false }],
+            ],
+            plugins: [
+              'yo-yoify',
+            ],
           },
         },
         {
