@@ -8,6 +8,7 @@ import Plugin from './Plugin';
 import PluginManager from './PluginManager';
 import PluginLocalStorage from './PluginLocalStorage';
 import getApplicationView from './util/getApplicationView';
+import handlers from './handlers';
 
 import EarlyAPIEventsPlugin from './plugins/EarlyAPIEventsPlugin';
 import CommandsPlugin from './plugins/CommandsPlugin';
@@ -187,6 +188,8 @@ const ExtPlug = Plugin.extend({
 
     this.appView = getApplicationView();
 
+    this.unsubscribeHandlers = handlers(this);
+
     this.corePlugins.forEach((plugin) => {
       plugin.enable();
     });
@@ -222,6 +225,9 @@ const ExtPlug = Plugin.extend({
     });
 
     this.guestPlugin.disable();
+
+    this.unsubscribeHandlers();
+    this.unsubscribeHandlers = null;
 
     // remove room settings handling
     this.roomSettings.dispose();

@@ -2,6 +2,7 @@ import Backbone from 'backbone';
 import bel from 'bel';
 import Events from 'plug/core/Events';
 import ShowDialogEvent from 'plug/events/ShowDialogEvent';
+import PluginInstallationEvent from '../../events/PluginInstallationEvent';
 import PackageInfoDialog from './PackageInfoDialog';
 
 export default Backbone.View.extend({
@@ -58,7 +59,11 @@ export default Backbone.View.extend({
   },
 
   onInstall() {
-    alert('Unimplemented');
+    const name = this.model.get('name');
+    Events.dispatch(new PluginInstallationEvent(
+      PluginInstallationEvent.INSTALL,
+      { name },
+    ));
   },
 
   onShowPackage(event) {
