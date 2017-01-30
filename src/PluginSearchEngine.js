@@ -11,6 +11,10 @@ export default class PluginSearchEngine {
     return `${this.apiUrl}/search?q=keywords:extplug-plugin ${encodeURIComponent(query)}`;
   }
 
+  getPackageUrl(name) {
+    return `${this.apiUrl}/package/${encodeURIComponent(name)}`;
+  }
+
   search(query) {
     const url = this.getSearchUrl(query);
 
@@ -18,5 +22,12 @@ export default class PluginSearchEngine {
       total,
       results: new Backbone.Collection(pluck(results, 'package')),
     }));
+  }
+
+  getPackageInfo(name) {
+    const url = this.getPackageUrl(name);
+
+    return requestJson(url).then(({ collected }) =>
+      new Backbone.Model(collected.metadata));
   }
 }

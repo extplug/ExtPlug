@@ -1,5 +1,8 @@
 import Backbone from 'backbone';
 import bel from 'bel';
+import Events from 'plug/core/Events';
+import ShowDialogEvent from 'plug/events/ShowDialogEvent';
+import PackageInfoDialog from './PackageInfoDialog';
 
 export default Backbone.View.extend({
   className: 'PluginRow',
@@ -43,6 +46,23 @@ export default Backbone.View.extend({
       </div>
     `);
 
+    this.$('.PluginRow-install').on('click', this.onInstall, this);
+    this.$('.PluginRow-package').on('click', this.onShowPackage, this);
+
     return this;
+  },
+
+  onInstall() {
+    alert('Unimplemented');
+  },
+
+  onShowPackage(event) {
+    if (event) event.preventDefault();
+
+    const dialog = new PackageInfoDialog({
+      model: this.model,
+    });
+    dialog.on('install', this.onInstall, this);
+    Events.dispatch(new ShowDialogEvent(ShowDialogEvent.SHOW, dialog));
   },
 });

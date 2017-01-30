@@ -7,6 +7,7 @@ import styleSearchBar from './SearchBar.css';
 import stylePluginRow from './PluginRow.css';
 import styleMainView from './MainView.css';
 import stylePluginsView from './PluginsView.css';
+import stylePackageInfoDialog from './PackageInfoDialog.css';
 
 const MainView = TabbedPanelView.extend({
   className: 'user-content extplug-plugins ExtPlugSettingsView',
@@ -19,6 +20,7 @@ const MainView = TabbedPanelView.extend({
     this.style.raw(styleMainView);
     this.style.raw(stylePluginRow);
     this.style.raw(stylePluginsView);
+    this.style.raw(stylePackageInfoDialog);
 
     return this._super();
   },

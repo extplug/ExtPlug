@@ -1,0 +1,35 @@
+.PackageInfoDialog {
+  width: 768px;
+
+  &-body {
+    text-align: left;
+    overflow-y: auto;
+    box-sizing: border-box;
+    /* 90% of screen height, minus the top and bottom area of the dialog */
+    max-height: calc(90vh - 55px * 2);
+    padding: 20px;
+
+    /* Center the spinner during load */
+    &.is-loading {
+      min-height: 200px;
+      display: flex;
+      text-align: center;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Markdown styles */
+    & img {
+      max-width: 100%;
+    }
+    & ul {
+      padding-left: 20px;
+    }
+    & h1, & h2, & h3, & h4, & h5, & h6 {
+      margin-top: 20px;
+    }
+    & pre {
+      margin: 15px 0;
+    }
+  }
+}
