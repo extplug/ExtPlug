@@ -1,3 +1,4 @@
+import $ from 'jquery';
 import Backbone from 'backbone';
 
 export default Backbone.View.extend({
@@ -5,19 +6,43 @@ export default Backbone.View.extend({
     this.collection.on('reset', this.onReset, this);
     this.collection.on('add', this.onAdd, this);
     this.collection.on('remove', this.onRemove, this);
+    this.collection.on('update reset', this.onUpdate, this);
 
     this.views = [];
   },
 
+  onResize() {
+    this.onUpdate();
+  },
+
+  onUpdate() {
+    if (this.scrollPane) {
+      this.scrollPane.reinitialise();
+    }
+  },
+
   render() {
+    this.$el.css({
+      width: '100%',
+      height: '100%',
+    });
+
+    this.scrollPane = this.$el.jScrollPane().data('jsp');
     this.collection.map(this.onAdd, this);
 
     return this;
   },
 
-  onReset() {
+  remove() {
+    this.scrollPane.destroy();
     this.$el.empty();
-    this.render();
+
+    return this._super();
+  },
+
+  onReset() {
+    this.scrollPane.getContentPane().empty();
+    this.collection.map(this.onAdd, this);
   },
 
   onAdd(plugin) {
@@ -25,7 +50,7 @@ export default Backbone.View.extend({
     const view = new View({
       model: plugin,
     });
-    this.$el.append(view.$el);
+    this.scrollPane.getContentPane().append(view.$el);
     view.render();
 
     this.views.push(view);

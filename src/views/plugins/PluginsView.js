@@ -33,7 +33,10 @@ const PluginsView = Backbone.View.extend({
 
     return this;
   },
-  onResize() {},
+
+  onResize() {
+    this.resultsView.onResize();
+  },
 
   search(query) {
     this.engine.search(query).then(({ results }) => {

@@ -4,4 +4,12 @@
   &-search {
     margin: 15px 0;
   }
+
+  &-results {
+    position: absolute;
+    top: 125px;
+    left: 15px;
+    right: 15px;
+    bottom: 0;
+  }
 }
