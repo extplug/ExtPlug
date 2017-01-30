@@ -1,6 +1,6 @@
 import Dialog from 'plug/views/dialogs/Dialog';
 import SpinnerView from 'plug/views/spinner/SpinnerView';
-import markdownIt from 'markdown-it';
+import Markdown from './Markdown';
 import PluginSearchEngine from '../../PluginSearchEngine';
 
 export default Dialog.extend({
@@ -28,10 +28,13 @@ export default Dialog.extend({
     this.searchEngine.getPackageInfo(this.model.get('name')).then((pkg) => {
       this.hideSpinner();
 
-      this.body.empty().append(markdownIt({
+      const md = new Markdown({
         linkify: true,
+        package: pkg.toJSON(),
+      });
 
-      }).render(pkg.get('readme')));
+      this.body.html(
+        md.render(pkg.get('readme')));
     });
 
     return this._super();
