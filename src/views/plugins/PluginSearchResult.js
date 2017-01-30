@@ -46,10 +46,15 @@ export default Backbone.View.extend({
       </div>
     `);
 
-    this.$('.PluginRow-install').on('click', this.onInstall, this);
-    this.$('.PluginRow-package').on('click', this.onShowPackage, this);
+    this.$('.PluginRow-install').on('click', this.onInstall.bind(this));
+    this.$('.PluginRow-package').on('click', this.onShowPackage.bind(this));
 
     return this;
+  },
+
+  remove() {
+    this.$('.PluginRow-install').off();
+    this.$('.PluginRow-package').off();
   },
 
   onInstall() {
