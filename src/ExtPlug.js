@@ -55,6 +55,9 @@ const ExtPlug = Plugin.extend({
 
   init() {
     this._super('extplug', this);
+
+    this.isFirstRun = localStorage.getItem(LS_NAME) == null;
+
     this.manager = new PluginManager({
       storage: new PluginLocalStorage({ version: packageMeta.version }),
     });
@@ -139,13 +142,6 @@ const ExtPlug = Plugin.extend({
   },
 
   /**
-   * Checks if ExtPlug has been initialised before.
-   */
-  isFirstRun() {
-    return localStorage.getItem(LS_NAME) == null;
-  },
-
-  /**
    * Things that should only happen the first time ExtPlug
    * is initialised.
    */
@@ -181,7 +177,7 @@ const ExtPlug = Plugin.extend({
       get: () => this.manager.pluginInstances,
     });
 
-    if (this.isFirstRun()) this.onFirstRun();
+    if (this.isFirstRun) this.onFirstRun();
 
     this.upgrade();
 
