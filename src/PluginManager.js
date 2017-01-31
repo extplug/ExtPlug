@@ -26,7 +26,7 @@ class PluginManager {
 
   install(url) {
     return this.load(url)
-      .then(plugin => this.storage.installPlugin(plugin.url));
+      .then(plugin => this.storage.installPlugin(plugin.get('fullUrl')));
   }
 
   uninstall(url) {
