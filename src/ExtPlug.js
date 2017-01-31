@@ -135,7 +135,9 @@ const ExtPlug = Plugin.extend({
    */
   loadInstalledPlugins() {
     this.manager.loadInstalledPlugins().then(() => {
-      Events.trigger('notify', 'icon-extplug', 'ExtPlug: loaded plugins.');
+      Events.trigger('notify', 'icon-extplug', 'ExtPlug: loaded plugins.', () => {
+        Events.trigger('show:user', 'settings', 'ext-plug');
+      });
     }).catch((err) => {
       Events.trigger('notify', 'icon-chat-system', `Plugin error: ${err.message}`);
     });

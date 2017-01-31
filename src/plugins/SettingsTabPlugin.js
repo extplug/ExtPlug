@@ -1,4 +1,5 @@
-import { around, after } from 'meld';
+import { around } from 'meld';
+import { delay } from 'underscore';
 import Events from 'plug/core/Events';
 import UserView from 'plug/views/users/UserView';
 import UserSettingsView from 'plug/views/users/settings/SettingsView';
@@ -10,9 +11,12 @@ const SettingsTabPlugin = Plugin.extend({
   enable() {
     const userView = this.ext.appView.user;
     Events.off('show:user', userView.show);
-    this.userPaneAdvice = after(UserView.prototype, 'show', (category, sub) => {
+    this.userPaneAdvice = around(UserView.prototype, 'show', function show(joinpoint) {
+      joinpoint.proceed();
+
+      const [category, sub] = joinpoint.args;
       if (category === 'settings' && sub === 'ext-plug') {
-        this.view.menu.select(sub);
+        delay(() => this.view.menu.select(sub), 100);
       }
     });
     Events.on('show:user', userView.show, userView);
