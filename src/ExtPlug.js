@@ -149,12 +149,12 @@ const ExtPlug = Plugin.extend({
    */
   onFirstRun() {
     return Promise.all([
-      this.manager.install('https://extplug.github.io/autowoot/build/autowoot.js;extplug/autowoot/main'),
-      this.manager.install('https://extplug.github.io/chat-notifications/build/chat-notifications.js;extplug/chat-notifications/main'),
-      this.manager.install('https://extplug.github.io/hide-badges/build/hide-badges.js;extplug/hide-badges/main'),
-      this.manager.install('https://extplug.github.io/meh-icons/build/meh-icons.js;extplug/meh-icons/main'),
-      this.manager.install('https://extplug.github.io/room-styles/build/room-styles.js;extplug/room-styles/main'),
-      this.manager.install('https://extplug.github.io/show-deleted/build/show-deleted.js;extplug/show-deleted/main'),
+      this.manager.install('https://unpkg.com/extplug-autowoot'),
+      this.manager.install('https://unpkg.gom/extplug-chat-notifications'),
+      this.manager.install('https://unpkg.com/extplug-hide-badges'),
+      this.manager.install('https://unpkg.com/extplug-meh-icons'),
+      this.manager.install('https://unpkg.com/extplug-room-styles'),
+      this.manager.install('https://unpkg.com/extplug-show-deleted'),
     ]);
   },
 
