@@ -18,6 +18,7 @@
   "devDependencies": {
     "babel-eslint": "^7.0.0",
     "babel-loader": "^6.2.10",
+    "babel-plugin-dynamic-import-system-import": "^1.0.0",
     "babel-plugin-external-helpers": "^6.5.0",
     "babel-preset-extplug": "^2.0.0",
     "css-loader": "^0.26.1",
@@ -38,13 +39,15 @@
     "json-loader": "^0.5.4",
     "merge-stream": "^1.0.0",
     "mkdirp": "^0.5.1",
+    "once": "^1.4.0",
     "postcss-cssnext": "^2.8.0",
     "postcss-loader": "^1.2.2",
     "requirejs": "^2.1.20",
     "run-sequence": "^1.1.2",
     "through2": "^2.0.1",
     "url-loader": "^0.5.7",
-    "webpack": "^2.2.0-rc.4"
+    "webpack": "^2.2.0",
+    "webpack-hot-middleware": "^2.16.1"
   },
   "scripts": {
     "prepublish": "npm run build",
