@@ -1,4 +1,5 @@
 import Backbone from 'backbone';
+import { findWhere, without } from 'underscore';
 
 export default Backbone.View.extend({
   initialize() {
@@ -7,7 +8,7 @@ export default Backbone.View.extend({
     this.collection.on('remove', this.onRemove, this);
     this.collection.on('update reset', this.onUpdate, this);
 
-    this.views = new Backbone.Collection();
+    this.views = [];
   },
 
   onResize() {
@@ -40,9 +41,10 @@ export default Backbone.View.extend({
   },
 
   onReset() {
-    this.views.toArray().forEach((view) => {
-      this.onRemove(view.model);
+    this.views.forEach((view) => {
+      view.remove();
     });
+    this.views = [];
     this.collection.map(this.onAdd, this);
   },
 
@@ -59,10 +61,10 @@ export default Backbone.View.extend({
   },
 
   onRemove(plugin) {
-    const view = this.views.find(entry => entry.model === plugin);
+    const view = findWhere(this.views, { model: plugin });
     if (view) {
       view.remove();
-      this.views.remove(view);
+      this.views = without(this.views, view);
       return view;
     }
     return null;

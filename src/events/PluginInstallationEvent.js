@@ -13,5 +13,6 @@ const PluginInstallationEvent = Event.extend({
 PluginInstallationEvent._name = 'extplug:PluginInstallationEvent';
 PluginInstallationEvent.INSTALL = 'extplug:PluginInstallationEvent:INSTALL';
 PluginInstallationEvent.UNINSTALL = 'extplug:PluginInstallationEvent:UNINSTALL';
+PluginInstallationEvent.ASK_UNINSTALL = 'extplug:PluginInstallationEvent:ASK_UNINSTALL';
 
 export default PluginInstallationEvent;

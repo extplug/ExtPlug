@@ -1,15 +1,19 @@
+:root {
+  --plugins-buttons-width: 125px;
+}
+
 .PluginRow {
   position: relative;
   margin-bottom: 4px;
-  height: 120px;
+  height: auto;
+  min-height: 120px;
   background: #1c1f25;
   width: 100%;
-  display: flex;
 
-  &--noFlex {
-    height: auto;
+  &-flexContent {
+    width: 100%;
+    display: flex;
     min-height: 120px;
-    display: block;
   }
 
   &-meta {
@@ -39,9 +43,9 @@
   }
 
   &-buttons {
-    width: 125px;
+    width: var(--plugins-buttons-width);
     flex-shrink: 0; /* Don't shrink smaller than 125px. */
-    height: 100%;
+    height: 120px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -75,6 +79,19 @@
     }
   }
 
+  &-status {
+    &.is-enabled {
+      background: #32234c;
+      &:hover { background: #f04f30; }
+    }
+  }
+
+  &-uninstall {
+    &:hover {
+      background: #f04f30;
+    }
+  }
+
   &-icon {
     position: static;
   }
@@ -82,6 +99,8 @@
   &-settings {
     display: none;
     padding: 16px;
+    width: 100%;
+    box-sizing: border-box;
 
     &.is-expanded {
       display: block;
@@ -98,7 +117,7 @@
   &-expand {
     position: absolute;
     top: 16px;
-    right: 16px;
+    right: calc(16px + var(--plugins-buttons-width));
     cursor: pointer;
     background: none;
   }
