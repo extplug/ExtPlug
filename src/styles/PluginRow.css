@@ -1,9 +1,16 @@
 .PluginRow {
+  position: relative;
   margin-bottom: 4px;
   height: 120px;
   background: #1c1f25;
   width: 100%;
   display: flex;
+
+  &--noFlex {
+    height: auto;
+    min-height: 120px;
+    display: block;
+  }
 
   &-meta {
     flex-grow: 1;
@@ -70,5 +77,34 @@
 
   &-icon {
     position: static;
+  }
+
+  &-settings {
+    display: none;
+    padding: 16px;
+
+    &.is-expanded {
+      display: block;
+    }
+
+    /* Clearfix */
+    &:after {
+      content: "";
+      display: table;
+      clear: both;
+    }
+  }
+
+  &-expand {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    cursor: pointer;
+    background: none;
+  }
+
+  &-expandIcon {
+    position: static;
+    display: block;
   }
 }

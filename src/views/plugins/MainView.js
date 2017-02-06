@@ -1,6 +1,7 @@
 import TabbedPanelView from 'plug/views/users/TabbedPanelView';
 import TabView from './TabView';
-import PluginsView from './PluginsView';
+import PluginsSearchView from './PluginsView';
+import InstalledPluginsView from './InstalledPluginsView';
 
 const MainView = TabbedPanelView.extend({
   className: 'user-content extplug-plugins ExtPlugSettingsView',
@@ -8,8 +9,11 @@ const MainView = TabbedPanelView.extend({
   getMenu: () => new TabView(),
 
   getView(section) {
+    if (section === 'discover-plugins') {
+      return new PluginsSearchView();
+    }
     if (section === 'plugins') {
-      return new PluginsView();
+      return new InstalledPluginsView();
     }
     return null;
   },

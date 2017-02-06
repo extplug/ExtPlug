@@ -7,7 +7,7 @@ export default Backbone.View.extend({
     this.collection.on('remove', this.onRemove, this);
     this.collection.on('update reset', this.onUpdate, this);
 
-    this.views = [];
+    this.views = new Backbone.Collection();
   },
 
   onResize() {
@@ -40,7 +40,9 @@ export default Backbone.View.extend({
   },
 
   onReset() {
-    this.scrollPane.getContentPane().empty();
+    this.views.toArray().forEach((view) => {
+      this.onRemove(view.model);
+    });
     this.collection.map(this.onAdd, this);
   },
 
@@ -53,6 +55,7 @@ export default Backbone.View.extend({
     view.render();
 
     this.views.push(view);
+    return view;
   },
 
   onRemove(plugin) {
@@ -60,6 +63,8 @@ export default Backbone.View.extend({
     if (view) {
       view.remove();
       this.views.remove(view);
+      return view;
     }
+    return null;
   },
 });

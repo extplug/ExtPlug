@@ -64,6 +64,7 @@ const controlFactory = {
 };
 
 const DefaultSettingsView = ControlGroupView.extend({
+  className: 'extplug control-group PluginSettingsView',
 
   render() {
     this.controls = [];
@@ -87,7 +88,6 @@ const DefaultSettingsView = ControlGroupView.extend({
     this.controls.forEach(control => control.destroy());
     this.controls = [];
   },
-
 });
 
 export default DefaultSettingsView;

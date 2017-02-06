@@ -7,7 +7,8 @@ export default Backbone.View.extend({
 
   render() {
     this.$el.append(
-      bel`<button class="plugins selected" data-value="plugins">Plugins</button>`,
+      bel`<button class="plugins selected" data-value="plugins">Installed Plugins</button>`,
+      bel`<button class="discover-plugins" data-value="discover-plugins">Discover Plugins</button>`,
       bel`<button class="settings" data-value="settings">ExtPlug Settings</button>`,
     );
 
