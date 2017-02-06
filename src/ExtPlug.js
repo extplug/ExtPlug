@@ -150,7 +150,7 @@ const ExtPlug = Plugin.extend({
   onFirstRun() {
     return Promise.all([
       this.manager.install('https://unpkg.com/extplug-autowoot'),
-      this.manager.install('https://unpkg.gom/extplug-chat-notifications'),
+      this.manager.install('https://unpkg.com/extplug-chat-notifications'),
       this.manager.install('https://unpkg.com/extplug-hide-badges'),
       this.manager.install('https://unpkg.com/extplug-meh-icons'),
       this.manager.install('https://unpkg.com/extplug-room-styles'),
