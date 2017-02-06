@@ -13,15 +13,22 @@ export default function pluginInstallationHandler(extp) {
     });
     Events.dispatch(new ShowDialogEvent(ShowDialogEvent.SHOW, dialog));
 
-    manager.install(event.url).catch((err) => {
-      console.error(err);
-    }).then(() => {
-      dialog.close();
-    });
+    manager.install(event.url)
+      .then(() => {
+        Events.trigger('notify', 'icon-extplug-plugins', `Plugin ${event.name} installed.`);
+      })
+      .catch((err) => {
+        console.error(err.stack || err.message);
+
+        Events.trigger('notify', 'icon-chat-system',
+          `An error occured during installation of ${event.name}: ${err.message}`);
+      })
+      .then(() => {
+        dialog.close();
+      });
   }
 
   function onUninstall(event) {
-    Events.trigger('notify', 'icon-extplug-plugins', `Uninstalling ${event.name}…`);
     manager.uninstall(event.url)
       .then(() => {
         Events.trigger('notify', 'icon-extplug-plugins', `Plugin ${event.name} removed.`);
