@@ -25,6 +25,7 @@
     "babel-plugin-external-helpers": "^6.5.0",
     "babel-plugin-yo-yoify": "^0.1.0",
     "babel-preset-extplug": "^2.0.0",
+    "cross-env": "^3.1.4",
     "css-loader": "^0.26.1",
     "cssnano": "^3.10.0",
     "del": "^2.2.2",
@@ -55,7 +56,9 @@
   "scripts": {
     "prepublish": "npm run build",
     "build": "gulp",
-    "test": "eslint --cache gulpfile.js src test"
+    "test": "eslint --cache gulpfile.js src test",
+    "dev": "cross-env NODE_ENV=development gulp watch",
+    "prod": "cross-env NODE_ENV=production npm run build -- --minify"
   },
   "greenkeeper": {
     "ignore": [
