@@ -26,6 +26,7 @@
     "babel-plugin-yo-yoify": "^0.1.0",
     "babel-preset-extplug": "^2.0.0",
     "css-loader": "^0.26.1",
+    "cssnano": "^3.10.0",
     "del": "^2.2.2",
     "eslint": "^3.12.0",
     "eslint-config-airbnb-base": "^11.0.0",
