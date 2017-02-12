@@ -1,12 +1,12 @@
 import Backbone from 'backbone';
-import $ from 'jquery';
+import bel from 'bel';
 import Events from 'plug/core/Events';
 
 /**
  * A checkbox setting item.
  */
 const CheckboxView = Backbone.View.extend({
-  className: 'item',
+  className: 'extp-Control extp-Checkbox',
   initialize(o) {
     this.label = o.label;
     this.description = o.description;
@@ -15,8 +15,8 @@ const CheckboxView = Backbone.View.extend({
   },
   render() {
     this.$el
-      .append('<i class="icon icon-check-blue" />')
-      .append($('<span />').text(this.label));
+      .append(bel`<i class="extp-Checkbox-icon icon icon-check-blue" />`)
+      .append(bel`<span class="extp-Checkbox-label">${this.label}</span>`);
 
     if (this.description) {
       this.$el
@@ -26,16 +26,16 @@ const CheckboxView = Backbone.View.extend({
     }
 
     if (this.enabled) {
-      this.$el.addClass('selected');
+      this.$el.addClass('is-selected');
     }
 
     this.$el.on('click', this.onChange);
     return this;
   },
   onChange() {
-    this.$el.toggleClass('selected');
+    this.$el.toggleClass('is-selected');
     const enabled = this.enabled;
-    this.enabled = this.$el.hasClass('selected');
+    this.enabled = this.$el.hasClass('is-selected');
     if (enabled !== this.enabled) {
       this.trigger('change', this.enabled);
     }

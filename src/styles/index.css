@@ -13,6 +13,7 @@
 @import './PluginSettingsView.css';
 @import './InstalledPluginsView.css';
 @import './ResponsiveUserMenu.css';
+@import './controls/index.css';
 
 .icon.icon-extplug {
   background: url(../../img/icon128.png);
