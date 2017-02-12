@@ -19,6 +19,17 @@ export default Backbone.View.extend({
     const model = this.model.toJSON();
     const hasSettings = this.getPluginSettingsView() !== null;
 
+    const onHoverStatus = () => {
+      if (model.enabled) {
+        this.$statusText.text('Disable');
+      }
+    };
+    const onBlurStatus = () => {
+      if (model.enabled) {
+        this.$statusText.text('Enabled');
+      }
+    };
+
     this.$el.append(bel`
       <div class="PluginRow-flexContent">
         <div class="PluginRow-meta">
@@ -31,9 +42,11 @@ export default Backbone.View.extend({
         </div>
         <div class="PluginRow-buttons">
           <button class="PluginRow-button PluginRow-status ${model.enabled ? 'is-enabled' : ''}"
-            onclick=${() => this.toggleStatus()}>
+            onclick=${() => this.toggleStatus()}
+            onmouseover=${onHoverStatus}
+            onmouseout=${onBlurStatus}>
             <i class="PluginRow-icon icon icon-${model.enabled ? 'check-white' : 'check-purple'}"></i>
-            <span>${model.enabled ? 'Enabled' : 'Enable'}</span>
+            <span class="PluginRow-statusText">${model.enabled ? 'Enabled' : 'Enable'}</span>
           </button>
           <button class="PluginRow-button PluginRow-uninstall"
             onclick=${() => this.uninstall()}>
@@ -63,6 +76,7 @@ export default Backbone.View.extend({
     }
 
     this.$settings = this.$('.PluginRow-settings');
+    this.$statusText = this.$('.PluginRow-statusText');
 
     if (this.isExpanded) {
       this.expandSettings();
