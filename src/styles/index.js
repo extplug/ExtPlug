@@ -13,3 +13,4 @@ export pluginSearchBar from './PluginSearchBar.css';
 export pluginsView from './PluginsView.css';
 export pluginSettingsView from './PluginSettingsView.css';
 export installedPluginsView from './InstalledPluginsView.css';
+export responsiveUserMenu from './ResponsiveUserMenu.css';

@@ -1,0 +1,20 @@
+/* Make the user avatar smaller in the menu, if there is not enough space for
+ * all menu items. */
+
+:root {
+  --default-avatar-height: 250px;
+}
+
+@media (max-height: 696px) {
+  #user-menu .avatar {
+    height: calc(var(--default-avatar-height) - 20px);
+    & img { top: -10px; }
+  }
+}
+
+@media (max-height: 656px) {
+  #user-menu .avatar {
+    height: calc(var(--default-avatar-height) - 34px);
+    & img { top: -17px; }
+  }
+}
