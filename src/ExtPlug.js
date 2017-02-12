@@ -1,5 +1,3 @@
-import { each } from 'underscore';
-
 import Events from 'plug/core/Events';
 import currentUser from 'plug/models/currentUser';
 
@@ -28,7 +26,7 @@ import UserMenuPlugin from './plugins/UserMenuPlugin';
 
 import * as packageMeta from '../package.json';
 
-import * as style from './styles';
+import style from './styles/index.css';
 
 // Enable compatibility with AMD-based plugins.
 import './util/compatibility';
@@ -54,6 +52,8 @@ const ExtPlug = Plugin.extend({
       label: 'Use CORS proxy',
     },
   },
+
+  style,
 
   init() {
     this._super('extplug', this);
@@ -193,8 +193,6 @@ const ExtPlug = Plugin.extend({
     this.corePlugins.forEach((plugin) => {
       plugin.enable();
     });
-
-    each(style, c => this.createStyle(c));
 
     // room settings
     this.roomSettings = new RoomSettings(this);

@@ -1,19 +1,21 @@
+const imports = require('postcss-import');
 const cssnext = require('postcss-cssnext');
 const cssnano = require('cssnano');
 
-let plugins;
+const plugins = [
+  imports(),
+];
 
 if (process.env.NODE_ENV === 'production') {
-  plugins = [
+  plugins.push(
     cssnext({
       features: {
         autoprefixer: false,
       },
-    }),
-    cssnano(),
-  ];
+    }));
+  plugins.push(cssnano());
 } else {
-  plugins = [cssnext()];
+  plugins.push(cssnext());
 }
 
 module.exports = {
