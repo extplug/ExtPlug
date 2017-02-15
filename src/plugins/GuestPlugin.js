@@ -63,7 +63,9 @@ const GuestPlugin = Plugin.extend({
       this.$roomBar.remove();
       this.$login.remove();
       this.$signup.find('span').text(Lang.signup.signupFree);
-      this.$settings = this.$login = this.$signup = null;
+      this.$settings = null;
+      this.$login = null;
+      this.$signup = null;
     }
 
     this.guestEnabled = false;
