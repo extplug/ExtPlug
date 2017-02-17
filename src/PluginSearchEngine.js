@@ -20,7 +20,10 @@ export default class PluginSearchEngine {
 
     return requestJson(url).then(({ total, results }) => ({
       total,
-      results: new Backbone.Collection(pluck(results, 'package')),
+      results: new Backbone.Collection(pluck(results, 'package').map((pkg) => {
+        pkg.url = `https://unpkg.com/${pkg.name}`;
+        return pkg;
+      })),
     }));
   }
 

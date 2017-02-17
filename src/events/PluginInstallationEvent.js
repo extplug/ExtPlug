@@ -5,7 +5,7 @@ const PluginInstallationEvent = Event.extend({
     this._super(type);
 
     this.name = name;
-    this.url = url || `https://unpkg.com/${name}`;
+    this.url = url;
   },
 });
 

@@ -10,6 +10,7 @@ export default Backbone.View.extend({
 
   render() {
     const model = this.model.toJSON();
+    const isInstalled = !!model.installed;
 
     const homepage = model.links.homepage || model.links.repository || model.links.npm;
     const userLink = model.publisher ? bel`
@@ -20,6 +21,8 @@ export default Backbone.View.extend({
         </a>
       </span>
     ` : '';
+
+    this.$el.toggleClass('PluginRow--isInstalled', isInstalled);
 
     this.$el.append(bel`
       <div class="PluginRow-flexContent">
@@ -36,10 +39,17 @@ export default Backbone.View.extend({
           </div>
         </div>
         <div class="PluginRow-buttons">
-          <button class="PluginRow-button PluginRow-install">
-            <i class="PluginRow-icon icon icon-add"></i>
-            <span>Install</span>
-          </button>
+          ${isInstalled ? bel`
+            <div class="PluginRow-button PluginRow-installed">
+              <i class="PluginRow-icon icon icon-check-white"></i>
+              <span>Installed</span>
+            </div>
+          ` : bel`
+            <button class="PluginRow-button PluginRow-install">
+              <i class="PluginRow-icon icon icon-add"></i>
+              <span>Install</span>
+            </button>
+          `}
           <a class="PluginRow-button PluginRow-package" target="_blank" rel="noreferrer noopener" href="${homepage}">
             <i class="PluginRow-icon icon icon-support-white"></i>
             <span>Package</span>
@@ -62,10 +72,15 @@ export default Backbone.View.extend({
   },
 
   onInstall() {
+    if (this.model.get('installed')) {
+      return;
+    }
+
     const name = this.model.get('name');
+    const url = this.model.get('url');
     Events.dispatch(new PluginInstallationEvent(
       PluginInstallationEvent.INSTALL,
-      { name },
+      { name, url },
     ));
   },
 

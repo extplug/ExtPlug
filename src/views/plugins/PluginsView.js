@@ -1,4 +1,5 @@
 import $ from 'jquery';
+import { sortBy } from 'underscore';
 import Backbone from 'backbone';
 import PluginSearchEngine from '../../PluginSearchEngine';
 import SearchBarView from './SearchBarView';
@@ -9,6 +10,7 @@ const PluginsView = Backbone.View.extend({
 
   initialize() {
     this.searchResults = new Backbone.Collection();
+    this.installedPlugins = window.extp.plugins;
 
     this.searchBarView = new SearchBarView();
     this.resultsView = new PluginSearchResultsListView({
@@ -39,8 +41,18 @@ const PluginsView = Backbone.View.extend({
   },
 
   search(query) {
+    const isInstalled = plugin =>
+      this.installedPlugins.some(installed =>
+        installed.get('fullUrl') === plugin.get('url'));
+
     this.engine.search(query).then(({ results }) => {
-      this.searchResults.reset(results.toArray());
+      const resultsArray = results.map((plugin) => {
+        plugin.set('installed', isInstalled(plugin));
+        return plugin;
+      });
+      this.searchResults.reset(
+        // Move plugins that are already installed to the end of the list.
+        sortBy(resultsArray, 'installed'));
     });
   },
 });

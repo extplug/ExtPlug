@@ -16,6 +16,10 @@
     min-height: 120px;
   }
 
+  &--isInstalled {
+    opacity: 0.9;
+  }
+
   &-meta {
     flex-grow: 1;
     box-sizing: border-box;
@@ -89,6 +93,16 @@
   &-uninstall {
     &:hover {
       background: #f04f30;
+    }
+  }
+
+  &-installed {
+    cursor: default;
+
+    background: #32234c;
+    &:hover {
+      /* No change */
+      background: #32234c;
     }
   }
 
