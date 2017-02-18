@@ -1,6 +1,6 @@
 import $ from 'jquery';
 
-const corsproxy = 'https://cors-anywhere.herokuapp.com/';
+const corsproxy = 'https://proxy.extplug.com/';
 
 function mayNeedProxy(url) {
   if (url.substr(0, corsproxy.length) !== corsproxy) {
