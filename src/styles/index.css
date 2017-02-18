@@ -1,0 +1,25 @@
+@import './badge.css';
+@import './inline-chat.css';
+@import './install-plugin-dialog.css';
+@import './settings-pane.css';
+@import './tab-menu.css';
+
+@import './Dialog.css';
+@import './ExtPlugSettingsView.css';
+@import './PackageInfoDialog.css';
+@import './PluginRow.css';
+@import './PluginSearchBar.css';
+@import './PluginsView.css';
+@import './PluginSettingsView.css';
+@import './InstalledPluginsView.css';
+@import './ResponsiveUserMenu.css';
+@import './controls/index.css';
+
+.icon.icon-extplug {
+  background: url(../../img/icon128.png);
+  background-size: contain;
+}
+.icon.icon-extplug-plugins {
+  background: url(../../img/plugins.png);
+  background-size: contain;
+}

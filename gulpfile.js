@@ -27,7 +27,7 @@ gulp.task('clean', ['clean-lib', 'clean-build']);
 function createWebpackConfig(options) {
   return {
     context: path.join(__dirname, './src'),
-    entry: ['./ExtPlug'],
+    entry: ['es6-symbol', 'es6-shim', './ExtPlug'],
     watch: !!options.watch,
 
     module: {
@@ -39,7 +39,12 @@ function createWebpackConfig(options) {
           exclude: /node_modules/,
           loader: 'babel-loader',
           options: {
-            presets: 'extplug',
+            presets: [
+              ['extplug', { amd: false }],
+            ],
+            plugins: [
+              'yo-yoify',
+            ],
           },
         },
         {

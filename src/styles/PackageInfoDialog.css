@@ -1,0 +1,51 @@
+.PackageInfoDialog {
+  width: 768px;
+
+  &-body {
+    text-align: left;
+    overflow-y: auto;
+    box-sizing: border-box;
+    /* 90% of screen height, minus the top and bottom area of the dialog */
+    max-height: calc(90vh - 55px * 2);
+    padding: 20px;
+
+    /* Center the spinner during load */
+    &.is-loading {
+      min-height: 200px;
+      display: flex;
+      text-align: center;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Markdown styles */
+    line-height: 1.5;
+    & p {
+      margin: 1em 0;
+    }
+    & img {
+      max-width: 100%;
+    }
+    & ul {
+      padding-left: 20px;
+    }
+    & h1, & h2, & h3, & h4, & h5, & h6 {
+      margin-top: 20px;
+    }
+    & code {
+      background: #222;
+      border: 1px solid #444;
+      border-radius: 3px;
+      padding: 2px 5px;
+    }
+    & pre {
+      margin: 5px 0;
+      & code {
+        display: block;
+        box-sizing: border-box;
+        padding: 10px;
+        overflow-x: auto;
+      }
+    }
+  }
+}

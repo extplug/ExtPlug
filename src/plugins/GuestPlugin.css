@@ -44,7 +44,7 @@
       }
     }
   }
-  & #user-menu .item:not(.settings) {
+  & #user-menu .item:not(.settings):not(.extplug-plugins) {
     display: none;
   }
   & #room-bar {

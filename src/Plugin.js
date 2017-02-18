@@ -45,15 +45,15 @@ const Plugin = Class.extend({
     hooks.forEach((hookName) => {
       if (this[hookName] !== stubHook) {
         this.on(hookName, this[hookName], this);
-        // prevent overwriting dis/enable hooks later
-        // use the events if you need to do additional work
-        Object.defineProperty(this, hookName, {
-          value: () => {
-            this.trigger(hookName);
-            Plugin.trigger(hookName, this);
-          },
-        });
       }
+      // prevent overwriting dis/enable hooks later
+      // use the events if you need to do additional work
+      Object.defineProperty(this, hookName, {
+        value: () => {
+          this.trigger(hookName);
+          Plugin.trigger(hookName, this);
+        },
+      });
     });
 
     // auto-remove event handlers added by the plugin, if the plugin

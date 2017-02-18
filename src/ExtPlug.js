@@ -1,5 +1,3 @@
-import { each } from 'underscore';
-
 import Events from 'plug/core/Events';
 import currentUser from 'plug/models/currentUser';
 
@@ -8,6 +6,7 @@ import Plugin from './Plugin';
 import PluginManager from './PluginManager';
 import PluginLocalStorage from './PluginLocalStorage';
 import getApplicationView from './util/getApplicationView';
+import handlers from './handlers';
 
 import EarlyAPIEventsPlugin from './plugins/EarlyAPIEventsPlugin';
 import CommandsPlugin from './plugins/CommandsPlugin';
@@ -23,10 +22,11 @@ import WaitlistEventsPlugin from './plugins/WaitlistEventsPlugin';
 import PlaybackEventsPlugin from './plugins/PlaybackEventsPlugin';
 import PlugSettingsPlugin from './plugins/PlugSettingsPlugin';
 import PopoutStylePlugin from './plugins/PopoutStylePlugin';
+import UserMenuPlugin from './plugins/UserMenuPlugin';
 
 import * as packageMeta from '../package.json';
 
-import * as style from './styles';
+import style from './styles/index.css';
 
 // Enable compatibility with AMD-based plugins.
 import './util/compatibility';
@@ -53,6 +53,8 @@ const ExtPlug = Plugin.extend({
     },
   },
 
+  style,
+
   init() {
     this._super('extplug', this);
 
@@ -76,6 +78,7 @@ const ExtPlug = Plugin.extend({
       new PlaybackEventsPlugin('extplug:playback-events', this),
       new PlugSettingsPlugin('extplug:plug-settings', this),
       new PopoutStylePlugin('extplug:popout-style', this),
+      new UserMenuPlugin('extplug:user-menu', this),
     ];
 
     this.guestPlugin = new GuestPlugin('extplug:guest', this);
@@ -185,11 +188,11 @@ const ExtPlug = Plugin.extend({
 
     this.appView = getApplicationView();
 
+    this.unsubscribeHandlers = handlers(this);
+
     this.corePlugins.forEach((plugin) => {
       plugin.enable();
     });
-
-    each(style, c => this.createStyle(c));
 
     // room settings
     this.roomSettings = new RoomSettings(this);
@@ -220,6 +223,9 @@ const ExtPlug = Plugin.extend({
     });
 
     this.guestPlugin.disable();
+
+    this.unsubscribeHandlers();
+    this.unsubscribeHandlers = null;
 
     // remove room settings handling
     this.roomSettings.dispose();
