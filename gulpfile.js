@@ -37,15 +37,17 @@ function createWebpackConfig(options) {
         {
           test: /\.js$/,
           exclude: /node_modules/,
-          loader: 'babel-loader',
-          options: {
-            presets: [
-              ['extplug', { amd: false }],
-            ],
-            plugins: [
-              'yo-yoify',
-            ],
-          },
+          use: [{
+            loader: 'babel-loader',
+            options: {
+              presets: [
+                'extplug',
+              ],
+              plugins: [
+                'yo-yoify',
+              ],
+            },
+          }],
         },
         {
           test: /\.png$/,
@@ -99,7 +101,7 @@ gulp.task('build:loader:transform', () => (
   gulp.src('src/main.js')
     .pipe(babel({
       presets: [
-        ['extplug', { amd: true }],
+        ['extplug', { modules: 'amd' }],
       ],
     }))
     .pipe(rename('init.js'))
