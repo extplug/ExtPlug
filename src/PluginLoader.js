@@ -62,7 +62,8 @@ export default class PluginLoader {
     }
 
     const pluginId = o.name || o.url;
-    const onLoad = resolve => (PluginClass) => {
+    const onLoad = resolve => (module) => {
+      const PluginClass = module.default || module;
       const instance = new PluginClass(pluginId, window.extp);
       const meta = new PluginMeta({
         id: pluginId,

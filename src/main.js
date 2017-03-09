@@ -27,7 +27,7 @@ plugModules.run();
 plugModules.register();
 
 waitFor(appViewExists, () => {
-  window.define('extplug', [EXTPLUG_MODULE], ExtPlug => new ExtPlug());
+  window.define('extplug', [EXTPLUG_MODULE], ({ default: ExtPlug }) => new ExtPlug());
 
   window.requirejs(['extplug'], (ext) => {
     window.requirejs.undef(EXTPLUG_MODULE);
