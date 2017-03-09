@@ -3,10 +3,14 @@ import { debounce } from 'underscore';
 import bel from 'bel';
 
 export default Backbone.View.extend({
+  initialize({ placeholder }) {
+    this.placeholderText = placeholder;
+  },
+
   render() {
     this.$el.append(bel`
       <div class="PluginSearchBar">
-        <input class="PluginSearchBar-input" type="text" placeholder="Search Plugins">
+        <input class="PluginSearchBar-input" type="text" placeholder="${this.placeholderText}">
         <i class="PluginSearchBar-icon icon icon-search"></i>
       </div>
     `);

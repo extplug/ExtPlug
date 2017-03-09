@@ -12,7 +12,9 @@ const PluginsView = Backbone.View.extend({
     this.searchResults = new Backbone.Collection();
     this.installedPlugins = window.extp.plugins;
 
-    this.searchBarView = new SearchBarView();
+    this.searchBarView = new SearchBarView({
+      placeholder: 'Search Plugins',
+    });
     this.resultsView = new PluginSearchResultsListView({
       collection: this.searchResults,
     });
