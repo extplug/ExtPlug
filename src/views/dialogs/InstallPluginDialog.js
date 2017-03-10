@@ -2,8 +2,7 @@ import $ from 'jquery';
 import { defer } from 'underscore';
 import Dialog from 'plug/views/dialogs/Dialog';
 import Events from 'plug/core/Events';
-import AlertEvent from 'plug/events/AlertEvent';
-import SpinnerView from 'plug/views/spinner/SpinnerView';
+import PluginInstallationEvent from '../../events/PluginInstallationEvent';
 
 const InstallPluginDialog = Dialog.extend({
   id: 'dialog-install-plugin',
@@ -22,7 +21,7 @@ const InstallPluginDialog = Dialog.extend({
     this.$el
       .append(this.getHeader('Install Plugin'))
       .append(this.getBody()
-        .append(this.getMessage('Enter the URL of the plugin you wish to install:'))
+        .append(this.getMessage('Enter the URL of the plugin you want to install:'))
         .append(this.$wrap))
       .append(this.getButtons('Install', true));
     defer(this.deferFocus.bind(this));
@@ -35,31 +34,10 @@ const InstallPluginDialog = Dialog.extend({
 
   submit() {
     const inp = this.$input;
-    if (inp.val().length > 0 && inp.val().length > 0) {
-      const spinner = new SpinnerView({ size: SpinnerView.LARGE });
-      this.$el.find('.dialog-body')
-        .empty()
-        .append(spinner.$el);
-      spinner.render();
-      const url = inp.val();
-      window.extp.install(url, (err) => {
-        this.close();
-        if (err) {
-          Events.dispatch(new AlertEvent(
-            AlertEvent.ALERT,
-            'Install Plugin Error',
-            `Error: ${err.message}`,
-            () => {},
-          ));
-        } else {
-          Events.dispatch(new AlertEvent(
-            AlertEvent.ALERT,
-            'Install Plugin',
-            'Plugin installed successfully.',
-            () => {},
-          ));
-        }
-      });
+    const url = inp.val();
+    if (url.length > 0 && url.length > 0) {
+      Events.dispatch(new PluginInstallationEvent(
+        PluginInstallationEvent.INSTALL, { name: '', url }));
     }
   },
 
