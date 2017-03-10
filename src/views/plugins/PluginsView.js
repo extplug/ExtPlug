@@ -1,12 +1,16 @@
 import $ from 'jquery';
 import { sortBy } from 'underscore';
 import Backbone from 'backbone';
+import html from 'bel';
+import Events from 'plug/core/Events';
+import ShowDialogEvent from 'plug/events/ShowDialogEvent';
 import PluginSearchEngine from '../../PluginSearchEngine';
+import InstallPluginDialog from '../dialogs/InstallPluginDialog';
 import SearchBarView from './SearchBarView';
 import PluginSearchResultsListView from './PluginSearchResultsListView';
 
 const PluginsView = Backbone.View.extend({
-  className: 'PluginsView',
+  className: 'PluginsView DiscoverPluginsView',
 
   initialize() {
     this.searchResults = new Backbone.Collection();
@@ -27,12 +31,21 @@ const PluginsView = Backbone.View.extend({
   render() {
     this.search('');
 
-    this.$el.append(
-      $('<div class="PluginsView-search" />').append(this.searchBarView.$el),
-      $('<div class="PluginsView-results" />').append(this.resultsView.$el),
-    );
+    this.$el.append(html`
+      <div class="PluginsView-search DiscoverPluginsView-search">
+        ${this.searchBarView.el}
+        <button class="DiscoverPluginsView-url"
+                onclick=${() => this.installByUrl()}>
+          Install By URL
+        </button>
+    `, html`
+      <div class="PluginsView-results">
+        ${this.resultsView.el}
+      </div>
+    `);
 
     this.searchBarView.render();
+    this.searchBarView.$el.addClass('DiscoverPluginsView-searchBar');
     this.resultsView.render();
 
     return this;
@@ -56,6 +69,13 @@ const PluginsView = Backbone.View.extend({
         // Move plugins that are already installed to the end of the list.
         sortBy(resultsArray, 'installed'));
     });
+  },
+
+  installByUrl() {
+    Events.dispatch(new ShowDialogEvent(
+      ShowDialogEvent.SHOW,
+      new InstallPluginDialog(),
+    ));
   },
 });
 

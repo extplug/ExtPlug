@@ -1,0 +1,21 @@
+.DiscoverPluginsView {
+  &-search {
+    display: flex;
+  }
+
+  &-searchBar {
+    flex-grow: 1;
+  }
+
+  &-url {
+    margin-left: 15px;
+    background: #282c35;
+    color: #eee;
+    font: 16px 'Open Sans', sans-serif;
+    font-weight: 400;
+    padding: 0 10px;
+    cursor: pointer;
+
+    &:hover { background: #323742; }
+  }
+}

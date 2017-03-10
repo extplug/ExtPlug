@@ -10,6 +10,7 @@
 @import './PluginRow.css';
 @import './PluginSearchBar.css';
 @import './PluginsView.css';
+@import './DiscoverPluginsView.css';
 @import './PluginSettingsView.css';
 @import './InstalledPluginsView.css';
 @import './ResponsiveUserMenu.css';
