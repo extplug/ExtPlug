@@ -1,5 +1,5 @@
 import Backbone from 'backbone';
-import bel from 'bel';
+import html from 'bel';
 import Lang from 'lang/Lang';
 import Events from 'plug/core/Events';
 import PluginInstallationEvent from '../../events/PluginInstallationEvent';
@@ -30,7 +30,7 @@ export default Backbone.View.extend({
       }
     };
 
-    this.$el.append(bel`
+    this.$el.append(html`
       <div class="PluginRow-flexContent">
         <div class="PluginRow-meta">
           <div class="PluginRow-name">
@@ -54,7 +54,7 @@ export default Backbone.View.extend({
             <span>Uninstall</span>
           </a>
         </div>
-        ${hasSettings ? bel`
+        ${hasSettings ? html`
           <button class="PluginRow-expand"
             onclick=${() => this.toggleSettings()}
             data-tooltip=${Lang.userMenu.settings}>
@@ -64,9 +64,9 @@ export default Backbone.View.extend({
       </div>
     `);
 
-    this.$el.append(bel`
+    this.$el.append(html`
       <div class="PluginRow-settings" />
-    `, bel`
+    `, html`
       <div class="clearfix" />
     `);
 

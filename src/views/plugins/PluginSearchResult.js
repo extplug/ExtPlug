@@ -1,5 +1,5 @@
 import Backbone from 'backbone';
-import bel from 'bel';
+import html from 'bel';
 import Events from 'plug/core/Events';
 import ShowDialogEvent from 'plug/events/ShowDialogEvent';
 import PluginInstallationEvent from '../../events/PluginInstallationEvent';
@@ -13,7 +13,7 @@ export default Backbone.View.extend({
     const isInstalled = !!model.installed;
 
     const homepage = model.links.homepage || model.links.repository || model.links.npm;
-    const userLink = model.publisher ? bel`
+    const userLink = model.publisher ? html`
       <span>
         by
         <a target="_blank" rel="noreferrer noopener" href="https://npmjs.com/~${model.publisher.username}">
@@ -24,7 +24,7 @@ export default Backbone.View.extend({
 
     this.$el.toggleClass('PluginRow--isInstalled', isInstalled);
 
-    this.$el.append(bel`
+    this.$el.append(html`
       <div class="PluginRow-flexContent">
         <div class="PluginRow-meta">
           <div class="PluginRow-name">
@@ -39,12 +39,12 @@ export default Backbone.View.extend({
           </div>
         </div>
         <div class="PluginRow-buttons">
-          ${isInstalled ? bel`
+          ${isInstalled ? html`
             <div class="PluginRow-button PluginRow-installed">
               <i class="PluginRow-icon icon icon-check-white"></i>
               <span>Installed</span>
             </div>
-          ` : bel`
+          ` : html`
             <button class="PluginRow-button PluginRow-install">
               <i class="PluginRow-icon icon icon-add"></i>
               <span>Install</span>

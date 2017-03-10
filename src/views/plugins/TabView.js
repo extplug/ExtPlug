@@ -1,15 +1,15 @@
 import $ from 'jquery';
 import Backbone from 'backbone';
-import bel from 'bel';
+import html from 'bel';
 
 export default Backbone.View.extend({
   className: 'extplug-tab-menu ExtPlugSettingsView-tabs',
 
   render() {
     this.$el.append(
-      bel`<button class="plugins selected" data-value="plugins">Installed Plugins</button>`,
-      bel`<button class="discover-plugins" data-value="discover-plugins">Discover Plugins</button>`,
-      bel`<button class="settings" data-value="settings">ExtPlug Settings</button>`,
+      html`<button class="plugins selected" data-value="plugins">Installed Plugins</button>`,
+      html`<button class="discover-plugins" data-value="discover-plugins">Discover Plugins</button>`,
+      html`<button class="settings" data-value="settings">ExtPlug Settings</button>`,
     );
 
     this.$('button').on('click', this.onClick.bind(this));

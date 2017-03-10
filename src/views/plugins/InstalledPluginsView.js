@@ -1,5 +1,5 @@
-import $ from 'jquery';
 import Backbone from 'backbone';
+import html from 'bel';
 import InstalledPluginsListView from './InstalledPluginsListView';
 import SearchBarView from './SearchBarView';
 
@@ -31,10 +31,15 @@ const PluginsView = Backbone.View.extend({
   },
 
   render() {
-    this.$el.append(
-      $('<div class="PluginsView-search" />').append(this.filterView.$el),
-      $('<div class="PluginsView-results" />').append(this.pluginsView.$el),
-    );
+    this.$el.append(html`
+      <div class="PluginsView-search">
+        ${this.filterView.el}
+      </div>
+    `, html`
+      <div class="PluginsView-results">
+        ${this.pluginsView.el}
+      </div>
+    `);
 
     this.filterView.render();
     this.pluginsView.render();
