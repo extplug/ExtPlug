@@ -1,4 +1,3 @@
-import $ from 'jquery';
 import { sortBy } from 'underscore';
 import Backbone from 'backbone';
 import html from 'bel';
