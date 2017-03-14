@@ -67,7 +67,7 @@ export default class PluginLoader {
       const instance = new PluginClass(pluginId, window.extp);
       const meta = new PluginMeta({
         id: pluginId,
-        fullUrl: url,
+        fullUrl: o.url,
         name: instance.name,
         description: instance.description,
         instance,
