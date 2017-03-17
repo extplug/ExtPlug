@@ -32,6 +32,7 @@ function createWebpackConfig(options) {
 
     module: {
       rules: [
+        { include: [path.join(__dirname, 'src/ExtPlug')], use: 'flat-loader' },
         { test: /\.css$/, use: ['css-loader', 'postcss-loader'] },
         { test: /\.json$/, use: 'json-loader' },
         {
