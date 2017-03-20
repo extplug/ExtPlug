@@ -57,15 +57,17 @@
     "webpack": "^2.2.0"
   },
   "scripts": {
-    "prepublish": "npm run build",
+    "prepublish": "gulp",
     "build": "gulp",
     "test": "eslint --cache gulpfile.js src test",
     "dev": "cross-env NODE_ENV=development gulp watch",
-    "prod": "cross-env NODE_ENV=production npm run build -- --minify"
+    "prod": "cross-env NODE_ENV=production gulp"
   },
   "greenkeeper": {
     "ignore": [
-      "jquery"
+      "backbone",
+      "jquery",
+      "underscore"
     ]
   }
 }

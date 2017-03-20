@@ -1,5 +1,8 @@
 {
   "presets": [
     "extplug"
+  ],
+  "plugins": [
+    "yo-yoify"
   ]
 }

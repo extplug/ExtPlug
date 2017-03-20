@@ -1,9 +1,9 @@
 /* eslint comma-dangle: ["error", "always-multiline"] */
-const path = require('path');
 const fs = require('fs');
 const gulp = require('gulp');
 const babel = require('gulp-babel');
-const env = require('gulp-util').env;
+const colors = require('gulp-util').colors;
+const log = require('gulp-util').log;
 const through2 = require('through2');
 const gulpif = require('gulp-if');
 const uglify = require('gulp-uglify');
@@ -15,7 +15,10 @@ const rjs = require('requirejs');
 const template = require('gulp-template');
 const zip = require('gulp-zip');
 const webpack = require('webpack');
+const webpackConfig = require('./webpack.config');
 const packg = require('./package.json');
+
+const env = process.env.NODE_ENV || 'development';
 
 function cleanLib() {
   return del('lib');
@@ -28,78 +31,20 @@ const clean = gulp.parallel(
   cleanBuild
 );
 
-function createWebpackConfig(options) {
-  return {
-    context: path.join(__dirname, './src'),
-    entry: ['es6-symbol', 'es6-shim', './ExtPlug'],
-    watch: !!options.watch,
-
-    module: {
-      rules: [
-        { include: [path.join(__dirname, 'src/ExtPlug')], use: 'flat-loader' },
-        { test: /\.css$/, use: ['css-loader', 'postcss-loader'] },
-        { test: /\.json$/, use: 'json-loader' },
-        {
-          test: /\.js$/,
-          exclude: /node_modules/,
-          use: [{
-            loader: 'babel-loader',
-            options: {
-              presets: [
-                'extplug',
-              ],
-              plugins: [
-                'yo-yoify',
-              ],
-            },
-          }],
-        },
-        {
-          test: /\.png$/,
-          loader: 'url-loader',
-          options: { limit: -1 },
-        },
-      ],
-    },
-
-    output: {
-      path: path.join(__dirname, './build'),
-      filename: 'source.js',
-      library: 'extplug/__internalExtPlug__',
-      libraryTarget: 'amd',
-    },
-
-    resolve: {
-      alias: {
-        extplug: path.join(__dirname, './src'),
-      },
-    },
-
-    externals: [
-      'jquery',
-      'underscore',
-      'backbone',
-      'plug-modules',
-      'lang/Lang',
-      (context, request, cb) => {
-        if (/^plug\//.test(request)) {
-          cb(null, `amd plug-modules!${request}`);
-        } else {
-          cb();
-        }
-      },
-    ],
-
-    plugins: [
-      options.minify && new webpack.optimize.UglifyJsPlugin(),
-    ].filter(Boolean),
-  };
-}
-
 function buildSource(done) {
-  webpack(createWebpackConfig({
-    minify: !!env.minify,
-  }), done);
+  webpack(webpackConfig, (err, stats) => {
+    if (err) {
+      done(err);
+    } else {
+      stats.toString({
+        modules: false,
+        colors: colors.enabled,
+      }).split('\n').forEach((line) => {
+        log(line);
+      });
+      done();
+    }
+  });
 }
 
 function buildLoaderTransform() {
@@ -157,7 +102,7 @@ function wrapBuiltSourceInLoader() {
         }
       });
     }))
-    .pipe(gulpif(!!env.minify, uglify({
+    .pipe(gulpif(env === 'production', uglify({
       compress: {
         screw_ie8: true,
         pure_getters: true,
