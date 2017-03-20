@@ -2,7 +2,7 @@ import jQuery from 'jquery';
 import { each, extend, partial } from 'underscore';
 import Backbone from 'backbone';
 import debug from 'debug';
-import quote from 'regexp-quote';
+import escapeStringRegExp from 'escape-string-regexp';
 import Class from 'plug/core/Class';
 import Settings from './models/Settings';
 import Style from './util/Style';
@@ -127,7 +127,7 @@ const Plugin = Class.extend({
 
   // Chat Commands API
   addCommand(name, cb) {
-    const rx = new RegExp(`^/${quote(name)}\\b`);
+    const rx = new RegExp(`^/${escapeStringRegExp(name)}\\b`);
     const fn = (text) => {
       if (rx.test(text)) {
         cb(text.slice(name.length + 2));
