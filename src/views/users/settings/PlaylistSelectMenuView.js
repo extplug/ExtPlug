@@ -1,8 +1,9 @@
 import $ from 'jquery';
 import Media from 'plug/models/Media';
-import { constructor as GrabMenu } from 'plug/views/grabs/grabMenu';
+import grabMenu from 'plug/views/grabs/grabMenu';
 import Lang from 'lang/Lang';
 
+const GrabMenu = grabMenu.constructor;
 const fakeMedia = [new Media()];
 
 const PlaylistSelectMenuView = GrabMenu.extend({
