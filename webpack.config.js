@@ -8,13 +8,13 @@ module.exports = {
   entry: [
     'es6-symbol',
     'es6-shim',
-    './ExtPlug',
+    './ExtPlug.js',
   ],
 
   module: {
     rules: [
       {
-        include: [path.join(__dirname, 'src/ExtPlug')],
+        include: [path.join(__dirname, 'src/ExtPlug.js')],
         use: 'flat-loader',
       },
       {
