@@ -1,5 +1,5 @@
 const path = require('path');
-const UglifyJsPlugin = require('webpack').UglifyJsPlugin;
+const BabiliPlugin = require('babili-webpack-plugin');
 
 const env = process.env.NODE_ENV || 'development';
 
@@ -70,6 +70,6 @@ module.exports = {
   ],
 
   plugins: [
-    env === 'production' && new UglifyJsPlugin(),
+    env === 'production' && new BabiliPlugin(),
   ].filter(Boolean),
 };
