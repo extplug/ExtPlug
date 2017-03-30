@@ -29,7 +29,7 @@
     "babel-plugin-yo-yoify": "^0.3.1",
     "babel-preset-extplug": "^3.0.0",
     "cross-env": "^3.1.4",
-    "css-loader": "^0.27.0",
+    "css-loader": "^0.28.0",
     "cssnano": "^3.10.0",
     "del": "^2.2.2",
     "eslint": "^3.16.1",
