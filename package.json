@@ -51,7 +51,7 @@
     "mkdirp": "^0.5.1",
     "postcss-cssnext": "^2.8.0",
     "postcss-import": "^9.1.0",
-    "postcss-loader": "^1.2.2",
+    "postcss-loader": "^2.0.0",
     "requirejs": "^2.1.20",
     "through2": "^2.0.1",
     "url-loader": "^0.5.7",
