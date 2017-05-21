@@ -104,12 +104,10 @@ function wrapBuiltSourceInLoader() {
     }))
     .pipe(gulpif(env === 'production', uglify({
       compress: {
-        screw_ie8: true,
         pure_getters: true,
         unsafe: true,
       },
-      output: { screw_ie8: true },
-      mangle: { toplevel: true },
+      toplevel: true,
     })))
     .pipe(rename('extplug.js'))
     .pipe(gulp.dest('build/'));
