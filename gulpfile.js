@@ -107,7 +107,7 @@ function wrapBuiltSourceInLoader() {
         pure_getters: true,
         unsafe: true,
       },
-      toplevel: true
+      toplevel: true,
     })))
     .pipe(rename('extplug.js'))
     .pipe(gulp.dest('build/'));
