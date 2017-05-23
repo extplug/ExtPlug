@@ -1,5 +1,7 @@
 # ExtPlug
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/extplug/ExtPlug.svg)](https://greenkeeper.io/)
+
 ![MIT Licensed](https://img.shields.io/github/license/extplug/extplug.svg?style=flat-square)
 ![Version](https://img.shields.io/github/tag/extplug/extplug.svg?style=flat-square)
 [![David dependencies](https://img.shields.io/david/extplug/extplug.svg?style=flat-square)](https://david-dm.org/extplug/extplug)
