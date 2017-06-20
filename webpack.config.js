@@ -1,4 +1,6 @@
 const path = require('path');
+const DefinePlugin = require('webpack').DefinePlugin;
+const ModuleConcatenationPlugin = require('webpack').optimize.ModuleConcatenationPlugin;
 const BabiliPlugin = require('babili-webpack-plugin');
 
 const env = process.env.NODE_ENV || 'development';
@@ -13,10 +15,6 @@ module.exports = {
 
   module: {
     rules: [
-      {
-        include: [path.join(__dirname, 'src/ExtPlug.js')],
-        use: 'flat-loader',
-      },
       {
         test: /\.css$/,
         use: [
@@ -70,6 +68,10 @@ module.exports = {
   ],
 
   plugins: [
+    new DefinePlugin({
+      'process.env': { NODE_ENV: env }
+    }),
+    env === 'production' && new ModuleConcatenationPlugin(),
     env === 'production' && new BabiliPlugin(),
   ].filter(Boolean),
 };
