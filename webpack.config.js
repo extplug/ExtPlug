@@ -69,7 +69,7 @@ module.exports = {
 
   plugins: [
     new DefinePlugin({
-      'process.env': { NODE_ENV: env }
+      'process.env': { NODE_ENV: JSON.stringify(env) }
     }),
     env === 'production' && new ModuleConcatenationPlugin(),
     env === 'production' && new BabiliPlugin(),
