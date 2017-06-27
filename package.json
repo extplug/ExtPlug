@@ -51,16 +51,18 @@
     "postcss-cssnext": "^2.8.0",
     "postcss-import": "^10.0.0",
     "postcss-loader": "^2.0.0",
+    "replacestream": "^4.0.2",
     "requirejs": "^2.1.20",
     "through2": "^2.0.1",
     "url-loader": "^0.5.7",
-    "webpack": "^3.0.0"
+    "webpack": "^3.0.0",
+    "webpack-dev-server": "^2.5.0"
   },
   "scripts": {
     "prepublish": "gulp",
     "build": "gulp",
     "test": "eslint --cache gulpfile.js src test",
-    "dev": "cross-env NODE_ENV=development gulp watch",
+    "dev": "cross-env NODE_ENV=development gulp dev",
     "prod": "cross-env NODE_ENV=production gulp"
   },
   "greenkeeper": {
