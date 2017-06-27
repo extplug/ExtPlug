@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<body style="font: 200% sans-serif; max-width: 600px; margin: auto">
+  <h1>All good!</h1>
+  <p>You can now close this tab.</p>
+  <script>
+    try { window.opener.postMessage('ok') } catch (e) {}
+    window.close()
+  </script>
+</body>
