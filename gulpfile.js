@@ -16,6 +16,7 @@ const template = require('gulp-template');
 const zip = require('gulp-zip');
 const webpack = require('webpack');
 const webpackConfig = require('./webpack.config');
+const DevServer = require('webpack-dev-server');
 const packg = require('./package.json');
 
 const env = process.env.NODE_ENV || 'development';
@@ -44,6 +45,49 @@ function buildSource(done) {
       });
       done();
     }
+  });
+}
+
+function getPort() {
+  const server = require('http').createServer().listen();
+  const { port } = server.address();
+  server.close();
+  return port;
+}
+function dev(done) {
+  const port = getPort();
+  const publicPath = `https://localhost:${port}/`;
+  const address = `${publicPath}dev.js`;
+
+  webpackConfig.entry.unshift(
+    `${require.resolve('webpack-dev-server/client')}?${publicPath}`,
+    'webpack/hot/dev-server');
+  webpackConfig.entry.pop();
+  webpackConfig.entry.push('./hotReloader.js');
+  webpackConfig.output.publicPath = publicPath;
+  webpackConfig.output.filename = 'dev.js';
+  webpackConfig.plugins.push(new webpack.HotModuleReplacementPlugin());
+  const compiler = webpack(webpackConfig);
+  const server = new DevServer(compiler, {
+    port,
+    publicPath,
+    contentBase: webpackConfig.output.path,
+    hot: true,
+    https: true,
+    disableHostCheck: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+    },
+  });
+
+  server.listen(port, () => {
+    gulp.series(buildLoader, function writeDevStub(done) {
+      fs.writeFile('build/source.js', `
+        requirejs.config({
+          paths: { 'extplug/__internalExtPlug__': ${JSON.stringify(address)}.replace(/\.js$/, '') }
+        });
+      `, done);
+    }, concatSource, wrapBuiltSourceInLoader, buildExtensions)(done);
   });
 }
 
@@ -182,6 +226,7 @@ exports.default = gulp.series(
 exports.clean = clean;
 exports.loader = buildLoader;
 exports.build = build;
+exports.dev = dev;
 exports.userscript = buildUserscript;
 exports.watchChrome = () =>
   gulp.watch('src/**/*', gulp.series(build, buildChromeExtension));
