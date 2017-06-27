@@ -78,6 +78,22 @@ function dev(done) {
     headers: {
       'Access-Control-Allow-Origin': '*',
     },
+    setup(app) {
+      app.get('/ok.html', (req, res) => {
+        res.setHeader('content-type', 'text/html');
+        res.send(`
+          <!DOCTYPE html>
+          <body style="font: 200% sans-serif; max-width: 600px; margin: auto">
+            <h1>All good!</h1>
+            <p>You can now close this tab.</p>
+            <script>
+              try { window.opener.postMessage('ok') } catch (e) {}
+              window.close()
+            </script>
+          </body>
+        `);
+      });
+    },
   });
 
   server.listen(port, () => {
@@ -85,6 +101,24 @@ function dev(done) {
       fs.writeFile('build/source.js', `
         requirejs.config({
           paths: { 'extplug/__internalExtPlug__': ${JSON.stringify(address)}.replace(/\.js$/, '') }
+        });
+        function tryAccess() {
+          return window.jQuery.get(${JSON.stringify(publicPath)});
+        }
+        tryAccess().fail(function () {
+          require('plug/core/Events').trigger('notify', 'icon-chat-system',
+            'Error: Could not load the ExtPlug dev mode extension. This is probably because its certificate is not whitelisted. ' +
+            'Please click here and whitelist the certificate.', function () {
+              window.open(${JSON.stringify(`${publicPath}ok.html`)});
+              var i = setInterval(function () {
+                tryAccess().then(function () {
+                  clearInterval(i);
+                  window.location.reload();
+                }).fail(function () {
+                  console.log('waiting for approval...');
+                });
+              }, 1500);
+            });
         });
       `, done);
     }, concatSource, wrapBuiltSourceInLoader, buildExtensions)(done);
