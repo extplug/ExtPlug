@@ -1,5 +1,6 @@
 /* eslint comma-dangle: ["error", "always-multiline"] */
 const fs = require('fs');
+const http = require('http');
 const gulp = require('gulp');
 const babel = require('gulp-babel');
 const colors = require('gulp-util').colors;
@@ -47,13 +48,6 @@ function buildSource(done) {
       done();
     }
   });
-}
-
-function getPort() {
-  const server = require('http').createServer().listen();
-  const { port } = server.address();
-  server.close();
-  return port;
 }
 
 function buildLoaderTransform() {
@@ -182,6 +176,13 @@ const buildExtensions = gulp.parallel(
   buildUserscript
 );
 
+function getPort() {
+  const server = http.createServer().listen();
+  const { port } = server.address();
+  server.close();
+  return port;
+}
+
 function dev(done) {
   const port = getPort();
   const publicPath = `https://localhost:${port}/`;
@@ -215,12 +216,17 @@ function dev(done) {
   });
 
   server.listen(port, () => {
-    gulp.series(buildLoader, function writeDevStub(done) {
+    function writeDevStub() {
       return fs.createReadStream('src/devStub.js')
         .pipe(replace('PUBLIC_PATH', JSON.stringify(publicPath)))
         .pipe(replace('ADDRESS', JSON.stringify(address)))
         .pipe(fs.createWriteStream('build/source.js'));
-    }, concatSource, wrapBuiltSourceInLoader, buildExtensions)(done);
+    }
+    gulp.series(
+      gulp.parallel(buildLoader, writeDevStub),
+      concatSource,
+      wrapBuiltSourceInLoader,
+      buildExtensions)(done);
   });
 }
 
