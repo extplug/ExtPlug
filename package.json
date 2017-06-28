@@ -60,7 +60,7 @@
   "scripts": {
     "prepublish": "gulp",
     "build": "gulp",
-    "test": "eslint --cache gulpfile.js src test",
+    "test": "eslint --fix --cache gulpfile.js src test",
     "dev": "cross-env NODE_ENV=development gulp dev",
     "prod": "cross-env NODE_ENV=production gulp"
   },

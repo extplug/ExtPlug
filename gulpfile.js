@@ -153,19 +153,19 @@ function userscriptMeta() {
 }
 
 function userscriptConcat() {
-  let inUserScriptComment = false
+  let inUserScriptComment = false;
   return gulp.src(['build/extplug.meta.user.js', 'build/extplug.js'])
     .pipe(gulpif(env === 'production', uglify({
       output: {
         comments(_, comment) {
           if (comment.value.includes('==UserScript==')) {
-            inUserScriptComment = true
+            inUserScriptComment = true;
           } else if (comment.value.includes('==/UserScript==')) {
-            inUserScriptComment = false
-            return true
+            inUserScriptComment = false;
+            return true;
           }
-          return inUserScriptComment
-        }
+          return inUserScriptComment;
+        },
       },
       compress: {
         pure_getters: true,
