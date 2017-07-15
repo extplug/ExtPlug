@@ -115,35 +115,26 @@ const build = gulp.series(
   wrapBuiltSourceInLoader
 );
 
-const buildChromeExtensionFiles = gulp.parallel(
-  () => gulp.src(['extensions/chrome/main.js', 'extensions/chrome/manifest.json'])
+const buildWebExtensionFiles = gulp.parallel(
+  () => gulp.src(['extensions/webextension/main.js', 'extensions/webextension/manifest.json'])
     .pipe(template(packg))
-    .pipe(gulp.dest('build/chrome/')),
+    .pipe(gulp.dest('build/webextension/')),
 
   () => gulp.src(['img/icon*.png'])
-    .pipe(gulp.dest('build/chrome/img/')),
+    .pipe(gulp.dest('build/webextension/img/')),
 
   () => gulp.src(['build/extplug.js'])
     .pipe(concat('extplug.js'))
-    .pipe(gulp.dest('build/chrome/'))
+    .pipe(gulp.dest('build/webextension/'))
 );
 
-function packChromeExtension() {
-  return gulp.src('build/chrome/*')
-    .pipe(zip('extplug.chrome.zip'))
+function packWebExtension() {
+  return gulp.src('build/webextension/*')
+    .pipe(zip('extplug.extension.zip'))
     .pipe(gulp.dest('build/'));
 }
 
-const buildChromeExtension = gulp.series(buildChromeExtensionFiles, packChromeExtension);
-
-const buildFirefoxExtension = gulp.parallel(
-  () => gulp.src(['extensions/firefox/*'])
-    .pipe(template(packg))
-    .pipe(gulp.dest('build/firefox/')),
-
-  () => gulp.src(['build/extplug.js'])
-    .pipe(gulp.dest('build/firefox/data/'))
-);
+const buildWebExtension = gulp.series(buildWebExtensionFiles, packWebExtension);
 
 function userscriptMeta() {
   return gulp.src(['extensions/userscript/extplug.user.js'])
@@ -183,8 +174,7 @@ const buildUserscript = gulp.series(
 );
 
 const buildExtensions = gulp.parallel(
-  buildChromeExtension,
-  buildFirefoxExtension,
+  buildWebExtension,
   buildUserscript
 );
 
@@ -253,10 +243,8 @@ exports.loader = buildLoader;
 exports.build = build;
 exports.dev = dev;
 exports.userscript = buildUserscript;
-exports.watchChrome = () =>
-  gulp.watch('src/**/*', gulp.series(build, buildChromeExtension));
-exports.watchFirefox = () =>
-  gulp.watch('src/**/*', gulp.series(build, buildFirefoxExtension));
+exports.watchWebExtension = () =>
+  gulp.watch('src/**/*', gulp.series(build, buildWebExtension));
 exports.watchUserscript = () =>
   gulp.watch('src/**/*', gulp.series(build, buildUserscript));
 exports.watch = () =>
