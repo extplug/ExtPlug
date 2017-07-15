@@ -1,4 +1,5 @@
 import PluginMeta from './models/PluginMeta';
+import { url as proxify } from './util/request';
 
 /**
  * Return the global Require.js function.
@@ -78,7 +79,9 @@ export default class PluginLoader {
 
     return new Promise((resolve, reject) => {
       this.require([pluginId], onLoad(resolve), reject);
-    });
+    }).catch((err) => new Promise((resolve, reject) => {
+      this.require([proxify(o.url)], onLoad(resolve), reject);
+    }));
   }
 
   /**
