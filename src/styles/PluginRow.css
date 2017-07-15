@@ -9,135 +9,135 @@
   min-height: 120px;
   background: #1c1f25;
   width: 100%;
+}
 
-  &-flexContent {
-    width: 100%;
-    display: flex;
-    min-height: 120px;
+.PluginRow-flexContent {
+  width: 100%;
+  display: flex;
+  min-height: 120px;
+}
+
+.PluginRow--isInstalled {
+  opacity: 0.9;
+}
+
+.PluginRow-meta {
+  flex-grow: 1;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 16px;
+}
+
+.PluginRow-name {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.PluginRow-description {
+  margin-top: 5px;
+  width: 100%;
+  color: #808691;
+}
+
+.PluginRow-published {
+  margin-top: 4px;
+  width: 100%;
+  color: #555D70;
+
+  & a { color: #fff }
+}
+
+.PluginRow-buttons {
+  width: var(--plugins-buttons-width);
+  flex-shrink: 0; /* Don't shrink smaller than 125px. */
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.PluginRow-button {
+  /* Size & Position */
+  width: 100%;
+  padding-left: 6px;
+  height: 59px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  box-sizing: border-box;
+
+  /* Colors */
+  background: #2d313a;
+  color: #eee;
+
+  /* Font */
+  font: 16px 'Open Sans', sans-serif;
+  font-weight: 400;
+  text-align: left;
+  text-decoration: none;
+
+  /* etc */
+  cursor: pointer;
+
+  &:hover {
+    background: #009cdd;
   }
+}
 
-  &--isInstalled {
-    opacity: 0.9;
-  }
-
-  &-meta {
-    flex-grow: 1;
-    box-sizing: border-box;
-    height: 100%;
-    padding: 16px;
-  }
-
-  &-name {
-    margin-top: 10px;
-    width: 100%;
-  }
-
-  &-description {
-    margin-top: 5px;
-    width: 100%;
-    color: #808691;
-  }
-
-  &-published {
-    margin-top: 4px;
-    width: 100%;
-    color: #555D70;
-
-    & a { color: #fff }
-  }
-
-  &-buttons {
-    width: var(--plugins-buttons-width);
-    flex-shrink: 0; /* Don't shrink smaller than 125px. */
-    height: 120px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  &-button {
-    /* Size & Position */
-    width: 100%;
-    padding-left: 6px;
-    height: 59px;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    box-sizing: border-box;
-
-    /* Colors */
-    background: #2d313a;
-    color: #eee;
-
-    /* Font */
-    font: 16px 'Open Sans', sans-serif;
-    font-weight: 400;
-    text-align: left;
-    text-decoration: none;
-
-    /* etc */
-    cursor: pointer;
-
-    &:hover {
-      background: #009cdd;
-    }
-  }
-
-  &-status {
-    &.is-enabled {
-      background: #32234c;
-      &:hover { background: #f04f30; }
-    }
-  }
-
-  &-uninstall {
-    &:hover {
-      background: #f04f30;
-    }
-  }
-
-  &-installed {
-    cursor: default;
-
+.PluginRow-status {
+  &.is-enabled {
     background: #32234c;
-    &:hover {
-      /* No change */
-      background: #32234c;
-    }
+    &:hover { background: #f04f30; }
   }
+}
 
-  &-icon {
-    position: static;
+.PluginRow-uninstall {
+  &:hover {
+    background: #f04f30;
   }
+}
 
-  &-settings {
-    display: none;
-    padding: 16px;
-    width: 100%;
-    box-sizing: border-box;
+.PluginRow-installed {
+  cursor: default;
 
-    &.is-expanded {
-      display: block;
-    }
-
-    /* Clearfix */
-    &:after {
-      content: "";
-      display: table;
-      clear: both;
-    }
+  background: #32234c;
+  &:hover {
+    /* No change */
+    background: #32234c;
   }
+}
 
-  &-expand {
-    position: absolute;
-    top: 16px;
-    right: calc(16px + var(--plugins-buttons-width));
-    cursor: pointer;
-    background: none;
-  }
+.PluginRow-icon {
+  position: static;
+}
 
-  &-expandIcon {
-    position: static;
+.PluginRow-settings {
+  display: none;
+  padding: 16px;
+  width: 100%;
+  box-sizing: border-box;
+
+  &.is-expanded {
     display: block;
   }
+
+  /* Clearfix */
+  &:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+}
+
+.PluginRow-expand {
+  position: absolute;
+  top: 16px;
+  right: calc(16px + var(--plugins-buttons-width));
+  cursor: pointer;
+  background: none;
+}
+
+.PluginRow-expandIcon {
+  position: static;
+  display: block;
 }

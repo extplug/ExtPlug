@@ -1,11 +1,9 @@
-.Dialog {
-  &-body {
-    &.is-loading {
-      min-height: 200px;
-      display: flex;
-      text-align: center;
-      justify-content: center;
-      align-items: center;
-    }
+.Dialog-body {
+  &.is-loading {
+    min-height: 200px;
+    display: flex;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
   }
 }

@@ -1,11 +1,11 @@
 .InstalledPluginsView {
   margin: 0 15px;
+}
 
-  &-list {
-    position: absolute;
-    top: 70px;
-    left: 15px;
-    right: 15px;
-    bottom: 0;
-  }
+.InstalledPluginsView-list {
+  position: absolute;
+  top: 70px;
+  left: 15px;
+  right: 15px;
+  bottom: 0;
 }

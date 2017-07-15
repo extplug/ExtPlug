@@ -1,7 +1,5 @@
-.ExtPlugSettingsView {
-  &-tabs {
-    top: 15px;
-    margin: 0 2%;
-    width: 96%;
-  }
+.ExtPlugSettingsView-tabs {
+  top: 15px;
+  margin: 0 2%;
+  width: 96%;
 }

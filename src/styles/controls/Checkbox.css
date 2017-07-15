@@ -3,20 +3,20 @@
 .extp-Checkbox {
   position: relative;
   cursor: pointer;
+}
 
-  &-icon {
-    top: 2px;
-    left: 0;
-    display: none;
-  }
+.extp-Checkbox-icon {
+  top: 2px;
+  left: 0;
+  display: none;
+}
 
-  &.is-selected &-icon {
-    display: block;
-  }
+.extp-Checkbox.is-selected .extp-Checkbox-icon {
+  display: block;
+}
 
-  &-label {
-    position: absolute;
-    left: 17px;
-    margin-left: 10px;
-  }
+.extp-Checkbox-label {
+  position: absolute;
+  left: 17px;
+  margin-left: 10px;
 }
