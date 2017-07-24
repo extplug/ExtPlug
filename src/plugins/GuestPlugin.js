@@ -29,7 +29,7 @@ const GuestPlugin = Plugin.extend({
     // add login button
     this.$signup = $('#footer-user .signup')
       .find('span')
-        .text(Lang.signup.signup)
+      .text(Lang.signup.signup)
       .end();
     this.$login = $('<div />')
       .addClass('signup login')
@@ -89,7 +89,7 @@ const GuestPlugin = Plugin.extend({
   onSettings(e) {
     e.stopPropagation();
     Events.trigger('tooltip:hide')
-          .trigger('show:user', 'settings', 'extplug');
+      .trigger('show:user', 'settings', 'extplug');
   },
 
 });

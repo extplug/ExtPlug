@@ -15,9 +15,9 @@ const Style = Class.extend({
     this.id = _.uniqueId('eps-');
 
     this.el = $('<style />').addClass('extplug-style')
-                            .attr('id', this.id)
-                            .attr('type', 'text/css')
-                            .appendTo('head');
+      .attr('id', this.id)
+      .attr('type', 'text/css')
+      .appendTo('head');
     if (popoutView._window) { // eslint-disable-line no-underscore-dangle
       this.el.clone().appendTo(popoutView.$document.find('head'));
     }

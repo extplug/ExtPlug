@@ -33,7 +33,7 @@ const EmojiDataPlugin = Plugin.extend({
         const emojiName = inner.attr('class').match(/gemoji-plug-(\S+)/);
         if (emojiName) {
           inner.attr('data-emoji-name', emojiName[1])
-               .addClass(`extplug-emoji-${name}`);
+            .addClass(`extplug-emoji-${name}`);
         }
       });
     });

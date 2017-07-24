@@ -20,7 +20,7 @@ const RemoveBoxView = View.extend({
 
     this.$el.css('cursor', 'default');
     this.$icon.css('cursor', 'pointer')
-              .css({ top: '-6px', left: '-4px' });
+      .css({ top: '-6px', left: '-4px' });
 
     this.$icon.on('click', this.onRemove);
     return this;
