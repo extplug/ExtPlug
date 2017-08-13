@@ -5,7 +5,7 @@
   "dependencies": {
     "backbone": "^1.1.2",
     "bel": "^5.0.0",
-    "debug": "^2.2.0",
+    "debug": "^3.0.0",
     "es6-shim": "^0.35.3",
     "es6-symbol": "^3.1.0",
     "escape-string-regexp": "^1.0.5",
