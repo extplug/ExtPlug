@@ -44,8 +44,10 @@ const RoomSettings = Backbone.Model.extend({
         } else if (e.status) {
           message += ` Status code: ${e.status}`;
         }
-        Events.trigger('notify', 'icon-chat-system',
-          `Room Settings could not be loaded for this room.${message}`);
+        Events.trigger(
+          'notify', 'icon-chat-system',
+          `Room Settings could not be loaded for this room.${message}`,
+        );
       });
     } else if (unload) {
       this.unload();

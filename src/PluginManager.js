@@ -88,8 +88,8 @@ class PluginManager {
   }
 
   loadInstalledPlugins() {
-    return this.storage.getInstalledPlugins().then(
-      installed => Promise.all(installed.map(this.load)));
+    return this.storage.getInstalledPlugins()
+      .then(installed => Promise.all(installed.map(this.load)));
   }
 }
 

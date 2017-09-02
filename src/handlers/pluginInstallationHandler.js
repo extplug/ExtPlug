@@ -4,9 +4,7 @@ import AlertEvent from 'plug/events/AlertEvent';
 import PluginInstallationEvent from '../events/PluginInstallationEvent';
 import LoadingDialog from '../views/dialogs/LoadingDialog';
 
-export default function pluginInstallationHandler(extp) {
-  const manager = extp.manager;
-
+export default function pluginInstallationHandler({ manager }) {
   function onInstall(event) {
     const dialog = new LoadingDialog({
       name: event.name,
@@ -20,8 +18,10 @@ export default function pluginInstallationHandler(extp) {
       .catch((err) => {
         console.error(err.stack || err.message);
 
-        Events.trigger('notify', 'icon-chat-system',
-          `An error occured during installation of ${event.name}: ${err.message}`);
+        Events.trigger(
+          'notify', 'icon-chat-system',
+          `An error occured during installation of ${event.name}: ${err.message}`,
+        );
       })
       .then(() => {
         dialog.close();

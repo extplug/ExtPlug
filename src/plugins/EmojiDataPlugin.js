@@ -15,7 +15,7 @@ const EmojiDataPlugin = Plugin.extend({
         // attempt to find the name in the emoji-data map
         const id = joinpoint.args[0];
         const data = emoji.data[id];
-        if (data) name = data[3][0];
+        if (data) name = data[3][0]; // eslint-disable-line prefer-destructuring
       }
       const html = joinpoint.proceed();
       if (name) {
@@ -33,7 +33,7 @@ const EmojiDataPlugin = Plugin.extend({
         const emojiName = inner.attr('class').match(/gemoji-plug-(\S+)/);
         if (emojiName) {
           inner.attr('data-emoji-name', emojiName[1])
-            .addClass(`extplug-emoji-${name}`);
+            .addClass(`extplug-emoji-${emojiName[1]}`);
         }
       });
     });

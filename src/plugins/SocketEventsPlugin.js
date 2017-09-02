@@ -46,7 +46,7 @@ function getSocket() {
     return window.rcs.plugSock.sock;
   }
 
-  const send = WebSocket.prototype.send;
+  const { send } = WebSocket.prototype;
   let socket;
   WebSocket.prototype.send = function sendIntercept(data) {
     if (this.url.indexOf('plug.dj') !== -1 && data.indexOf(CHAT_INTERCEPT_STRING) !== -1) {

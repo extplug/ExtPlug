@@ -39,8 +39,7 @@ const InstallPluginDialog = Dialog.extend({
   submit() {
     const url = this.input.value;
     if (url.length > 0 && url.length > 0) {
-      Events.dispatch(new PluginInstallationEvent(
-        PluginInstallationEvent.INSTALL, { name: '', url }));
+      Events.dispatch(new PluginInstallationEvent(PluginInstallationEvent.INSTALL, { name: '', url }));
     }
   },
 

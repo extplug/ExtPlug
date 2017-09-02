@@ -64,9 +64,9 @@ const PluginsView = Backbone.View.extend({
         plugin.set('installed', isInstalled(plugin));
         return plugin;
       });
-      this.searchResults.reset(
-        // Move plugins that are already installed to the end of the list.
-        sortBy(resultsArray, 'installed'));
+      // Move plugins that are already installed to the end of the list.
+      const sortedResults = sortBy(resultsArray, 'installed');
+      this.searchResults.reset(sortedResults);
     });
   },
 
