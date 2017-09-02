@@ -22,8 +22,10 @@ const SettingsTabPlugin = Plugin.extend({
     Events.on('show:user', userView.show, userView);
 
     // Add ExtPlug tab to user settings
-    this.settingsTabAdvice = around(UserSettingsView.prototype, 'getMenu',
-      () => new TabMenuView());
+    this.settingsTabAdvice = around(
+      UserSettingsView.prototype, 'getMenu',
+      () => new TabMenuView(),
+    );
     this.settingsPaneAdvice = around(UserSettingsView.prototype, 'getView', (joinpoint) => {
       if (joinpoint.args[0] === 'ext-plug') {
         return new SettingsSectionView({

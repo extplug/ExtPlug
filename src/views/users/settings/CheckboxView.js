@@ -33,8 +33,8 @@ const CheckboxView = Backbone.View.extend({
     return this;
   },
   onChange() {
+    const { enabled } = this;
     this.$el.toggleClass('is-selected');
-    const enabled = this.enabled;
     this.enabled = this.$el.hasClass('is-selected');
     if (enabled !== this.enabled) {
       this.trigger('change', this.enabled);

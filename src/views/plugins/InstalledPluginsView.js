@@ -52,9 +52,8 @@ const PluginsView = Backbone.View.extend({
   },
 
   filter(query) {
-    this.filteredPlugins.reset(
-      this.installedPlugins.toArray()
-        .filter(matchPlugin(query.toLowerCase())));
+    this.filteredPlugins.reset(this.installedPlugins.toArray()
+      .filter(matchPlugin(query.toLowerCase())));
   },
 });
 

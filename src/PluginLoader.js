@@ -19,6 +19,7 @@ function getRequireJs() {
  * that.
  */
 function parseLegacyPluginUrl(name) {
+  /* eslint-disable prefer-destructuring */
   const parts = name.split(';');
   const o = {};
   o.url = parts[0];
@@ -30,6 +31,7 @@ function parseLegacyPluginUrl(name) {
   o.url = o.url.replace(/^http:/, 'https:');
 
   return o;
+  /* eslint-enable prefer-destructuring */
 }
 
 export default class PluginLoader {

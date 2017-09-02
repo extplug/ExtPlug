@@ -28,11 +28,11 @@
   if (isReady) {
     // Tampermonkey doesn't appear to find some of the global functions by
     // default, so we redefine them here as local vars.
-    /* eslint-disable no-unused-vars */
+    /* eslint-disable no-unused-vars, prefer-destructuring */
     var requirejs = window.requirejs;
     var require = window.requirejs;
     var define = window.define;
-    /* eslint-enable no-unused-vars */
+    /* eslint-enable no-unused-vars, prefer-destructuring */
 
     CODE; // eslint-disable-line
 
@@ -42,4 +42,3 @@
     setTimeout(load, 20);
   }
 }());
-/* eslint-enable no-var, vars-on-top */

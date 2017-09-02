@@ -21,13 +21,14 @@ export default class extends MarkdownIt {
       const token = tokens[idx];
 
       // Rewrite repository-relative urls to the github CDN.
-      const repository = opts.package.repository;
+      const { repository } = opts.package;
       if (repository && repository.type === 'git') {
         const github = gh(repository.url);
         if (github) {
           token.attrSet('src', toAbsolute(
             `${GH_CDN}/${github.user}/${github.repo}/${github.branch}/`,
-            token.attrGet('src')));
+            token.attrGet('src'),
+          ));
         }
       }
     });

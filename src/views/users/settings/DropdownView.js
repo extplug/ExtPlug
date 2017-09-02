@@ -7,6 +7,7 @@ const DropdownView = Backbone.View.extend({
 
   initialize() {
     if (!this.options.selected) {
+      // eslint-disable-next-line prefer-destructuring
       this.options.selected = Object.keys(this.options.options)[0];
     }
 
@@ -94,7 +95,7 @@ const DropdownView = Backbone.View.extend({
   },
 
   canExpandDownward() {
-    const top = this.$dl.offset().top;
+    const { top } = this.$dl.offset();
     const bottom = top + this.$rows.height();
     return bottom < $(document).height();
   },

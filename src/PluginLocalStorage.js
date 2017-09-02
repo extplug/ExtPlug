@@ -40,7 +40,7 @@ class PluginLocalStorage {
    * Add a newly installed plugin.
    */
   installPlugin(url) {
-    const data = this.data;
+    const { data } = this;
 
     if (!data.installed) {
       data.installed = [];
@@ -57,7 +57,7 @@ class PluginLocalStorage {
    * Remove a plugin.
    */
   removePlugin(url) {
-    const data = this.data;
+    const { data } = this;
 
     if (data.installed) {
       data.installed = without(data.installed, url);
@@ -82,7 +82,7 @@ class PluginLocalStorage {
    * Store settings for a plugin.
    */
   setPluginSettings(name, { enabled, settings }) {
-    const data = this.data;
+    const { data } = this;
     if (!data.plugins) {
       data.plugins = {};
     }

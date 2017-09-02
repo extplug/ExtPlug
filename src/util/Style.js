@@ -34,7 +34,7 @@ const Style = Class.extend({
   },
 
   $() {
-    let el = this.el;
+    let { el } = this;
     if (popoutView._window) { // eslint-disable-line no-underscore-dangle
       el = el.add(popoutView.$document.find(`#${this.id}`));
     }

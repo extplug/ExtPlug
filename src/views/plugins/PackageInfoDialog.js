@@ -33,8 +33,7 @@ export default Dialog.extend({
         package: pkg.toJSON(),
       });
 
-      this.body.html(
-        md.render(pkg.get('readme')));
+      this.body.html(md.render(pkg.get('readme')));
     });
 
     return this._super();

@@ -3,8 +3,7 @@ const fs = require('fs');
 const http = require('http');
 const gulp = require('gulp');
 const babel = require('gulp-babel');
-const colors = require('gulp-util').colors;
-const log = require('gulp-util').log;
+const { colors, log } = require('gulp-util');
 const through2 = require('through2');
 const replace = require('replacestream');
 const gulpif = require('gulp-if');
@@ -100,7 +99,7 @@ function wrapBuiltSourceInLoader() {
         if (e) {
           cb(e);
         } else {
-          file.contents = new Buffer(file.contents.toString().replace('CODE', () => code));
+          file.contents = Buffer.from(file.contents.toString().replace('CODE', () => code));
           cb(null, file);
         }
       });
@@ -192,7 +191,8 @@ function dev(done) {
 
   webpackConfig.entry.unshift(
     `${require.resolve('webpack-dev-server/client')}?${publicPath}`,
-    'webpack/hot/dev-server');
+    'webpack/hot/dev-server'
+  );
   webpackConfig.entry.pop();
   webpackConfig.entry.push('./hotReloader.js');
   webpackConfig.output.publicPath = publicPath;
@@ -228,7 +228,8 @@ function dev(done) {
       gulp.parallel(buildLoader, writeDevStub),
       concatSource,
       wrapBuiltSourceInLoader,
-      buildExtensions)(done);
+      buildExtensions
+    )(done);
   });
 }
 

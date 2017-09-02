@@ -1,4 +1,4 @@
-const API = window.API;
+const { API } = window;
 
 // CSS classes for room-specific roles
 const roleClasses = [
