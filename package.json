@@ -19,7 +19,7 @@
     "semver-compare": "^1.0.0",
     "sistyl": "^1.0.0",
     "underscore": "^1.6.0",
-    "yo-yoify": "^3.5.0"
+    "yo-yoify": "^4.0.0"
   },
   "devDependencies": {
     "babel-core": "^6.26.0",
