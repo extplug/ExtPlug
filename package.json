@@ -52,7 +52,7 @@
     "replacestream": "^4.0.2",
     "requirejs": "^2.3.5",
     "through2": "^2.0.1",
-    "url-loader": "^0.5.7",
+    "url-loader": "^0.6.1",
     "webpack": "^3.5.5",
     "webpack-dev-server": "^2.7.1"
   },
