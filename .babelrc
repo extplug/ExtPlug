@@ -3,6 +3,8 @@
     "extplug"
   ],
   "plugins": [
-    "yo-yoify"
+    ["yo-yoify", {
+      "appendChildModule": "bel/appendChild"
+    }]
   ]
 }
