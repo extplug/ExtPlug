@@ -1,13 +1,13 @@
 import $ from 'jquery';
 import _ from 'underscore';
-import { Sistyl } from 'sistyl';
+import sistyl from 'sistyl';
 import Class from 'plug/core/Class';
 import popoutView from 'plug/views/rooms/popout/PopoutView';
 
 // hack to get plug.dj-like Class inheritance on a not-plug.dj-like Class
 const Style = Class.extend({
   init(defaults) {
-    this.sistyl = new Sistyl(defaults);
+    this.sistyl = sistyl(defaults);
     this.timeout = null;
     this.rawStyles = [];
 
