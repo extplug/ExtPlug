@@ -21,7 +21,7 @@
     "onecolor": "^3.0.4",
     "plug-modules": "^5.2.0",
     "semver-compare": "^1.0.0",
-    "sistyl": "^1.0.0",
+    "sistyl": "^2.0.0",
     "underscore": "^1.6.0",
     "yo-yoify": "^4.0.0"
   },
