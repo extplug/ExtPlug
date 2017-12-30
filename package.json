@@ -44,7 +44,7 @@
     "gulp-concat": "^2.6.0",
     "gulp-if": "^2.0.1",
     "gulp-rename": "^1.2.2",
-    "gulp-template": "^4.0.0",
+    "gulp-template": "^5.0.0",
     "gulp-uglify": "^3.0.0",
     "gulp-util": "^3.0.7",
     "gulp-zip": "^4.0.0",
