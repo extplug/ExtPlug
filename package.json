@@ -29,7 +29,7 @@
     "babel-core": "^7.0.0-beta.3",
     "babel-loader": "^7.1.2",
     "babel-plugin-external-helpers": "^7.0.0-beta.3",
-    "babel-plugin-yo-yoify": "^1.0.1",
+    "babel-plugin-yo-yoify": "^2.0.0",
     "babel-preset-extplug": "^4.0.1",
     "cross-env": "^5.1.0",
     "css-loader": "^0.28.7",
