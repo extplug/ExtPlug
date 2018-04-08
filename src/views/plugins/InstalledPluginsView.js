@@ -1,5 +1,5 @@
 import Backbone from 'backbone';
-import html from 'bel';
+import html from 'nanohtml';
 import InstalledPluginsListView from './InstalledPluginsListView';
 import SearchBarView from './SearchBarView';
 

@@ -1,5 +1,5 @@
 import Backbone from 'backbone';
-import bel from 'bel';
+import bel from 'nanohtml';
 import Events from 'plug/core/Events';
 
 /**

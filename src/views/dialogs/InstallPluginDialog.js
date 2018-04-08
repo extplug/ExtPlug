@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import { defer } from 'underscore';
-import html from 'bel';
+import html from 'nanohtml';
 import Dialog from 'plug/views/dialogs/Dialog';
 import Events from 'plug/core/Events';
 import PluginInstallationEvent from '../../events/PluginInstallationEvent';

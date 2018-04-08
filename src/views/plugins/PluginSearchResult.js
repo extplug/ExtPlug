@@ -1,5 +1,5 @@
 import Backbone from 'backbone';
-import html from 'bel';
+import html from 'nanohtml';
 import Events from 'plug/core/Events';
 import ShowDialogEvent from 'plug/events/ShowDialogEvent';
 import PluginInstallationEvent from '../../events/PluginInstallationEvent';

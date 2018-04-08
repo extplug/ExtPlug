@@ -1,6 +1,6 @@
 import Backbone from 'backbone';
 import { debounce } from 'underscore';
-import html from 'bel';
+import html from 'nanohtml';
 
 export default Backbone.View.extend({
   initialize({ placeholder }) {

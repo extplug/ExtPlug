@@ -189,6 +189,7 @@ function dev(done) {
   const publicPath = `https://localhost:${port}/`;
   const address = `${publicPath}dev.js`;
 
+  webpackConfig.mode = 'development';
   webpackConfig.entry.unshift(
     `${require.resolve('webpack-dev-server/client')}?${publicPath}`,
     'webpack/hot/dev-server'

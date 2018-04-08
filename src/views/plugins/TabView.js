@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import Backbone from 'backbone';
-import html from 'bel';
+import html from 'nanohtml';
 
 export default Backbone.View.extend({
   className: 'extplug-tab-menu ExtPlugSettingsView-tabs',

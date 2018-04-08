@@ -1,6 +1,6 @@
 import { around } from 'meld';
 import BaseView from 'plug/views/users/menu/UserMenuView';
-import html from 'bel';
+import html from 'nanohtml';
 
 export default BaseView.extend({
   render() {

@@ -1,8 +1,5 @@
 const path = require('path');
-const DefinePlugin = require('webpack').DefinePlugin;
-const ModuleConcatenationPlugin = require('webpack').optimize.ModuleConcatenationPlugin;
-
-const env = process.env.NODE_ENV || 'development';
+const env = process.env.NODE_ENV || 'production';
 
 module.exports = {
   context: path.join(__dirname, './src'),
@@ -12,6 +9,8 @@ module.exports = {
     './ExtPlug.js',
   ],
 
+  mode: env === 'development' ? 'development' : 'production',
+
   module: {
     rules: [
       {
@@ -20,10 +19,6 @@ module.exports = {
           'css-loader',
           'postcss-loader',
         ],
-      },
-      {
-        test: /\.json$/,
-        use: 'json-loader',
       },
       {
         test: /\.js$/,
@@ -65,11 +60,4 @@ module.exports = {
       }
     },
   ],
-
-  plugins: [
-    new DefinePlugin({
-      'process.env': { NODE_ENV: JSON.stringify(env) }
-    }),
-    env === 'production' && new ModuleConcatenationPlugin(),
-  ].filter(Boolean),
 };

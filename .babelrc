@@ -3,8 +3,6 @@
     "extplug"
   ],
   "plugins": [
-    ["yo-yoify", {
-      "appendChildModule": "bel/appendChild"
-    }]
+    "module:nanohtml"
   ]
 }
