@@ -1,3 +1,7 @@
+# Unmaintained
+
+I've moved on to [üWave](https://u-wave.net), so I'm no longer working on ExtPlug. If you like the idea of an extension framework like this and want to work off ExtPlug's codebase, [open an issue](https://github.com/extplug/ExtPlug/issues/new) and I'll add you to the org. Note that many changes are probably necessary to adapt to plug.dj's recent redesign.
+
 # ExtPlug
 
 ![MIT Licensed](https://img.shields.io/github/license/extplug/extplug.svg?style=flat-square)
